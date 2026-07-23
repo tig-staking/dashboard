@@ -104,7 +104,7 @@ a{color:var(--accent);text-decoration:none}
 .tag-claim{background:rgba(168,85,247,.16);color:#c084fc}
 .tag-reward{background:rgba(148,163,184,.16);color:#cbd5e1}
 .hidden{display:none!important}
-.live{display:none;margin-left:6px;font-size:10px;padding:2px 7px;border-radius:99px;background:rgba(34,197,94,.14);color:#4ade80}
+.live{display:none;margin-left:6px;font-size:10px;padding:2px 7px;border-radius:999px;background:rgba(34,197,94,.14);color:#4ade80}
 .live.on{display:inline-block;animation:pulse 1.5s infinite}
 .empty{border:1px dashed rgba(120,140,255,.25);border-radius:16px;padding:36px 20px;text-align:center;background:rgba(18,24,43,.45);margin:18px 0}
 .drawer-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:80}
@@ -304,8 +304,8 @@ a{color:var(--accent);text-decoration:none}
   'use strict';
 
   var C = {
-    TIG: '0x0C03Ce270B4826Ec62e7DD007f0B716068639F7B',
-    STAKE: '0x9F6b29E498Ef6BEe4a050fa1F29c31DBE6c6aEF4',
+    TIG: '0x0c03ce270b4826ec62e7dd007f0b716068639f7b',
+    STAKE: '0x16340277fdd1c93f0b2fd276ecbdd8b093498fe9',
     RPCS: ['https://mainnet.base.org', 'https://base.llamarpc.com', 'https://1rpc.io/base'],
     DB_NAME: 'TIGv14',
     DB_VERSION: 1,
@@ -386,7 +386,6 @@ a{color:var(--accent);text-decoration:none}
     localStorage.setItem('tig-theme', next);
   }
 
-  // Preload bazy danych z pliku data.json zgromadzonego na serwerze
   async function autoPreload() {
     try {
       var res = await fetch('./data.json?t=' + Date.now());
@@ -524,8 +523,6 @@ a{color:var(--accent);text-decoration:none}
 
     try {
       await db.open();
-      
-      // 1. Dociągnięcie snapshotu z data.json z GitHub Pages
       await autoPreload();
 
       var count = await db.count();
@@ -535,7 +532,6 @@ a{color:var(--accent);text-decoration:none}
         await refreshAll();
       }
 
-      // 2. Dociągnięcie najświeższych bloków w tle
       fastSync();
     } catch (err) {
       console.error(err);
