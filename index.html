@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TIG Staking Dashboard</title>
-<script type="text/javascript" nonce="66c6e41131824bb09c37179cdb5" src="//local.adguard.org?ts=1784775382790&amp;type=content-script&amp;dmn=contribution.usercontent.google.com&amp;url=https%3A%2F%2Fcontribution.usercontent.google.com%2Fdownload%3Fc%3DCgxiYXJkX3N0b3JhZ2USUBINcmVzcG9uc2VfZGF0YRo_CjAwYzc1NDYwM2U3YzI0MTVlMDAwNjU3M2ZlYzE3ZmRlMTA3ZmRhMTRhNDgwMjMwYzISCxIHELfVm4aZHxgB%26filename%3Dtig_staking_dashboard.html%26opi%3D103135050&amp;app=chrome.exe&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1"></script><script type="text/javascript" nonce="66c6e41131824bb09c37179cdb5" src="//local.adguard.org?ts=1784775382790&amp;name=AdGuard%20Extra&amp;type=user-script"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js"></script>
 <style>
 :root{--bg:#0b1020;--bg2:#12182b;--card:rgba(18,24,43,.92);--border:rgba(120,140,255,.12);--text:#e8eaf2;--text2:#9aa3b5;--accent:#6ea8fe;--green:#22c55e;--red:#ef4444;--yellow:#eab308;--purple:#a855f7;--ok:rgba(34,197,94,.12);--mid:rgba(234,179,8,.12);--bad:rgba(239,68,68,.12)}
@@ -150,6 +150,10 @@ a{color:var(--accent);text-decoration:none}
 .inspector-card .v{font-size:20px;font-weight:750;margin-top:4px}
 .inspector-card .s{font-size:11px;color:var(--text2);margin-top:2px}
 
+.btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text);background:rgba(255,255,255,.04)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--text2)}
+.btn-info{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.25);color:#60a5fa}
 </style>
 </head>
 <body>
@@ -448,7 +452,7 @@ a{color:var(--accent);text-decoration:none}
     BATCH: 3000,
     BATCH_MIN: 400,
     BATCH_MAX: 4000,
-    INTERVAL: 5 * 60 * 1000, // 5 minute auto-refresh interval
+    INTERVAL: 5 * 60 * 1000,
     PENDING_PERIOD_FALLBACK_DAYS: 28,
     BLOCK_CONCURRENCY: 4,
     RPC_DELAY_MS: 200,
@@ -460,7 +464,8 @@ a{color:var(--accent);text-decoration:none}
     COHORT_LONG: 90,
     COHORT_MEDIUM: 30,
     DORMANCY_DAYS: 90,
-    MAX_BATCH_RETRIES: 10
+    MAX_BATCH_RETRIES: 10,
+    SNAPSHOT_CHUNK: 2000  // chunk size for snapshot IndexedDB writes
   };
 
   var LOCKER_ABI = [
@@ -534,6 +539,9 @@ a{color:var(--accent);text-decoration:none}
       m.indexOf('429') >= 0 || m.indexOf('over rate') >= 0 || m.indexOf('capacity') >= 0;
   }
 
+  // ────────────────────────────
+  //  IndexedDB wrapper (optimized)
+  // ────────────────────────────
   function DB() { this.db = null; this._opening = null; }
   DB.prototype.open = function () {
     var self = this;
@@ -577,18 +585,57 @@ a{color:var(--accent);text-decoration:none}
       });
     });
   };
+
+  // ---- optimized add: routes small batches to one-shot, large batches to chunked ----
   DB.prototype.add = function (items) {
     if (!items || !items.length) return Promise.resolve(0);
-    return this.open().then(function (db) {
-      return new Promise(function (resolve, reject) {
-        var tx = db.transaction('txs', 'readwrite');
-        var store = tx.objectStore('txs');
-        for (var i = 0; i < items.length; i++) store.put(items[i]);
-        tx.oncomplete = function () { resolve(items.length); };
-        tx.onerror = function () { reject(tx.error); };
+    // For RPC scan batches (< 4000 items) use fast single-transaction path
+    if (items.length <= 4000) {
+      return this.open().then(function (db) {
+        return new Promise(function (resolve, reject) {
+          var tx = db.transaction('txs', 'readwrite');
+          var store = tx.objectStore('txs');
+          for (var i = 0; i < items.length; i++) store.put(items[i]);
+          tx.oncomplete = function () { resolve(items.length); };
+          tx.onerror = function () { reject(tx.error); };
+        });
       });
-    });
+    }
+    // Large snapshot → chunked writes
+    return this.addChunked(items, C.SNAPSHOT_CHUNK);
   };
+
+  // ---- CHUNKED INSERT – the key optimization ----
+  DB.prototype.addChunked = function (items, chunkSize, onProgress) {
+    if (!items || !items.length) return Promise.resolve(0);
+    chunkSize = chunkSize || C.SNAPSHOT_CHUNK;
+    var self = this;
+    var total = items.length;
+    var inserted = 0;
+
+    function insertChunk(offset) {
+      if (offset >= total) return Promise.resolve(0);
+      var chunk = items.slice(offset, offset + chunkSize);
+      return self.open().then(function (db) {
+        return new Promise(function (resolve, reject) {
+          var tx = db.transaction('txs', 'readwrite');
+          var store = tx.objectStore('txs');
+          for (var i = 0; i < chunk.length; i++) store.put(chunk[i]);
+          tx.oncomplete = function () { resolve(chunk.length); };
+          tx.onerror = function () { reject(tx.error); };
+        });
+      }).then(function (n) {
+        inserted += n;
+        if (onProgress) onProgress(inserted, total);
+        // Yield to event loop between chunks – lets GC breathe & progress bar update
+        return new Promise(function (r) { setTimeout(r, 8); })
+          .then(function () { return insertChunk(offset + chunkSize); });
+      });
+    }
+
+    return insertChunk(0).then(function () { return inserted; });
+  };
+
   DB.prototype.meta = function (key) {
     return this.open().then(function (db) {
       return new Promise(function (resolve, reject) {
@@ -962,45 +1009,72 @@ a{color:var(--accent);text-decoration:none}
     return true;
   }
 
+  // ────────────────────────────────────────
+  //  OPTIMIZED snapshot loader (chunked IDB)
+  // ────────────────────────────────────────
   async function loadSnapshotIfEmpty() {
     var c = await db.count();
     if (c === 0) {
-      document.getElementById('syncStatus').textContent = 'Loading data.json snapshot...';
+      var statusEl = document.getElementById('syncStatus');
+      statusEl.textContent = 'Loading data.json snapshot...';
+      setProgress(2, 'Downloading snapshot...', 'fast');
       try {
         var res = await fetch('./data.json?t=' + Date.now());
         if (res.ok) {
+          setProgress(25, 'Reading snapshot data...', 'fast');
           var d = await res.json();
+
           var txList = Array.isArray(d) ? d : (d && d.transactions ? d.transactions : null);
           if (txList && txList.length) {
-            var maxBlock = 0;
-            var maxTime = 0;
-            var norm = txList.map(function (tx, i) {
-              var o = Object.assign({}, tx);
-              o.id = tx.id || ((tx.hash || 'x') + '-' + (tx.logIndex != null ? tx.logIndex : i));
+            setProgress(35, 'Normalizing ' + txList.length.toLocaleString() + ' records...', 'fast');
+
+            // Extract metadata BEFORE we mutate/invalidate `d`
+            var snapMeta = d && d.metadata ? d.metadata : null;
+            var snapLastBlock = snapMeta && snapMeta.lastBlock != null ? Number(snapMeta.lastBlock) : 0;
+            var snapLastSync = snapMeta && snapMeta.lastSync != null ? Number(snapMeta.lastSync) : 0;
+
+            var maxBlock = 0, maxTime = 0;
+
+            // Normalize in-place (no Object.assign – saves memory & time)
+            for (var i = 0; i < txList.length; i++) {
+              var o = txList[i];
+              o.id = o.id || ((o.hash || 'x') + '-' + (o.logIndex != null ? o.logIndex : i));
               if (o.valueTig == null && o.value != null) o.valueTig = valueToTig(o.value);
               if (o.type === 'stake') o.type = 'lock';
               if (o.type === 'unstake') o.type = 'withdraw';
               if (o.type === 'unlock' && !o.withdrawableTime) o.withdrawableTime = (o.timestamp || 0) + pendingPeriodSec;
               o.blacklisted = isBlacklisted(o.address) ? 1 : 0;
-              
+
               var bn = Number(o.blockNumber) || 0;
               if (bn > maxBlock) maxBlock = bn;
               var ts = Number(o.timestamp) || 0;
               if (ts > maxTime) maxTime = ts;
+            }
 
-              return o;
+            setProgress(42, 'Writing to IndexedDB (chunked)...', 'fast');
+
+            // ── KEY: chunked write with live progress ──
+            var totalCount = txList.length;
+            await db.addChunked(txList, C.SNAPSHOT_CHUNK, function (done, total) {
+              var pct = 42 + (done / total) * 50; // 42% → 92%
+              setProgress(pct, 'Importing snapshot ' + done.toLocaleString() + ' / ' + total.toLocaleString() + ' records', 'fast');
             });
-            
-            await db.add(norm);
 
-            // Wyliczamy lub pobieramy ostatni blok ze snapshota
-            var lastBlock = (d.metadata && d.metadata.lastBlock != null) ? Number(d.metadata.lastBlock) : maxBlock;
-            var lastSync = (d.metadata && d.metadata.lastSync != null) ? Number(d.metadata.lastSync) : (maxTime ? maxTime * 1000 : Date.now());
+            // Free memory
+            d = null;
+            txList = null;
+
+            setProgress(94, 'Saving metadata...', 'fast');
+
+            // Determine final block & sync time
+            var lastBlock = snapLastBlock > 0 ? snapLastBlock : maxBlock;
+            var lastSync = snapLastSync > 0 ? snapLastSync : (maxTime ? maxTime * 1000 : Date.now());
 
             if (lastBlock > 0) await db.setMeta('lastBlock', lastBlock);
             if (lastSync > 0) await db.setMeta('lastSync', lastSync);
 
-            console.log('Snapshot loaded:', norm.length, 'transactions. Last block set to:', lastBlock);
+            setProgress(100, 'Snapshot ready: ' + totalCount.toLocaleString() + ' transactions', 'fast');
+            console.log('Snapshot loaded:', totalCount, 'transactions. Last block set to:', lastBlock);
           }
         }
       } catch (e) {
@@ -1019,7 +1093,7 @@ a{color:var(--accent);text-decoration:none}
       await db.open();
       await loadSnapshotIfEmpty();
       buildIface();
-      
+
       var c0 = await db.count();
       if (c0 > 0) {
         setAppVisibility(true);
@@ -1679,7 +1753,7 @@ a{color:var(--accent);text-decoration:none}
     if (countdownTimer) clearInterval(countdownTimer);
     countdownTimer = setInterval(tick, 1000);
   }
-  
+
   function computeWalletHistory(addr, sortedTxs) {
     if (!addr || !sortedTxs) return null;
     var target = addr.toLowerCase();
@@ -1785,7 +1859,7 @@ a{color:var(--accent);text-decoration:none}
     if (main) main.classList.remove('hidden');
 
     document.getElementById('inspActive').textContent = fmt(res.curStaked) + ' TIG';
-    
+
     var curHolders = data.holders.slice().sort(function(a,b){ return b.balance - a.balance; });
     var curRankIdx = curHolders.findIndex(function(x){ return x.address.toLowerCase() === addr.toLowerCase(); });
     var curRankText = curRankIdx >= 0 ? 'Current Rank: #' + (curRankIdx + 1) : 'Ex-Holder (0 active)';
@@ -1856,26 +1930,27 @@ a{color:var(--accent);text-decoration:none}
     var data = uiState.lastUiData;
     var container = document.getElementById('inspQuickChips');
     if (!data || !container) return;
-    
-    var addrMap = new Map();
-    data.sorted.forEach(function(tx){
-      var a = tx.address.toLowerCase();
-      var v = Number(tx.valueTig) || 0;
-      var t = normalizeType(tx.type);
-      if (!addrMap.has(a)) addrMap.set(a, { withdrawn: 0, unlock: 0, addr: tx.address });
-      var obj = addrMap.get(a);
-      if (t === 'withdraw') obj.withdrawn += v;
-      if (t === 'unlock') obj.unlock += v;
-    });
 
-    var activeAddrs = new Set(data.holders.map(function(h){ return h.address.toLowerCase(); }));
+    var addrMap = new Map();
+    for (var i = 0; i < data.sorted.length; i++) {
+      var tx = data.sorted[i];
+      var a = String(tx.address).toLowerCase();
+      if (isBlacklisted(a)) continue;
+      var t = normalizeType(tx.type);
+      var v = Number(tx.valueTig) || 0;
+      var entry = addrMap.get(a) || { addr: a, locked: 0, withdrawn: 0, lastSeen: 0 };
+      if (t === 'lock' || t === 'claim' || t === 'relock') entry.locked += v;
+      else if (t === 'unlock') entry.locked = Math.max(0, entry.locked - v);
+      else if (t === 'withdraw') entry.withdrawn += v;
+      entry.lastSeen = Math.max(entry.lastSeen, tx.timestamp);
+      addrMap.set(a, entry);
+    }
+
     var exWhales = [];
-    addrMap.forEach(function(obj, a){
-      if (!activeAddrs.has(a) && obj.withdrawn > 1000) {
-        exWhales.push(obj);
-      }
+    addrMap.forEach(function (e) {
+      if (e.locked < 1 && e.withdrawn > 5000) exWhales.push(e);
     });
-    exWhales.sort(function(a,b){ return b.withdrawn - a.withdrawn; });
+    exWhales.sort(function (a, b) { return b.withdrawn - a.withdrawn; });
 
     var html = '<span style="font-size:11px;color:var(--text2);align-self:center;margin-right:4px">Top Ex-Holders:</span>';
     exWhales.slice(0, 5).forEach(function(w){
