@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TIG Staking Dashboard</title>
-<script type="text/javascript" nonce="66c6e41131824bb09c37179cdb5" src="//local.adguard.org?ts=1784775382790&amp;type=content-script&amp;dmn=contribution.usercontent.google.com&amp;url=https%3A%2F%2Fcontribution.usercontent.google.com%2Fdownload%3Fc%3DCgxiYXJkX3N0b3JhZ2USUBINcmVzcG9uc2VfZGF0YRo_CjAwYzc1NDYwM2U3YzI0MTVlMDAwNjU3M2ZlYzE3ZmRlMTA3ZmRhMTRhNDgwMjMwYzISCxIHELfVm4aZHxgB%26filename%3Dtig_staking_dashboard.html%26opi%3D103135050&amp;app=chrome.exe&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1"></script><script type="text/javascript" nonce="66c6e41131824bb09c37179cdb5" src="//local.adguard.org?ts=1784775382790&amp;name=AdGuard%20Extra&amp;type=user-script"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script type="text/javascript" nonce="66c6e41131824bb09c37179cdb5" src="//local.adguard.org?ts=1784775382790&amp;type=content-script&amp;dmn=contribution.usercontent.google.com&amp;url=https%3A%2F%2Fcontribution.usercontent.google.com%2Fdownload%3Fc%3DCgxiYXJkX3N0b3JhZ2USUBINcmVzcG9uc2VfZGF0YRo_CjAwYzc1NDYwM2U3YzI0MTVlMDAwNjU3M2ZlYzE3ZmRlMTA3ZmRlMTA3ZmRhMTRhNDgwMjMwYzISCxIHELfVm4aZHxgB%26filename%3Dtig_staking_dashboard.html%26opi%3D103135050&amp;app=chrome.exe&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1"></script><script type="text/javascript" nonce="66c6e41131824bb09c37179cdb5" src="//local.adguard.org?ts=1784775382790&amp;name=AdGuard%20Extra&amp;type=user-script"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js"></script>
 <style>
 :root{--bg:#0b1020;--bg2:#12182b;--card:rgba(18,24,43,.92);--border:rgba(120,140,255,.12);--text:#e8eaf2;--text2:#9aa3b5;--accent:#6ea8fe;--green:#22c55e;--red:#ef4444;--yellow:#eab308;--purple:#a855f7;--ok:rgba(34,197,94,.12);--mid:rgba(234,179,8,.12);--bad:rgba(239,68,68,.12)}
@@ -14,29 +14,15 @@ body{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-s
 .container{max-width:1280px;margin:0 auto;padding:16px}
 header{position:sticky;top:0;z-index:50;background:rgba(11,16,32,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
 [data-theme="light"] header{background:rgba(255,255,255,.96)}
-.header-inner{max-width:1280px;margin:0 auto;padding:12px 16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.header-inner{max-width:1280px;margin:0 auto;padding:14px 16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
 .brand{min-width:0;flex:1}
-.brand h1{font-size:17px;font-weight:750;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.brand h1{font-size:18px;font-weight:750;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .brand .fresh{font-size:12px;font-weight:600;color:var(--text2)}
 .brand .fresh strong{color:var(--text);font-weight:700}
-.brand p{font-size:11px;color:var(--text2);margin-top:3px}
-.controls{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.btn{border:0;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:650;cursor:pointer;white-space:nowrap}
-.btn:disabled{opacity:.45;cursor:not-allowed}.btn:hover:not(:disabled){filter:brightness(1.08)}
-.btn-primary{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
-.btn-success{background:var(--green);color:#041}
-.btn-warning{background:rgba(234,179,8,.16);color:#f5d76e}
-.btn-info{background:rgba(110,168,254,.14);color:var(--accent)}
-.btn-ghost{background:rgba(255,255,255,.04);color:var(--text);border:1px solid var(--border)}
-.btn-danger{background:rgba(239,68,68,.12);color:#f87171}
+.brand p{font-size:12px;color:var(--text2);margin-top:4px;display:flex;align-items:center;gap:6px}
+.header-badges{display:flex;align-items:center;gap:8px}
+.badge-auto{font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;background:rgba(110,168,254,.1);color:var(--accent);border:1px solid rgba(110,168,254,.25)}
 .btn-xs{padding:6px 8px;font-size:11px}
-.menu-wrap{position:relative}
-.menu{display:none;position:absolute;right:0;top:calc(100% + 6px);min-width:200px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:6px;box-shadow:0 16px 40px rgba(0,0,0,.35);z-index:60}
-.menu.open{display:flex;flex-direction:column;gap:2px}
-.menu button{width:100%;text-align:left;justify-content:flex-start;background:transparent;border:0;color:var(--text);padding:10px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer}
-.menu button:hover{background:rgba(110,168,254,.1)}
-.menu .sep{height:1px;background:var(--border);margin:4px 0}
-.menu .danger{color:#f87171}
 .status{margin:0 0 12px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--card);display:flex;flex-wrap:wrap;gap:8px 14px;justify-content:space-between;font-size:11px;color:var(--text2)}
 .status strong{color:var(--text)}
 .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
@@ -173,23 +159,10 @@ a{color:var(--accent);text-decoration:none}
   <div class="header-inner">
     <div class="brand">
       <h1>TIG Staking <span class="fresh" id="freshLine">· No data yet</span><span class="live" id="liveBadge">LIVE</span></h1>
-      <p>Base · local scanner · <span id="syncModeBadge">Ready</span> · <span id="countdown"></span></p>
+      <p>Base Network · scanner <span id="syncModeBadge">Ready</span> · <span id="countdown"></span></p>
     </div>
-    <div class="controls">
-      <button type="button" class="btn btn-primary" id="fastBtn">Sync</button>
-      <button type="button" class="btn btn-warning" id="stopBtn" disabled>Stop</button>
-      <div class="menu-wrap">
-        <button type="button" class="btn btn-ghost" id="moreBtn" aria-label="More">⋯</button>
-        <div class="menu" id="moreMenu">
-          <button type="button" id="jsonBtn">Export JSON</button>
-          <button type="button" id="csvBtn">Export CSV</button>
-          <button type="button" id="importBtn">Import JSON</button>
-          <div class="sep"></div>
-          <button type="button" id="themeBtn">Toggle theme</button>
-          <div class="sep"></div>
-          <button type="button" class="danger" id="wipeBtn">Wipe database…</button>
-        </div>
-      </div>
+    <div class="header-badges">
+      <span class="badge-auto">🔄 Refresh: Co 5 min</span>
     </div>
   </div>
 </header>
@@ -207,9 +180,8 @@ a{color:var(--accent);text-decoration:none}
   <div class="progress" id="progressWrap"><div class="bar"><div class="fill" id="progressFill"></div></div><div class="ptext" id="progressText"></div></div>
 
   <div class="empty" id="emptyState">
-    <h2>No local data yet</h2>
-    <p>One full sync downloads TokenLocker history into this browser (~a few minutes on free RPC). After that, daily checks are a short Sync now.</p>
-    <button type="button" class="btn btn-primary" id="emptyFullBtn">Start sync</button>
+    <h2>Connecting to Base Network...</h2>
+    <p>Downloading TokenLocker history into browser cache...</p>
   </div>
 
   <div id="appMain" class="hidden">
@@ -455,7 +427,6 @@ a{color:var(--accent);text-decoration:none}
   <p style="margin-top:12px"><a id="drawerLink" target="_blank" rel="noopener">Open on Basescan</a></p>
 </aside>
 
-<input type="file" id="fileInput" accept=".json">
 <!-- hidden compat for any external hooks -->
 <button type="button" id="toggleDetails" class="hidden" tabindex="-1" aria-hidden="true"></button>
 <div id="detailsPanel" class="hidden"></div>
@@ -483,7 +454,7 @@ a{color:var(--accent);text-decoration:none}
     BATCH: 3000,
     BATCH_MIN: 400,
     BATCH_MAX: 4000,
-    INTERVAL: 1 * 60 * 1000,
+    INTERVAL: 5 * 60 * 1000, // 5 minutowy interval odświeżania
     PENDING_PERIOD_FALLBACK_DAYS: 28,
     BLOCK_CONCURRENCY: 4,
     RPC_DELAY_MS: 200,
@@ -717,15 +688,6 @@ a{color:var(--accent);text-decoration:none}
     if (on) el.classList.add('on'); else el.classList.remove('on');
   }
   function setDot(cls) { document.getElementById('statusDot').className = 'dot ' + cls; }
-  function revokeLater(url) { setTimeout(function () { try { URL.revokeObjectURL(url); } catch (e) {} }, 5000); }
-  function updateButtons(busy) {
-    var fastBtn = document.getElementById('fastBtn');
-    if (fastBtn) fastBtn.disabled = busy;
-    var emptyFull = document.getElementById('emptyFullBtn');
-    if (emptyFull) emptyFull.disabled = busy;
-    var stopBtn = document.getElementById('stopBtn');
-    if (stopBtn) stopBtn.disabled = !busy;
-  }
   function setProgress(pct, text, mode) {
     document.getElementById('progressWrap').style.display = 'block';
     var fill = document.getElementById('progressFill');
@@ -1008,8 +970,8 @@ a{color:var(--accent);text-decoration:none}
 
   async function runSync(mode) {
     if (syncing) return;
-    if (typeof ethers === 'undefined') { alert('ethers.js failed to load'); return; }
-    syncing = true; stopReq = false; updateButtons(true); setLive(true);
+    if (typeof ethers === 'undefined') { return; }
+    syncing = true; stopReq = false; setLive(true);
     setProgress(0, 'Connecting…', mode);
     document.getElementById('syncStatus').textContent = mode === 'fast' ? 'Fast sync…' : 'Full sync…';
     try {
@@ -1049,15 +1011,13 @@ a{color:var(--accent);text-decoration:none}
       setDot('dot-red');
       document.getElementById('syncModeBadge').textContent = 'Error';
     } finally {
-      syncing = false; updateButtons(false); setLive(false);
+      syncing = false; setLive(false);
       document.getElementById('appMain').classList.remove('skeleton');
       setTimeout(function () { document.getElementById('progressWrap').style.display = 'none'; }, 900);
       invalidateCache();
     }
   }
   function fastSync() { return runSync('fast'); }
-  function fullSync() { return runSync('full'); }
-  function stopSync() { stopReq = true; document.getElementById('syncStatus').textContent = 'Stopping…'; }
 
   function consumePending(pendingMap, addr, amount) {
     var q = pendingMap.get(addr);
@@ -1658,95 +1618,18 @@ a{color:var(--accent);text-decoration:none}
     }, 250);
   }
 
-  async function exportJSON() {
-    var txs = await db.all();
-    if (!txs.length) return alert('No data');
-    var payload = { version: 4, engine: 'TokenLocker-getLogs', exported: new Date().toISOString(),
-      config: { token: C.TIG, staking: C.STAKE, firstBlock: C.FIRST_BLOCK, blacklist: C.BLACKLIST, pendingPeriodSec: pendingPeriodSec },
-      metadata: { lastBlock: await db.meta('lastBlock'), lastSync: await db.meta('lastSync'), total: txs.length }, transactions: txs };
-    var url = URL.createObjectURL(new Blob([JSON.stringify(payload)], { type: 'application/json' }));
-    var a = document.createElement('a'); a.href = url; a.download = 'tig-v14.json'; a.click(); revokeLater(url);
-  }
-  async function exportCSV() {
-    var txs = await db.all();
-    if (!txs.length) return alert('No data');
-    var rows = txs.map(function (tx) {
-      return [tx.id || '', tx.hash, tx.timestamp, tx.blockNumber, tx.type, tx.address, tx.valueTig != null ? tx.valueTig : valueToTig(tx.value), tx.withdrawableTime || '', isBlacklisted(tx.address) ? 1 : 0].join(',');
-    });
-    var url = URL.createObjectURL(new Blob([['id,hash,timestamp,block,type,address,value_tig,withdrawableTime,blacklisted'].concat(rows).join('\n')], { type: 'text/csv' }));
-    var a = document.createElement('a'); a.href = url; a.download = 'tig-v14.csv'; a.click(); revokeLater(url);
-  }
-  function importData() { document.getElementById('fileInput').click(); }
-  async function handleImport(ev) {
-    var f = ev.target.files && ev.target.files[0];
-    if (!f) return;
-    if (!confirm('Replace ALL TIGv14 data?')) { ev.target.value = ''; return; }
-    try {
-      var d = JSON.parse(await f.text());
-      if (!d.transactions) throw new Error('Invalid file');
-      await db.clear();
-      var norm = d.transactions.map(function (tx, i) {
-        var o = Object.assign({}, tx);
-        o.id = tx.id || ((tx.hash || 'x') + '-' + (tx.logIndex != null ? tx.logIndex : i));
-        if (o.valueTig == null && o.value != null) o.valueTig = valueToTig(o.value);
-        if (o.type === 'stake') o.type = 'lock';
-        if (o.type === 'unstake') o.type = 'withdraw';
-        if (o.type === 'unlock' && !o.withdrawableTime) o.withdrawableTime = (o.timestamp || 0) + pendingPeriodSec;
-        o.blacklisted = isBlacklisted(o.address) ? 1 : 0;
-        return o;
-      });
-      document.getElementById('progressWrap').style.display = 'block';
-      
-      // OPTIMIZED FAST BULK IMPORT:
-      setProgress(50, 'Saving ' + norm.length + ' transactions to database...', 'fast');
-      await sleep(20);
-      
-      // Batch all items in ONE single IndexedDB transaction
-      await db.add(norm);
-      
-      if (d.metadata) {
-        if (d.metadata.lastBlock != null) await db.setMeta('lastBlock', d.metadata.lastBlock);
-        if (d.metadata.lastSync != null) await db.setMeta('lastSync', d.metadata.lastSync);
-      }
-      setProgress(100, 'Import Complete', 'fast');
-      document.getElementById('progressWrap').style.display = 'none';
-      invalidateCache(); await refreshAll({ skipCharts: false });
-      alert('Imported ' + (await db.count()).toLocaleString() + ' transactions instantly!');
-    } catch (e) { alert('Import error: ' + (e.message || e)); }
-    ev.target.value = '';
-  }
-  function toggleTheme() {
-    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    try { localStorage.setItem('tig-theme', next); } catch (e) {}
-  }
-  async function wipeDatabase() {
-    var typed = prompt('Type DELETE to wipe local TIGv14 database');
-    if (typed !== 'DELETE') return;
-    stopReq = true;
-    try {
-      db.close();
-      var ok = await new Promise(function (resolve) {
-        var req = indexedDB.deleteDatabase(C.DB_NAME), done = false;
-        function fin(v) { if (!done) { done = true; resolve(v); } }
-        req.onsuccess = function () { fin(true); };
-        req.onerror = function () { fin(false); };
-        req.onblocked = function () { alert('Close other tabs, then retry Wipe'); };
-        setTimeout(function () { fin(false); }, 8000);
-      });
-      if (ok) location.reload(); else alert('Wipe incomplete');
-    } catch (e) { alert(e.message || e); }
-  }
   function updateCountdown() {
     async function tick() {
-      if (syncing) { document.getElementById('countdown').textContent = 'syncing'; return; }
+      if (syncing) { document.getElementById('countdown').textContent = 'syncing...'; return; }
       try {
         var ls = await db.meta('lastSync');
         if (!ls) { document.getElementById('countdown').textContent = ''; return; }
         updateFreshLine(ls, false);
         var diff = Number(ls) + C.INTERVAL - Date.now();
         if (diff <= 0) { document.getElementById('countdown').textContent = 'auto-sync due'; return; }
-        document.getElementById('countdown').textContent = Math.floor(diff / 60000) + 'm to auto-sync';
+        var m = Math.floor(diff / 60000);
+        var s = Math.floor((diff % 60000) / 1000);
+        document.getElementById('countdown').textContent = 'za ' + m + 'm ' + (s < 10 ? '0' : '') + s + 's';
       } catch (e) {}
     }
     tick();
@@ -1763,7 +1646,6 @@ a{color:var(--accent);text-decoration:none}
     var curStaked = 0, curPending = 0, totalWithdrawn = 0, peakBal = 0, peakTime = userTxs[0].timestamp;
     var timeline = [];
 
-    // Reconstruct user balance over time
     userTxs.forEach(function (tx) {
       var v = Number(tx.valueTig) || 0;
       var t = normalizeType(tx.type);
@@ -1784,7 +1666,6 @@ a{color:var(--accent);text-decoration:none}
       timeline.push({ ts: tx.timestamp, staked: curStaked, type: t, value: v, tx: tx });
     });
 
-    // Compute peak rank by re-simulating all holders up to peakTime
     var holderBalsAtPeak = new Map();
     for (var i = 0; i < sortedTxs.length; i++) {
       var tx = sortedTxs[i];
@@ -1806,7 +1687,6 @@ a{color:var(--accent);text-decoration:none}
     var peakRankIdx = sortedPeakHolders.findIndex(function (x) { return x.addr === target; });
     var peakRank = peakRankIdx >= 0 ? '#' + (peakRankIdx + 1) + ' of ' + sortedPeakHolders.length : 'N/A';
 
-    // Calculate rank at each timeline event
     var runBals = new Map();
     var txIdx = 0;
     timeline.forEach(function(pt) {
@@ -1863,7 +1743,6 @@ a{color:var(--accent);text-decoration:none}
 
     document.getElementById('inspActive').textContent = fmt(res.curStaked) + ' TIG';
     
-    // Current Rank
     var curHolders = data.holders.slice().sort(function(a,b){ return b.balance - a.balance; });
     var curRankIdx = curHolders.findIndex(function(x){ return x.address.toLowerCase() === addr.toLowerCase(); });
     var curRankText = curRankIdx >= 0 ? 'Current Rank: #' + (curRankIdx + 1) : 'Ex-Holder (0 active)';
@@ -1879,7 +1758,6 @@ a{color:var(--accent);text-decoration:none}
     document.getElementById('inspLifetime').textContent = lifetimeDays + ' days';
     document.getElementById('inspTxCount').textContent = res.userTxs.length + ' transactions';
 
-    // Chart
     var showRank = document.getElementById('inspToggleRank') ? document.getElementById('inspToggleRank').checked : false;
     var chartLabels = res.timeline.map(function(pt){ return chartDate(pt.ts); });
     var chartData = res.timeline.map(function(pt){ return pt.staked; });
@@ -1915,7 +1793,7 @@ a{color:var(--accent);text-decoration:none}
       customScales.yRank = {
         type: 'linear',
         position: 'right',
-        reverse: true, // Rank #1 at top!
+        reverse: true,
         ticks: { color: '#eab308', stepSize: 1, callback: function(v){ return '#' + v; } },
         grid: { display: false }
       };
@@ -1923,7 +1801,6 @@ a{color:var(--accent);text-decoration:none}
 
     makeChart('chartInspector', 'line', chartLabels, datasets, customScales);
 
-    // Table
     document.getElementById('inspBadge').textContent = String(res.userTxs.length);
     document.getElementById('inspTableBody').innerHTML = res.userTxs.slice().reverse().map(function(tx){
       var t = normalizeType(tx.type);
@@ -1937,7 +1814,6 @@ a{color:var(--accent);text-decoration:none}
     var container = document.getElementById('inspQuickChips');
     if (!data || !container) return;
     
-    // Find top wallets that withdrawn high amount or had large peak but 0 active
     var addrMap = new Map();
     data.sorted.forEach(function(tx){
       var a = tx.address.toLowerCase();
@@ -1974,24 +1850,8 @@ a{color:var(--accent);text-decoration:none}
   }
 
   function bindUI() {
-    document.getElementById('fastBtn').onclick = function () { closeMenu(); fastSync(); };
-    if (document.getElementById('emptyFullBtn')) document.getElementById('emptyFullBtn').onclick = function () { fastSync(); };
-    document.getElementById('stopBtn').onclick = function () { stopSync(); };
-    if (document.getElementById('jsonBtn')) document.getElementById('jsonBtn').onclick = function () { closeMenu(); exportJSON(); };
-    document.getElementById('csvBtn').onclick = function () { closeMenu(); exportCSV(); };
-    document.getElementById('importBtn').onclick = function () { closeMenu(); importData(); };
-    document.getElementById('themeBtn').onclick = function () { closeMenu(); toggleTheme(); };
-    document.getElementById('wipeBtn').onclick = function () { closeMenu(); wipeDatabase(); };
     document.getElementById('searchBtn').onclick = function () { searchHolder(); };
     document.getElementById('searchInput').oninput = function () { searchHolder(); };
-    document.getElementById('fileInput').onchange = function (e) { handleImport(e); };
-    document.getElementById('moreBtn').onclick = function (e) {
-      e.stopPropagation();
-      document.getElementById('moreMenu').classList.toggle('open');
-    };
-    function closeMenu() { document.getElementById('moreMenu').classList.remove('open'); }
-    document.addEventListener('click', function () { closeMenu(); });
-    document.getElementById('moreMenu').onclick = function (e) { e.stopPropagation(); };
 
     Array.prototype.forEach.call(document.querySelectorAll('.tab-btn'), function (btn) {
       btn.onclick = function () {
@@ -2041,6 +1901,7 @@ a{color:var(--accent);text-decoration:none}
       };
     }
   }
+
   async function init() {
     bindUI();
     try { document.documentElement.setAttribute('data-theme', localStorage.getItem('tig-theme') || 'dark'); } catch (e) {}
@@ -2062,7 +1923,6 @@ a{color:var(--accent);text-decoration:none}
         setAppVisibility(true);
         await refreshAll({ skipCharts: false });
       }
-      // Immediately start sync on page launch to catch up missing blocks
       fastSync();
     } catch (err) {
       console.error(err);
@@ -2078,7 +1938,7 @@ a{color:var(--accent);text-decoration:none}
     }, 10000);
     updateCountdown();
   }
-  window.fastSync = fastSync; window.fullSync = fullSync; window.stopSync = stopSync;
+  window.fastSync = fastSync;
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();
