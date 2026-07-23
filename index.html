@@ -7,8 +7,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js"></script>
 <style>
-:root{--bg:#0b1020;--bg2:#12182b;--card:rgba(18,24,43,.92);--border:rgba(120,140,255,.12);--text:#e8eaf2;--text2:#9aa3b5;--accent:#6ea8fe;--green:#22c55e;--red:#ef4444;--yellow:#eab308;--purple:#a855f7;--ok:rgba(34,197,94,.12);--mid:rgba(234,179,8,.12);--bad:rgba(239,68,68,.12)}
-[data-theme="light"]{--bg:#f3f5f9;--bg2:#fff;--card:#fff;--border:rgba(0,0,0,.08);--text:#141820;--text2:#667085;--accent:#2563eb;--ok:rgba(34,197,94,.1);--mid:rgba(234,179,8,.1);--bad:rgba(239,68,68,.08)}
+:root{--bg:#0b1020;--bg2:#12182b;--card:rgba(18,24,43,.92);--border:rgba(120,140,255,.12);--text:#e8eaf2;--text2:#aab2c8;--accent:#6ea8fe;--green:#22c55e;--red:#ef4444;--yellow:#eab308;--purple:#a855f7;--ok:rgba(34,197,94,.12);--mid:rgba(234,179,8,.12);--bad:rgba(239,68,68,.12)}
+[data-theme="light"]{--bg:#f3f5f9;--bg2:#fff;--card:#fff;--border:rgba(0,0,0,.08);--text:#141820;--text2:#525b6e;--accent:#2563eb;--ok:rgba(34,197,94,.1);--mid:rgba(234,179,8,.1);--bad:rgba(239,68,68,.08)}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.45}
 .container{max-width:1280px;margin:0 auto;padding:16px}
@@ -43,14 +43,16 @@ header{position:sticky;top:0;z-index:50;background:rgba(11,16,32,.92);backdrop-f
 .health-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}
 @media(max-width:900px){.health-metrics{grid-template-columns:repeat(2,1fr)}}
 .hmet{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:10px}
-.hmet .k{font-size:10px;text-transform:uppercase;letter-spacing:.3px;color:var(--text2)}
+.hmet .k{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text2)}
 .hmet .v{font-size:18px;font-weight:750;margin-top:4px}
+.hmet .sub{font-size:12px!important;font-weight:600!important;color:var(--text2)!important;margin-top:4px!important;opacity:.9}
 .partial-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(234,179,8,.16);color:#facc15;border:1px solid rgba(234,179,8,.28)}
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
 @media(max-width:900px){.kpi-grid{display:flex;overflow-x:auto;gap:10px;padding-bottom:4px;scroll-snap-type:x mandatory}.kpi-grid .kpi{min-width:68vw;scroll-snap-align:start;flex:0 0 auto}}
 .kpi{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px}
 .kpi .label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.35px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.kpi .value{font-size:24px;font-weight:760;margin-top:6px}.kpi .sub{font-size:11px;color:var(--text2);margin-top:4px}
+.kpi .value{font-size:24px;font-weight:760;margin-top:6px}
+.kpi .sub{font-size:12px;font-weight:600;color:var(--text2);margin-top:5px}
 .kpi.spi{border-width:2px}
 .kpi.spi.bullish{border-color:rgba(34,197,94,.45)}.kpi.spi.neutral{border-color:rgba(234,179,8,.45)}.kpi.spi.bearish{border-color:rgba(239,68,68,.4)}
 .gauge{height:7px;border-radius:99px;background:rgba(255,255,255,.06);margin-top:10px;overflow:hidden}.gauge>i{display:block;height:100%;width:0}
@@ -72,7 +74,7 @@ header{position:sticky;top:0;z-index:50;background:rgba(11,16,32,.92);backdrop-f
 .funnel .card{padding:12px}
 .funnel .k{font-size:11px;color:var(--text2);text-transform:uppercase}
 .funnel .v{font-size:22px;font-weight:760;margin-top:4px}
-.funnel .s{font-size:11px;color:var(--text2);margin-top:4px}
+.funnel .s{font-size:12px;font-weight:600;color:var(--text2);margin-top:6px}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 10px;padding:4px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px}
 .tab-btn{border:0;background:transparent;color:var(--text2);padding:8px 12px;border-radius:99px;font-size:12px;font-weight:700;cursor:pointer}
 .tab-btn.active{background:rgba(110,168,254,.14);color:var(--text)}
@@ -149,7 +151,7 @@ a{color:var(--accent);text-decoration:none}
 .inspector-card{background:rgba(168,85,247,.05);border:1px solid rgba(168,85,247,.2);border-radius:12px;padding:12px}
 .inspector-card .k{font-size:10px;text-transform:uppercase;color:var(--text2);letter-spacing:.3px}
 .inspector-card .v{font-size:20px;font-weight:750;margin-top:4px}
-.inspector-card .s{font-size:11px;color:var(--text2);margin-top:2px}
+.inspector-card .s{font-size:12px;font-weight:600;color:var(--text2);margin-top:4px}
 
 .btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text);background:rgba(255,255,255,.04)}
 .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -200,15 +202,15 @@ a{color:var(--accent);text-decoration:none}
         <div class="kpi spi neutral" id="spiCard" style="min-width:130px;max-width:180px;padding:8px 12px;margin:0">
           <div class="label" style="font-size:10px">Pressure (0–100) <span class="tip" tabindex="0" data-tip="0–100 from unlock ratio, trend, dormancy, upcoming, whales. Higher = more exit pressure.">?</span></div>
           <div class="value" id="spiValue" style="font-size:20px;margin-top:2px">-</div>
-          <div class="sub" id="spiLabel" style="font-size:10px;margin-top:2px">-</div>
+          <div class="sub" id="spiLabel" style="font-size:11px;margin-top:2px">-</div>
           <div class="gauge" id="spiGauge" style="height:5px;margin-top:6px"><i id="spiFill"></i></div>
         </div>
       </div>
       <div class="health-metrics">
-        <div class="hmet"><div class="k">Net Staking 7d <span class="tip" tabindex="0" data-tip="Net change in locked TIG over last 7 days (Locks + Claims + Relocks − Unlocks).">?</span></div><div class="v" id="net7d">-</div><div class="sub" id="net7dSub" style="font-size:11px;color:var(--text2);margin-top:2px">+lock − unlock</div></div>
-        <div class="hmet"><div class="k">Can Leave in 7d <span class="tip" tabindex="0" data-tip="TIG ending their 28-day cooldown within the next 7 days that will become withdrawable.">?</span></div><div class="v c-yellow" id="unlock7d">-</div><div class="sub" id="unlock7dSub" style="font-size:11px;color:var(--text2);margin-top:2px">pending</div></div>
-        <div class="hmet"><div class="k">Active Locked <span class="tip" tabindex="0" data-tip="Total TIG actively staked and locked in the contract (earning rewards, not in unlock process).">?</span></div><div class="v" id="lockedKpi">-</div><div class="sub" id="lockedSub" style="font-size:11px;color:var(--text2);margin-top:2px">TIG actively earning</div></div>
-        <div class="hmet"><div class="k">Active Holders <span class="tip" tabindex="0" data-tip="Number of unique wallet addresses currently holding active locked TIG.">?</span></div><div class="v" id="holdersKpi">-</div><div class="sub" id="holdersSub" style="font-size:11px;color:var(--text2);margin-top:2px">active</div></div>
+        <div class="hmet"><div class="k">Net Staking 7d <span class="tip" tabindex="0" data-tip="Net change in locked TIG over last 7 days (Locks + Claims + Relocks − Unlocks).">?</span></div><div class="v" id="net7d">-</div><div class="sub" id="net7dSub">+lock − unlock</div></div>
+        <div class="hmet"><div class="k">Can Leave in 7d <span class="tip" tabindex="0" data-tip="TIG ending their 28-day cooldown within the next 7 days that will become withdrawable.">?</span></div><div class="v c-yellow" id="unlock7d">-</div><div class="sub" id="unlock7dSub">pending</div></div>
+        <div class="hmet"><div class="k">Active Locked <span class="tip" tabindex="0" data-tip="Total TIG actively staked and locked in the contract (earning rewards, not in unlock process).">?</span></div><div class="v" id="lockedKpi">-</div><div class="sub" id="lockedSub">TIG actively earning</div></div>
+        <div class="hmet"><div class="k">Active Holders <span class="tip" tabindex="0" data-tip="Number of unique wallet addresses currently holding active locked TIG.">?</span></div><div class="v" id="holdersKpi">-</div><div class="sub" id="holdersSub">active</div></div>
       </div>
     </div>
 
