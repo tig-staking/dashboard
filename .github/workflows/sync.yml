@@ -2,15 +2,14 @@ name: Sync Blockchain Data
 
 on:
   schedule:
-    # Uruchamia się co 5 minut
     - cron: '*/5 * * * *'
-  workflow_dispatch: # Umożliwia też ręczne kliknięcie "Run"
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Przyznaje uprawnienia do zapisu plików
+      contents: write
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
