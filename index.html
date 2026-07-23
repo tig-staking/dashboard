@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TIG Staking Dashboard</title>
-<script type="text/javascript" nonce="66c6e41131824bb09c37179cdb5" src="//local.adguard.org?ts=1784775382790&amp;type=content-script&amp;dmn=contribution.usercontent.google.com&amp;url=https%3A%2F%2Fcontribution.usercontent.google.com%2Fdownload%3Fc%3DCgxiYXJkX3N0b3JhZ2USUBINcmVzcG9uc2VfZGF0YRo_CjAwYzc1NDYwM2U3YzI0MTVlMDAwNjU3M2ZlYzE3ZmRlMTA3ZmRlMTA3ZmRhMTRhNDgwMjMwYzISCxIHELfVm4aZHxgB%26filename%3Dtig_staking_dashboard.html%26opi%3D103135050&amp;app=chrome.exe&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1"></script><script type="text/javascript" nonce="66c6e41131824bb09c37179cdb5" src="//local.adguard.org?ts=1784775382790&amp;name=AdGuard%20Extra&amp;type=user-script"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script type="text/javascript" nonce="66c6e41131824bb09c37179cdb5" src="//local.adguard.org?ts=1784775382790&amp;type=content-script&amp;dmn=contribution.usercontent.google.com&amp;url=https%3A%2F%2Fcontribution.usercontent.google.com%2Fdownload%3Fc%3DCgxiYXJkX3N0b3JhZ2USUBINcmVzcG9uc2VfZGF0YRo_CjAwYzc1NDYwM2U3YzI0MTVlMDAwNjU3M2ZlYzE3ZmRlMTA3ZmRhMTRhNDgwMjMwYzISCxIHELfVm4aZHxgB%26filename%3Dtig_staking_dashboard.html%26opi%3D103135050&amp;app=chrome.exe&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1"></script><script type="text/javascript" nonce="66c6e41131824bb09c37179cdb5" src="//local.adguard.org?ts=1784775382790&amp;name=AdGuard%20Extra&amp;type=user-script"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js"></script>
 <style>
 :root{--bg:#0b1020;--bg2:#12182b;--card:rgba(18,24,43,.92);--border:rgba(120,140,255,.12);--text:#e8eaf2;--text2:#9aa3b5;--accent:#6ea8fe;--green:#22c55e;--red:#ef4444;--yellow:#eab308;--purple:#a855f7;--ok:rgba(34,197,94,.12);--mid:rgba(234,179,8,.12);--bad:rgba(239,68,68,.12)}
@@ -734,7 +734,7 @@ a{color:var(--accent);text-decoration:none}
 
   async function connectRPC(forceNext) {
     if (connectingRPC) {
-      for (var i = 0; i < 80 && connectingRPC; i++) await sleep(100);
+      for (var i = 0; i < 40 && connectingRPC; i++) await sleep(100);
       if (provider) return provider.getBlockNumber();
     }
     connectingRPC = true;
@@ -751,7 +751,7 @@ a{color:var(--accent);text-decoration:none}
           var p = new ethers.JsonRpcProvider(url, 8453, { staticNetwork: true });
           var bn = await Promise.race([
             p.getBlockNumber(),
-            new Promise(function (_, rej) { setTimeout(function () { rej(new Error('RPC timeout')); }, 8000); })
+            new Promise(function (_, rej) { setTimeout(function () { rej(new Error('RPC timeout')); }, 4000); })
           ]);
           rpcIndex = idx;
           provider = p;
@@ -761,7 +761,7 @@ a{color:var(--accent);text-decoration:none}
             var c = new ethers.Contract(C.STAKE, LOCKER_ABI, p);
             var pp = await Promise.race([
               c.pendingPeriod(),
-              new Promise(function (_, rej) { setTimeout(function () { rej(new Error('pp timeout')); }, 5000); })
+              new Promise(function (_, rej) { setTimeout(function () { rej(new Error('pp timeout')); }, 3000); })
             ]);
             var sec = Number(pp);
             if (isFinite(sec) && sec > 0) pendingPeriodSec = sec;
@@ -925,7 +925,7 @@ a{color:var(--accent);text-decoration:none}
         if (found > 0 && !hadDataPaint) {
           hadDataPaint = true;
           setAppVisibility(true);
-          document.getElementById('appMain').classList.add('skeleton');
+          document.getElementById('appMain').classList.remove('skeleton');
           await liveRefresh({ skipCharts: false });
         } else if (found > 0 && batchCount % C.REFRESH_EVERY_N === 0) {
           await liveRefresh({ skipCharts: batchCount % C.CHART_EVERY_N !== 0 });
@@ -965,13 +965,14 @@ a{color:var(--accent);text-decoration:none}
   async function loadSnapshotIfEmpty() {
     var c = await db.count();
     if (c === 0) {
-      document.getElementById('syncStatus').textContent = 'Loading snapshot data...';
+      document.getElementById('syncStatus').textContent = 'Loading data.json snapshot...';
       try {
-        var res = await fetch('./data.json');
+        var res = await fetch('./data.json?t=' + Date.now());
         if (res.ok) {
           var d = await res.json();
-          if (d && d.transactions && d.transactions.length) {
-            var norm = d.transactions.map(function (tx, i) {
+          var txList = Array.isArray(d) ? d : (d && d.transactions ? d.transactions : null);
+          if (txList && txList.length) {
+            var norm = txList.map(function (tx, i) {
               var o = Object.assign({}, tx);
               o.id = tx.id || ((tx.hash || 'x') + '-' + (tx.logIndex != null ? tx.logIndex : i));
               if (o.valueTig == null && o.value != null) o.valueTig = valueToTig(o.value);
@@ -986,11 +987,11 @@ a{color:var(--accent);text-decoration:none}
               if (d.metadata.lastBlock != null) await db.setMeta('lastBlock', d.metadata.lastBlock);
               if (d.metadata.lastSync != null) await db.setMeta('lastSync', d.metadata.lastSync);
             }
-            console.log('Snapshot loaded:', norm.length, 'transactions');
+            console.log('Snapshot loaded successfully:', norm.length, 'transactions');
           }
         }
       } catch (e) {
-        console.warn('Could not load data.json snapshot automatically:', e);
+        console.warn('Could not load data.json snapshot:', e);
       }
     }
   }
@@ -1005,6 +1006,13 @@ a{color:var(--accent);text-decoration:none}
       await db.open();
       await loadSnapshotIfEmpty();
       buildIface();
+      
+      var c0 = await db.count();
+      if (c0 > 0) {
+        setAppVisibility(true);
+        await refreshAll({ skipCharts: false });
+      }
+
       var cur = await connectRPC(false);
       chainHead = cur;
       var from = await getResumeFrom();
@@ -1017,7 +1025,6 @@ a{color:var(--accent);text-decoration:none}
         await refreshAll({ skipCharts: false });
         return;
       }
-      if ((await db.count()) > 0) await liveRefresh({ skipCharts: false });
       var ok = await scanBlocks(from, cur, mode);
       if (ok && !stopReq) {
         await db.setMeta('lastBlock', cur);
@@ -1035,9 +1042,9 @@ a{color:var(--accent);text-decoration:none}
       }
     } catch (err) {
       console.error(err);
-      document.getElementById('syncStatus').textContent = 'Error: ' + errText(err);
-      setDot('dot-red');
-      document.getElementById('syncModeBadge').textContent = 'Error';
+      document.getElementById('syncStatus').textContent = 'Live sync info: ' + errText(err);
+      setDot('dot-yellow');
+      document.getElementById('syncModeBadge').textContent = 'Snapshot Mode';
     } finally {
       syncing = false; setLive(false);
       document.getElementById('appMain').classList.remove('skeleton');
