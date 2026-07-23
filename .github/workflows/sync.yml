@@ -2,6 +2,7 @@ name: Sync Blockchain Data
 
 on:
   schedule:
+    
     - cron: '*/30 * * * *'
   workflow_dispatch:
 
@@ -30,4 +31,4 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add data.json
-          git diff --quiet && git diff --staged --quiet || (git commit -m "auto: aktualizacja bazy danych [skip ci]" && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "auto: aktualizacja bazy danych" && git push)
