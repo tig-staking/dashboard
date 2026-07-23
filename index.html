@@ -972,6 +972,8 @@ a{color:var(--accent);text-decoration:none}
           var d = await res.json();
           var txList = Array.isArray(d) ? d : (d && d.transactions ? d.transactions : null);
           if (txList && txList.length) {
+            var maxBlock = 0;
+            var maxTime = 0;
             var norm = txList.map(function (tx, i) {
               var o = Object.assign({}, tx);
               o.id = tx.id || ((tx.hash || 'x') + '-' + (tx.logIndex != null ? tx.logIndex : i));
@@ -980,14 +982,25 @@ a{color:var(--accent);text-decoration:none}
               if (o.type === 'unstake') o.type = 'withdraw';
               if (o.type === 'unlock' && !o.withdrawableTime) o.withdrawableTime = (o.timestamp || 0) + pendingPeriodSec;
               o.blacklisted = isBlacklisted(o.address) ? 1 : 0;
+              
+              var bn = Number(o.blockNumber) || 0;
+              if (bn > maxBlock) maxBlock = bn;
+              var ts = Number(o.timestamp) || 0;
+              if (ts > maxTime) maxTime = ts;
+
               return o;
             });
+            
             await db.add(norm);
-            if (d.metadata) {
-              if (d.metadata.lastBlock != null) await db.setMeta('lastBlock', d.metadata.lastBlock);
-              if (d.metadata.lastSync != null) await db.setMeta('lastSync', d.metadata.lastSync);
-            }
-            console.log('Snapshot loaded successfully:', norm.length, 'transactions');
+
+            // Wyliczamy lub pobieramy ostatni blok ze snapshota
+            var lastBlock = (d.metadata && d.metadata.lastBlock != null) ? Number(d.metadata.lastBlock) : maxBlock;
+            var lastSync = (d.metadata && d.metadata.lastSync != null) ? Number(d.metadata.lastSync) : (maxTime ? maxTime * 1000 : Date.now());
+
+            if (lastBlock > 0) await db.setMeta('lastBlock', lastBlock);
+            if (lastSync > 0) await db.setMeta('lastSync', lastSync);
+
+            console.log('Snapshot loaded:', norm.length, 'transactions. Last block set to:', lastBlock);
           }
         }
       } catch (e) {
