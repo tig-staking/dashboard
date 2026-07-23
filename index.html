@@ -48,22 +48,10 @@ header{position:sticky;top:0;z-index:50;background:rgba(11,16,32,.92);backdrop-f
 .hmet{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:10px}
 .hmet .k{font-size:10px;text-transform:uppercase;letter-spacing:.3px;color:var(--text2)}
 .hmet .v{font-size:18px;font-weight:750;margin-top:4px}
-.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
-@media(max-width:900px){.kpi-grid{display:flex;overflow-x:auto;gap:10px;padding-bottom:4px;scroll-snap-type:x mandatory}.kpi-grid .kpi{min-width:68vw;scroll-snap-align:start;flex:0 0 auto}}
 .kpi{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px}
-.kpi .label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.35px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.kpi .value{font-size:24px;font-weight:760;margin-top:6px}.kpi .sub{font-size:11px;color:var(--text2);margin-top:4px}
-.kpi.spi{border-width:2px}
-.kpi.spi.bullish{border-color:rgba(34,197,94,.45)}.kpi.spi.neutral{border-color:rgba(234,179,8,.45)}.kpi.spi.bearish{border-color:rgba(239,68,68,.4)}
+.kpi .value{font-size:24px;font-weight:760;margin-top:6px}
 .gauge{height:7px;border-radius:99px;background:rgba(255,255,255,.06);margin-top:10px;overflow:hidden}.gauge>i{display:block;height:100%;width:0}
-.gauge.bullish>i{background:linear-gradient(90deg,#16a34a,#4ade80)}
-.gauge.neutral>i{background:linear-gradient(90deg,#ca8a04,#facc15)}
-.gauge.bearish>i{background:linear-gradient(90deg,#dc2626,#f87171)}
 .c-green{color:var(--green)}.c-red{color:var(--red)}.c-yellow{color:var(--yellow)}.c-purple{color:var(--purple)}
-.alerts{display:flex;flex-direction:column;gap:8px;margin:8px 0 4px}
-.alert{border-radius:10px;padding:10px 12px;font-size:13px;border:1px solid transparent;display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
-.alert.info{background:rgba(59,130,246,.08);border-color:rgba(59,130,246,.25)}
-.alert.warn{background:rgba(234,179,8,.08);border-color:rgba(234,179,8,.25)}
 .funnel{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
 @media(max-width:900px){.funnel{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:500px){.funnel{grid-template-columns:1fr}}
@@ -77,48 +65,28 @@ header{position:sticky;top:0;z-index:50;background:rgba(11,16,32,.92);backdrop-f
 .card h3{font-size:14px;font-weight:700;margin-bottom:4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .card .hint{font-size:11px;color:var(--text2);margin-bottom:10px}
 .badge{font-size:11px;background:rgba(255,255,255,.06);border:1px solid var(--border);padding:2px 8px;border-radius:999px;color:var(--text2)}
-.unlock-pills{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
-.pill{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:10px}
-.pill .k{font-size:10px;color:var(--text2);text-transform:uppercase}.pill .v{font-size:18px;font-weight:740;margin-top:4px}
-.near-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
-.near-item{display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid var(--border);font-size:12px}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
-@media(max-width:960px){.grid-2{grid-template-columns:1fr}}
-.table-wrap{max-height:340px;overflow:auto}
+.table-wrap{max-height:380px;overflow:auto}
 table{width:100%;border-collapse:collapse;font-size:12px}
 th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,.04);text-align:left;vertical-align:top}
 th{position:sticky;top:0;background:var(--card);color:var(--text2);font-size:10px;text-transform:uppercase;letter-spacing:.3px;z-index:1}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}
 a{color:var(--accent);text-decoration:none}
 .search{display:flex;gap:6px;margin:8px 0}
-.search input,.sel{flex:1;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:8px;padding:8px 10px;font-size:12px}
-.search input{font-family:ui-monospace,monospace}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
-.chip{border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--text2);border-radius:999px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer}
-.chip.active{background:rgba(110,168,254,.14);color:var(--text);border-color:rgba(110,168,254,.35)}
+.search input{flex:1;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:8px;padding:8px 10px;font-size:12px;font-family:ui-monospace,monospace}
 .tag{display:inline-block;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:700}
 .tag-lock{background:rgba(34,197,94,.14);color:#4ade80}
 .tag-unlock{background:rgba(234,179,8,.16);color:#facc15}
 .tag-withdraw{background:rgba(239,68,68,.14);color:#f87171}
 .tag-relock{background:rgba(59,130,246,.16);color:#60a5fa}
 .tag-claim{background:rgba(168,85,247,.16);color:#c084fc}
-.tag-reward{background:rgba(148,163,184,.16);color:#cbd5e1}
 .hidden{display:none!important}
-.live{display:none;margin-left:6px;font-size:10px;padding:2px 7px;border-radius:999px;background:rgba(34,197,94,.14);color:#4ade80}
+.live{display:none;margin-left:6px;font-size:10px;padding:2px 7px;border-radius:99px;background:rgba(34,197,94,.14);color:#4ade80}
 .live.on{display:inline-block;animation:pulse 1.5s infinite}
-.empty{border:1px dashed rgba(120,140,255,.25);border-radius:16px;padding:36px 20px;text-align:center;background:rgba(18,24,43,.45);margin:18px 0}
-.drawer-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:80}
-.drawer-bg.open{display:block}
-.drawer{position:fixed;top:0;right:0;height:100%;width:min(420px,92vw);background:var(--bg2);border-left:1px solid var(--border);z-index:90;padding:16px;overflow:auto;transform:translateX(100%);transition:transform .2s}
-.drawer.open{transform:translateX(0)}
-.tab-btn.tab-inspector{background:rgba(168,85,247,.12);color:#c084fc;border:1px solid rgba(168,85,247,.3)}
-.tab-btn.tab-inspector.active{background:linear-gradient(135deg,#a855f7,#7e22ce);color:#fff;border-color:transparent}
 .inspector-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
 @media(max-width:900px){.inspector-stats{grid-template-columns:repeat(2,1fr)}}
 .inspector-card{background:rgba(168,85,247,.05);border:1px solid rgba(168,85,247,.2);border-radius:12px;padding:12px}
 .inspector-card .k{font-size:10px;text-transform:uppercase;color:var(--text2);letter-spacing:.3px}
 .inspector-card .v{font-size:20px;font-weight:750;margin-top:4px}
-.inspector-card .s{font-size:11px;color:var(--text2);margin-top:2px}
 </style>
 </head>
 <body>
@@ -126,11 +94,11 @@ a{color:var(--accent);text-decoration:none}
   <div class="header-inner">
     <div class="brand">
       <h1>TIG Staking <span class="fresh" id="freshLine">· Loading data...</span><span class="live" id="liveBadge">LIVE</span></h1>
-      <p>Base · local scanner · <span id="syncModeBadge">Ready</span> · <span id="countdown"></span></p>
+      <p>Base · local scanner · <span id="syncModeBadge">Ready</span></p>
     </div>
     <div class="controls">
       <button type="button" class="btn btn-primary" id="fastBtn">Sync Now</button>
-      <button type="button" class="btn btn-ghost" id="themeBtn" onclick="toggleTheme()">🌓</button>
+      <button type="button" class="btn btn-ghost" onclick="toggleTheme()">🌓</button>
     </div>
   </div>
 </header>
@@ -142,121 +110,56 @@ a{color:var(--accent);text-decoration:none}
     <span>Block <strong id="lastBlock">-</strong></span>
     <span>Synced <strong id="lastSync">never</strong></span>
     <span>Batch <strong id="batchSizeLabel">3000</strong></span>
-    <span>RPC <strong id="rpcLabel">-</strong></span>
   </div>
-
-  <div class="progress" id="progressWrap"><div class="bar"><div class="fill" id="progressFill"></div></div><div class="ptext" id="progressText"></div></div>
 
   <div id="appMain">
     <div class="health neutral" id="healthStrip">
       <div class="health-top">
         <div>
-          <div class="health-title"><span id="healthEmoji">🟢</span> <span id="healthTitle">Healthy Staking Pressure</span></div>
-          <div class="health-sentence" id="healthSentence">Loading snapshot...</div>
-        </div>
-        <div class="kpi spi neutral" id="spiCard" style="min-width:130px;max-width:180px;padding:8px 12px;margin:0">
-          <div class="label" style="font-size:10px">Pressure (0–100)</div>
-          <div class="value" id="spiValue" style="font-size:20px;margin-top:2px">-</div>
-          <div class="sub" id="spiLabel" style="font-size:10px;margin-top:2px">-</div>
-          <div class="gauge" id="spiGauge" style="height:5px;margin-top:6px"><i id="spiFill"></i></div>
+          <div class="health-title"><span id="healthEmoji">🟢</span> Healthy Staking Dashboard</div>
+          <div class="health-sentence" id="healthSentence">All historical transactions loaded successfully.</div>
         </div>
       </div>
       <div class="health-metrics">
-        <div class="hmet"><div class="k">Net Staking 7d</div><div class="v" id="net7d">-</div><div class="sub" id="net7dSub">+lock − unlock</div></div>
-        <div class="hmet"><div class="k">Can Leave in 7d</div><div class="v c-yellow" id="unlock7d">-</div><div class="sub" id="unlock7dSub">pending</div></div>
-        <div class="hmet"><div class="k">Active Locked</div><div class="v" id="lockedKpi">-</div><div class="sub" id="lockedSub">TIG actively earning</div></div>
-        <div class="hmet"><div class="k">Active Holders</div><div class="v" id="holdersKpi">-</div><div class="sub" id="holdersSub">active</div></div>
+        <div class="hmet"><div class="k">Total Staked</div><div class="v" id="totalStakedMetric">0 TIG</div></div>
+        <div class="hmet"><div class="k">Total Unstaked</div><div class="v c-yellow" id="totalUnstakedMetric">0 TIG</div></div>
+        <div class="hmet"><div class="k">Active Holders</div><div class="v" id="activeStakersMetric">0</div></div>
+        <div class="hmet"><div class="k">Total Events</div><div class="v" id="totalTxsMetric">0</div></div>
       </div>
     </div>
 
     <div class="tabs" role="tablist">
       <button type="button" class="tab-btn active" data-tab="overview">Overview</button>
-      <button type="button" class="tab-btn" data-tab="exits">Exits</button>
       <button type="button" class="tab-btn" data-tab="holders">Holders</button>
-      <button type="button" class="tab-btn tab-inspector" data-tab="inspector">🔍 Wallet Inspector</button>
+      <button type="button" class="tab-btn" data-tab="inspector">🔍 Wallet Inspector</button>
     </div>
 
     <div class="tab-panel active" id="tab-overview">
-      <div class="funnel">
-        <div class="card"><div class="k">7d Unlock Requests</div><div class="v c-yellow" id="funnelUnlock">-</div><div class="s">Requested intent</div></div>
-        <div class="card"><div class="k">Active Cooldown</div><div class="v c-yellow" id="funnelCooldown">-</div><div class="s">Locked in cooldown</div></div>
-        <div class="card"><div class="k">Ready to Withdraw</div><div class="v c-red" id="funnelWithdrawable">-</div><div class="s">Withdrawable now</div></div>
-        <div class="card"><div class="k">7d Realized Withdraws</div><div class="v c-red" id="funnelWithdraw">-</div><div class="s">Physically left</div></div>
-      </div>
-
-      <div class="charts">
-        <div class="card">
-          <h3>Flow (30d)</h3>
-          <div class="hint">Green = Locks · Red = Unlocks · Blue = Net Flow</div>
-          <canvas id="chartFlow" height="130"></canvas>
-          <div class="hint" id="flowSummary" style="margin-top:10px;padding:8px 10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;"></div>
-        </div>
-        <div class="card">
-          <h3>Unlock calendar</h3>
-          <div class="unlock-pills">
-            <div class="pill"><div class="k">Ready Now</div><div class="v c-red" id="uPillReady">-</div></div>
-            <div class="pill"><div class="k">Next 7d</div><div class="v" id="uPill7">-</div></div>
-            <div class="pill"><div class="k">8–14d</div><div class="v" id="uPill14">-</div></div>
-            <div class="pill"><div class="k">15–28d</div><div class="v" id="uPill28">-</div></div>
-          </div>
-          <canvas id="chartUnlock" height="120"></canvas>
-        </div>
-      </div>
-
       <div class="card">
-        <h3>Latest activity <span class="badge" id="txBadge">0</span></h3>
-        <div class="chips" id="txChips">
-          <button type="button" class="chip active" data-filter="all">All</button>
-          <button type="button" class="chip" data-filter="unlock">Unlocks</button>
-          <button type="button" class="chip" data-filter="withdraw">Withdraws</button>
-          <button type="button" class="chip" data-filter="large">Large only</button>
+        <h3>Latest Activity <span class="badge" id="txBadge">0</span></h3>
+        <div class="search">
+          <input type="text" id="searchInput" placeholder="Search address or tx hash..." oninput="filterTable()">
         </div>
         <div class="table-wrap"><table>
-          <thead><tr><th>Type</th><th>Address</th><th>Amount</th><th>When</th><th>Withdrawable</th><th>Tx</th></tr></thead>
-          <tbody id="txBody"><tr><td colspan="6">Loading...</td></tr></tbody>
+          <thead><tr><th>Type</th><th>Address</th><th>Amount (TIG)</th><th>Block</th><th>Tx Hash</th></tr></thead>
+          <tbody id="txTableBody"><tr><td colspan="5">Loading...</td></tr></tbody>
         </table></div>
-      </div>
-    </div>
-
-    <div class="tab-panel" id="tab-exits">
-      <div class="grid-2">
-        <div class="card">
-          <h3>Unlocks 7d <span class="badge" id="unstakeCount7d">0</span></h3>
-          <div class="table-wrap"><table>
-            <thead><tr><th>Address</th><th>Amt</th><th>When</th><th>Withdrawable</th><th>Tx</th></tr></thead>
-            <tbody id="unstakes7dBody"><tr><td colspan="5">Loading...</td></tr></tbody>
-          </table></div>
-        </div>
-        <div class="card">
-          <h3>Upcoming withdrawable <span class="badge" id="unlockCount">0</span></h3>
-          <div class="table-wrap"><table>
-            <thead><tr><th>When</th><th>Address</th><th>Amt</th><th>In</th><th>Tx</th></tr></thead>
-            <tbody id="unlocksBody"><tr><td colspan="5">Loading...</td></tr></tbody>
-          </table></div>
-        </div>
       </div>
     </div>
 
     <div class="tab-panel" id="tab-holders">
       <div class="card">
-        <h3>Holders <span class="badge" id="holderCount">0</span></h3>
-        <div class="search">
-          <input id="searchInput" placeholder="Find address 0x…">
-          <select class="sel" id="holderSort" style="flex:0 0 140px">
-            <option value="locked">Sort: Locked</option>
-            <option value="pending">Sort: Pending</option>
-          </select>
-        </div>
+        <h3>Holders Overview</h3>
         <div class="table-wrap"><table>
-          <thead><tr><th>#</th><th>Address</th><th>Locked</th><th>Pending</th><th>Share</th></tr></thead>
-          <tbody id="holdersBody"><tr><td colspan="5">Loading...</td></tr></tbody>
+          <thead><tr><th>#</th><th>Address</th><th>Staked Balance</th></tr></thead>
+          <tbody id="holdersBody"><tr><td colspan="3">Loading...</td></tr></tbody>
         </table></div>
       </div>
     </div>
 
     <div class="tab-panel" id="tab-inspector">
       <div class="card" style="margin-bottom:12px;border-color:rgba(168,85,247,.3)">
-        <h3>🔍 Wallet Inspector & History Audit</h3>
+        <h3>🔍 Wallet Inspector</h3>
         <div class="search" style="margin-top:10px">
           <input id="inspInput" placeholder="Enter wallet address 0x…">
           <button type="button" class="btn btn-primary" id="inspBtn">Inspect Wallet</button>
@@ -265,16 +168,15 @@ a{color:var(--accent);text-decoration:none}
 
       <div id="inspMain" class="hidden">
         <div class="inspector-stats">
-          <div class="inspector-card"><div class="k">Active Locked</div><div class="v" id="inspActive">-</div></div>
-          <div class="inspector-card"><div class="k">Historical Peak</div><div class="v c-purple" id="inspPeakBal">-</div></div>
-          <div class="inspector-card"><div class="k">Total Withdrawn</div><div class="v c-red" id="inspTotalWithdrawn">-</div></div>
-          <div class="inspector-card"><div class="k">Pending</div><div class="v" id="inspPending">-</div></div>
+          <div class="inspector-card"><div class="k">Active Staked</div><div class="v" id="inspActive">0 TIG</div></div>
+          <div class="inspector-card"><div class="k">Total Withdrawn</div><div class="v c-red" id="inspTotalWithdrawn">0 TIG</div></div>
+          <div class="inspector-card"><div class="k">Total Events</div><div class="v" id="inspTxCount">0</div></div>
         </div>
         <div class="card">
-          <h3>Full Transaction Ledger <span class="badge" id="inspBadge">0</span></h3>
+          <h3>Transaction History</h3>
           <div class="table-wrap"><table>
-            <thead><tr><th>Type</th><th>Amount</th><th>Timestamp</th><th>Block</th><th>Tx</th></tr></thead>
-            <tbody id="inspTableBody"><tr><td colspan="5">Enter address to load</td></tr></tbody>
+            <thead><tr><th>Type</th><th>Amount (TIG)</th><th>Block</th><th>Tx Hash</th></tr></thead>
+            <tbody id="inspTableBody"></tbody>
           </table></div>
         </div>
       </div>
@@ -286,27 +188,14 @@ a{color:var(--accent);text-decoration:none}
   </div>
 </div>
 
-<div class="drawer-bg" id="drawerBg"></div>
-<aside class="drawer" id="holderDrawer">
-  <button type="button" class="btn btn-ghost btn-xs" id="drawerClose" style="float:right">Close</button>
-  <h3 id="drawerTitle">Holder</h3>
-  <div class="hint" id="drawerMeta"></div>
-  <div class="table-wrap" style="max-height:none;margin-top:12px">
-    <table>
-      <thead><tr><th>Type</th><th>Amt</th><th>When</th></tr></thead>
-      <tbody id="drawerBody"></tbody>
-    </table>
-  </div>
-</aside>
-
 <script>
 (function () {
   'use strict';
 
   var C = {
     TIG: '0x0c03ce270b4826ec62e7dd007f0b716068639f7b',
-    STAKE: '0x16340277fdd1c93f0b2fd276ecbdd8b093498fe9',
-    RPCS: ['https://mainnet.base.org', 'https://base.llamarpc.com', 'https://1rpc.io/base'],
+    STAKE: '0x9f6b29e498ef6bee4a050fa1f29c31dbe6c6aef4',
+    RPCS: ['https://mainnet.base.org', 'https://base.llamarpc.com'],
     DB_NAME: 'TIGv14',
     DB_VERSION: 1,
     FIRST_BLOCK: 26498642,
@@ -349,13 +238,17 @@ a{color:var(--accent);text-decoration:none}
       r.onsuccess = function () { resolve(r.result || 0); };
     });
   };
-  DB.prototype.add = function (items) {
+  DB.prototype.bulkAdd = function (items) {
     var self = this;
-    return new Promise(function (resolve) {
+    return new Promise(function (resolve, reject) {
+      if (!items || !items.length) return resolve();
       var tx = self.db.transaction('txs', 'readwrite');
       var store = tx.objectStore('txs');
-      for (var i = 0; i < items.length; i++) store.put(items[i]);
+      for (var i = 0; i < items.length; i++) {
+        store.put(items[i]);
+      }
       tx.oncomplete = function () { resolve(); };
+      tx.onerror = function (e) { reject(e.target.error); };
     });
   };
   DB.prototype.meta = function (k) {
@@ -376,9 +269,10 @@ a{color:var(--accent);text-decoration:none}
 
   var db = new DB();
   var syncing = false;
+  var allTransactions = [];
 
   function fmt(n) { return (n || 0).toLocaleString('en-US', { maximumFractionDigits: 2 }); }
-  function shortAddr(a) { return a ? a.substring(0, 6) + '…' + a.substring(a.length - 4) : ''; }
+  function shortAddr(a) { return (a && a.length >= 42) ? (a.substring(0, 6) + '…' + a.substring(38)) : (a || ''); }
   function setDot(cls) { document.getElementById('statusDot').className = 'dot ' + cls; }
   function toggleTheme() {
     var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -386,6 +280,7 @@ a{color:var(--accent);text-decoration:none}
     localStorage.setItem('tig-theme', next);
   }
 
+  // Piorunująco szybki Bulk Preload Snapshotu
   async function autoPreload() {
     try {
       var res = await fetch('./data.json?t=' + Date.now());
@@ -396,11 +291,12 @@ a{color:var(--accent);text-decoration:none}
       var serverLastBlock = (serverData.metadata && serverData.metadata.lastBlock) || 0;
 
       if (serverLastBlock > localLastBlock) {
-        document.getElementById('syncStatus').textContent = 'Loading snapshot...';
+        document.getElementById('syncStatus').textContent = 'Fast loading snapshot...';
         var txs = serverData.transactions || [];
-        for (var i = 0; i < txs.length; i += 1000) {
-          await db.add(txs.slice(i, i + 1000));
-        }
+        
+        // Zapis błyskawiczny w jednej transakcji
+        await db.bulkAdd(txs);
+
         if (serverData.metadata.lastBlock != null) await db.setMeta('lastBlock', serverData.metadata.lastBlock);
         if (serverData.metadata.lastSync != null) await db.setMeta('lastSync', serverData.metadata.lastSync);
       }
@@ -413,7 +309,7 @@ a{color:var(--accent);text-decoration:none}
     if (syncing) return;
     syncing = true;
     setDot('dot-yellow');
-    document.getElementById('syncStatus').textContent = 'Syncing recent blocks...';
+    document.getElementById('syncStatus').textContent = 'Syncing...';
 
     try {
       var provider = new ethers.JsonRpcProvider(C.RPCS[0]);
@@ -422,11 +318,7 @@ a{color:var(--accent);text-decoration:none}
 
       if (lastBlock < currentBlock) {
         var iface = new ethers.Interface(LOCKER_ABI);
-        var logs = await provider.getLogs({
-          address: C.STAKE,
-          fromBlock: lastBlock + 1,
-          toBlock: currentBlock
-        });
+        var logs = await provider.getLogs({ address: C.STAKE, fromBlock: lastBlock + 1, toBlock: currentBlock });
 
         var parsed = logs.map(function (l) {
           var logData = null;
@@ -447,7 +339,7 @@ a{color:var(--accent);text-decoration:none}
           };
         }).filter(Boolean);
 
-        if (parsed.length > 0) await db.add(parsed);
+        if (parsed.length > 0) await db.bulkAdd(parsed);
         await db.setMeta('lastBlock', currentBlock);
         await db.setMeta('lastSync', Date.now());
       }
@@ -457,57 +349,152 @@ a{color:var(--accent);text-decoration:none}
       document.getElementById('syncModeBadge').textContent = 'Live';
       setDot('dot-green');
       await refreshAll();
-
     } catch (err) {
       console.error(err);
       document.getElementById('syncStatus').textContent = 'Sync Error';
       setDot('dot-red');
-    } finally {
-      syncing = false;
-    }
+    } finally { syncing = false; }
   }
 
   async function refreshAll() {
-    var txs = await db.all();
-    if (!txs.length) return;
+    allTransactions = await db.all();
+    if (!allTransactions.length) return;
 
-    txs.sort(function (a, b) { return b.blockNumber - a.blockNumber; });
+    allTransactions.sort(function (a, b) { return (b.blockNumber || 0) - (a.blockNumber || 0); });
 
-    document.getElementById('totalTx').textContent = txs.length.toLocaleString();
+    var totalStaked = 0, totalUnstaked = 0;
+    var stakersMap = {};
+
+    allTransactions.forEach(function (tx) {
+      var amt = parseFloat(tx.valueTig || tx.value || 0);
+      var userAddr = tx.address || tx.user || 'unknown';
+      var type = (tx.type || tx.event || '').toLowerCase();
+
+      if (type === 'lock' || type === 'tokenslocked') {
+        totalStaked += amt;
+        stakersMap[userAddr] = (stakersMap[userAddr] || 0) + amt;
+      } else if (type === 'withdraw' || type === 'tokenswithdrawn' || type === 'unlock') {
+        totalUnstaked += amt;
+        stakersMap[userAddr] = (stakersMap[userAddr] || 0) - amt;
+      }
+    });
+
+    var activeStakers = 0;
+    var holdersList = [];
+    Object.keys(stakersMap).forEach(function (a) {
+      if (stakersMap[a] > 0.001) {
+        activeStakers++;
+        holdersList.push({ address: a, balance: stakersMap[a] });
+      }
+    });
+
+    holdersList.sort(function(a,b){ return b.balance - a.balance; });
+
+    document.getElementById('totalStakedMetric').textContent = fmt(totalStaked) + ' TIG';
+    document.getElementById('totalUnstakedMetric').textContent = fmt(totalUnstaked) + ' TIG';
+    document.getElementById('activeStakersMetric').textContent = activeStakers.toLocaleString();
+    document.getElementById('totalTxsMetric').textContent = allTransactions.length.toLocaleString();
+    document.getElementById('txBadge').textContent = allTransactions.length.toLocaleString();
+
     var lb = await db.meta('lastBlock');
     document.getElementById('lastBlock').textContent = lb ? lb.toLocaleString() : '-';
     var ls = await db.meta('lastSync');
     document.getElementById('lastSync').textContent = ls ? new Date(ls).toLocaleTimeString() : 'never';
+    document.getElementById('healthSentence').textContent = 'All ' + allTransactions.length.toLocaleString() + ' events active and synced.';
 
-    renderTable(txs.slice(0, 50));
+    renderTable(allTransactions.slice(0, 50));
+    renderHolders(holdersList.slice(0, 50));
   }
 
   function renderTable(txs) {
-    var tbody = document.getElementById('txBody');
+    var tbody = document.getElementById('txTableBody');
     tbody.innerHTML = '';
 
     txs.forEach(function (tx) {
       var addr = tx.address || tx.user || '0x0000000000000000000000000000000000000000';
       var formattedAddr = shortAddr(addr);
       var type = tx.type || tx.event || 'lock';
-      var amt = tx.valueTig ? fmt(tx.valueTig) : (tx.amount ? fmt(parseFloat(tx.amount)) : '0.00');
+      var amt = tx.valueTig ? fmt(tx.valueTig) : (tx.value ? fmt(parseFloat(tx.value)) : '0.00');
       var hash = tx.hash || tx.transactionHash || '#';
 
       var tr = document.createElement('tr');
       tr.innerHTML = 
         '<td><span class="tag tag-' + type + '">' + type + '</span></td>' +
         '<td><a class="mono" href="https://basescan.org/address/' + addr + '" target="_blank">' + formattedAddr + '</a></td>' +
+        '<td><strong>' + amt + '</strong></td>' +
+        '<td>' + (tx.blockNumber || '-') + '</td>' +
+        '<td><a href="https://basescan.org/tx/' + hash + '" target="_blank">View</a></td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderHolders(holders) {
+    var tbody = document.getElementById('holdersBody');
+    tbody.innerHTML = '';
+    holders.forEach(function (h, idx) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = 
+        '<td>' + (idx + 1) + '</td>' +
+        '<td><a class="mono" href="https://basescan.org/address/' + h.address + '" target="_blank">' + shortAddr(h.address) + '</a></td>' +
+        '<td><strong>' + fmt(h.balance) + ' TIG</strong></td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  window.filterTable = function () {
+    var query = document.getElementById('searchInput').value.toLowerCase();
+    var filtered = allTransactions.filter(function (tx) {
+      var a = tx.address || tx.user || '';
+      var h = tx.hash || tx.transactionHash || '';
+      return a.toLowerCase().includes(query) || h.toLowerCase().includes(query);
+    });
+    renderTable(filtered.slice(0, 50));
+  };
+
+  function inspectWallet(addr) {
+    if (!addr) return;
+    var target = addr.toLowerCase();
+    var userTxs = allTransactions.filter(function (tx) {
+      var a = tx.address || tx.user || '';
+      return a.toLowerCase() === target;
+    });
+
+    var main = document.getElementById('inspMain');
+    main.classList.remove('hidden');
+
+    var staked = 0, withdrawn = 0;
+    userTxs.forEach(function (tx) {
+      var amt = parseFloat(tx.valueTig || tx.value || 0);
+      var type = (tx.type || tx.event || '').toLowerCase();
+      if (type === 'lock' || type === 'tokenslocked') staked += amt;
+      if (type === 'withdraw' || type === 'tokenswithdrawn') withdrawn += amt;
+    });
+
+    document.getElementById('inspActive').textContent = fmt(staked) + ' TIG';
+    document.getElementById('inspTotalWithdrawn').textContent = fmt(withdrawn) + ' TIG';
+    document.getElementById('inspTxCount').textContent = userTxs.length;
+
+    var tbody = document.getElementById('inspTableBody');
+    tbody.innerHTML = '';
+    userTxs.forEach(function (tx) {
+      var amt = tx.valueTig ? fmt(tx.valueTig) : fmt(parseFloat(tx.value || 0));
+      var type = tx.type || tx.event || 'lock';
+      var hash = tx.hash || tx.transactionHash || '#';
+
+      var tr = document.createElement('tr');
+      tr.innerHTML = 
+        '<td><span class="tag tag-' + type + '">' + type + '</span></td>' +
         '<td><strong>' + amt + ' TIG</strong></td>' +
         '<td>' + (tx.blockNumber || '-') + '</td>' +
-        '<td>-</td>' +
-        '<td><a href="https://basescan.org/tx/' + hash + '" target="_blank">tx</a></td>';
+        '<td><a href="https://basescan.org/tx/' + hash + '" target="_blank">View</a></td>';
       tbody.appendChild(tr);
     });
   }
 
   function bindUI() {
     document.getElementById('fastBtn').onclick = fastSync;
-    
+    document.getElementById('inspBtn').onclick = function () { inspectWallet(document.getElementById('inspInput').value.trim()); };
+
     Array.prototype.forEach.call(document.querySelectorAll('.tab-btn'), function (btn) {
       btn.onclick = function () {
         var tab = btn.getAttribute('data-tab');
@@ -523,6 +510,8 @@ a{color:var(--accent);text-decoration:none}
 
     try {
       await db.open();
+      
+      // 1. Dociągnięcie snapshotu z data.json z GitHub Pages w ułamku sekundy
       await autoPreload();
 
       var count = await db.count();
@@ -532,6 +521,7 @@ a{color:var(--accent);text-decoration:none}
         await refreshAll();
       }
 
+      // 2. Dociągnięcie najświeższych bloków z RPC w tle
       fastSync();
     } catch (err) {
       console.error(err);
@@ -539,9 +529,7 @@ a{color:var(--accent);text-decoration:none}
       setDot('dot-red');
     }
 
-    setInterval(function () {
-      if (!syncing) fastSync();
-    }, C.INTERVAL);
+    setInterval(function () { if (!syncing) fastSync(); }, C.INTERVAL);
   }
 
   window.toggleTheme = toggleTheme;
