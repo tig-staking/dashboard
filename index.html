@@ -48,13 +48,33 @@ header{position:sticky;top:0;z-index:50;background:rgba(11,16,32,.92);backdrop-f
 .hmet{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:10px}
 .hmet .k{font-size:10px;text-transform:uppercase;letter-spacing:.3px;color:var(--text2)}
 .hmet .v{font-size:18px;font-weight:750;margin-top:4px}
+.partial-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(234,179,8,.16);color:#facc15;border:1px solid rgba(234,179,8,.28)}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
+@media(max-width:900px){.kpi-grid{display:flex;overflow-x:auto;gap:10px;padding-bottom:4px;scroll-snap-type:x mandatory}.kpi-grid .kpi{min-width:68vw;scroll-snap-align:start;flex:0 0 auto}}
 .kpi{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px}
-.kpi .value{font-size:24px;font-weight:760;margin-top:6px}
+.kpi .label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.35px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.kpi .value{font-size:24px;font-weight:760;margin-top:6px}.kpi .sub{font-size:11px;color:var(--text2);margin-top:4px}
+.kpi.spi{border-width:2px}
+.kpi.spi.bullish{border-color:rgba(34,197,94,.45)}.kpi.spi.neutral{border-color:rgba(234,179,8,.45)}.kpi.spi.bearish{border-color:rgba(239,68,68,.4)}
 .gauge{height:7px;border-radius:99px;background:rgba(255,255,255,.06);margin-top:10px;overflow:hidden}.gauge>i{display:block;height:100%;width:0}
+.gauge.bullish>i{background:linear-gradient(90deg,#16a34a,#4ade80)}
+.gauge.neutral>i{background:linear-gradient(90deg,#ca8a04,#facc15)}
+.gauge.bearish>i{background:linear-gradient(90deg,#dc2626,#f87171)}
 .c-green{color:var(--green)}.c-red{color:var(--red)}.c-yellow{color:var(--yellow)}.c-purple{color:var(--purple)}
+.alerts{display:flex;flex-direction:column;gap:8px;margin:8px 0 4px}
+.alert{border-radius:10px;padding:10px 12px;font-size:13px;border:1px solid transparent;display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+.alert.info{background:rgba(59,130,246,.08);border-color:rgba(59,130,246,.25)}
+.alert.warn{background:rgba(234,179,8,.08);border-color:rgba(234,179,8,.25)}
+.alert.bad{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.25)}
+.alert.soft{background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.25)}
+.alert .dismiss{border:0;background:transparent;color:var(--text2);cursor:pointer;font-size:12px;padding:2px 6px}
 .funnel{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
 @media(max-width:900px){.funnel{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:500px){.funnel{grid-template-columns:1fr}}
+.funnel .card{padding:12px}
+.funnel .k{font-size:11px;color:var(--text2);text-transform:uppercase}
+.funnel .v{font-size:22px;font-weight:760;margin-top:4px}
+.funnel .s{font-size:11px;color:var(--text2);margin-top:4px}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 10px;padding:4px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px}
 .tab-btn{border:0;background:transparent;color:var(--text2);padding:8px 12px;border-radius:99px;font-size:12px;font-weight:700;cursor:pointer}
 .tab-btn.active{background:rgba(110,168,254,.14);color:var(--text)}
@@ -65,28 +85,63 @@ header{position:sticky;top:0;z-index:50;background:rgba(11,16,32,.92);backdrop-f
 .card h3{font-size:14px;font-weight:700;margin-bottom:4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .card .hint{font-size:11px;color:var(--text2);margin-bottom:10px}
 .badge{font-size:11px;background:rgba(255,255,255,.06);border:1px solid var(--border);padding:2px 8px;border-radius:999px;color:var(--text2)}
-.table-wrap{max-height:380px;overflow:auto}
+.unlock-pills{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.pill{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:10px}
+.pill .k{font-size:10px;color:var(--text2);text-transform:uppercase}.pill .v{font-size:18px;font-weight:740;margin-top:4px}
+.near-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.near-item{display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid var(--border);font-size:12px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+@media(max-width:960px){.grid-2{grid-template-columns:1fr}}
+.table-wrap{max-height:340px;overflow:auto}
 table{width:100%;border-collapse:collapse;font-size:12px}
 th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,.04);text-align:left;vertical-align:top}
 th{position:sticky;top:0;background:var(--card);color:var(--text2);font-size:10px;text-transform:uppercase;letter-spacing:.3px;z-index:1}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}
 a{color:var(--accent);text-decoration:none}
 .search{display:flex;gap:6px;margin:8px 0}
-.search input{flex:1;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:8px;padding:8px 10px;font-size:12px;font-family:ui-monospace,monospace}
+.search input,.sel{flex:1;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:8px;padding:8px 10px;font-size:12px}
+.search input{font-family:ui-monospace,monospace}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chip{border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--text2);border-radius:999px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer}
+.chip.active{background:rgba(110,168,254,.14);color:var(--text);border-color:rgba(110,168,254,.35)}
 .tag{display:inline-block;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:700}
 .tag-lock{background:rgba(34,197,94,.14);color:#4ade80}
 .tag-unlock{background:rgba(234,179,8,.16);color:#facc15}
 .tag-withdraw{background:rgba(239,68,68,.14);color:#f87171}
 .tag-relock{background:rgba(59,130,246,.16);color:#60a5fa}
 .tag-claim{background:rgba(168,85,247,.16);color:#c084fc}
+.tag-reward{background:rgba(148,163,184,.16);color:#cbd5e1}
+.tag-diamond{background:rgba(168,85,247,.16);color:#c084fc}
+.tag-long{background:rgba(59,130,246,.16);color:#60a5fa}
+.tag-medium{background:rgba(234,179,8,.16);color:#facc15}
+.tag-short{background:rgba(239,68,68,.16);color:#f87171}
+.tag-pending{background:rgba(234,179,8,.16);color:#facc15;margin-left:4px}
+.tip{display:inline-flex;align-items:center;justify-content:center;cursor:help;position:relative;width:15px;height:15px;border-radius:50%;font-size:10px;font-weight:800;color:var(--text2);border:1px solid rgba(110,168,254,.35);background:rgba(110,168,254,.12);flex-shrink:0}
+.tip::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);width:min(310px,72vw);background:#0f172a;color:#e5e7eb;border:1px solid rgba(148,163,184,.35);padding:10px 12px;border-radius:8px;font-size:11px;font-weight:400;line-height:1.45;white-space:pre-line;opacity:0;pointer-events:none;z-index:40;box-shadow:0 12px 28px rgba(0,0,0,.35)}
+.tip:hover::after,.tip:focus::after{opacity:1}
 .hidden{display:none!important}
 .live{display:none;margin-left:6px;font-size:10px;padding:2px 7px;border-radius:99px;background:rgba(34,197,94,.14);color:#4ade80}
 .live.on{display:inline-block;animation:pulse 1.5s infinite}
+.empty{border:1px dashed rgba(120,140,255,.25);border-radius:16px;padding:36px 20px;text-align:center;background:rgba(18,24,43,.45);margin:18px 0}
+.relock-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.relock-row .pill .v{font-size:16px}
+.drawer-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:80}
+.drawer-bg.open{display:block}
+.drawer{position:fixed;top:0;right:0;height:100%;width:min(420px,92vw);background:var(--bg2);border-left:1px solid var(--border);z-index:90;padding:16px;overflow:auto;transform:translateX(100%);transition:transform .2s}
+.drawer.open{transform:translateX(0)}
+.drawer h3{margin-bottom:8px}
+.drawer .close{float:right}
+.row-btn{cursor:pointer}.row-btn:hover td{background:rgba(110,168,254,.06)}
+.group-label td{color:var(--text2);font-size:10px;text-transform:uppercase;letter-spacing:.4px;background:rgba(255,255,255,.02);font-weight:700}
+.tab-btn.tab-inspector{background:rgba(168,85,247,.12);color:#c084fc;border:1px solid rgba(168,85,247,.3)}
+.tab-btn.tab-inspector:hover{background:rgba(168,85,247,.22)}
+.tab-btn.tab-inspector.active{background:linear-gradient(135deg,#a855f7,#7e22ce);color:#fff;border-color:transparent}
 .inspector-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
 @media(max-width:900px){.inspector-stats{grid-template-columns:repeat(2,1fr)}}
 .inspector-card{background:rgba(168,85,247,.05);border:1px solid rgba(168,85,247,.2);border-radius:12px;padding:12px}
 .inspector-card .k{font-size:10px;text-transform:uppercase;color:var(--text2);letter-spacing:.3px}
 .inspector-card .v{font-size:20px;font-weight:750;margin-top:4px}
+.inspector-card .s{font-size:11px;color:var(--text2);margin-top:2px}
 </style>
 </head>
 <body>
@@ -94,99 +149,268 @@ a{color:var(--accent);text-decoration:none}
   <div class="header-inner">
     <div class="brand">
       <h1>TIG Staking <span class="fresh" id="freshLine">· Loading data...</span><span class="live" id="liveBadge">LIVE</span></h1>
-      <p>Base · local scanner · <span id="syncModeBadge">Ready</span></p>
+      <p>Base · local scanner · <span id="syncModeBadge">Ready</span> · <span id="countdown"></span></p>
     </div>
     <div class="controls">
-      <button type="button" class="btn btn-primary" id="fastBtn">Sync Now</button>
-      <button type="button" class="btn btn-ghost" onclick="toggleTheme()">🌓</button>
+      <button type="button" class="btn btn-primary" id="fastBtn">Sync</button>
+      <button type="button" class="btn btn-ghost" id="themeBtn" onclick="toggleTheme()">🌓</button>
     </div>
   </div>
 </header>
-
 <div class="container">
   <div class="status" id="techStatus">
-    <span><span class="dot dot-green" id="statusDot"></span><span id="syncStatus">Initializing...</span></span>
+    <span><span class="dot dot-green" id="statusDot"></span><span id="syncStatus">Ready</span></span>
     <span>Txs <strong id="totalTx">0</strong></span>
     <span>Block <strong id="lastBlock">-</strong></span>
     <span>Synced <strong id="lastSync">never</strong></span>
     <span>Batch <strong id="batchSizeLabel">3000</strong></span>
+    <span>RPC <strong id="rpcLabel">-</strong></span>
+    <span>Coverage <strong id="coverageLabel">-</strong></span>
   </div>
 
+  <div class="progress" id="progressWrap"><div class="bar"><div class="fill" id="progressFill"></div></div><div class="ptext" id="progressText"></div></div>
+
   <div id="appMain">
+    <div class="alerts" id="eduSection"></div>
+    <div class="alerts" id="alertsSection"></div>
+
     <div class="health neutral" id="healthStrip">
       <div class="health-top">
         <div>
-          <div class="health-title"><span id="healthEmoji">🟢</span> Healthy Staking Dashboard</div>
-          <div class="health-sentence" id="healthSentence">All historical transactions loaded successfully.</div>
+          <div class="health-title"><span id="healthEmoji">🟡</span> <span id="healthTitle">Waiting for data</span> <span id="healthPartial" class="partial-badge hidden">partial</span></div>
+          <div class="health-sentence" id="healthSentence">Sync to load staking health.</div>
+        </div>
+        <div class="kpi spi neutral" id="spiCard" style="min-width:130px;max-width:180px;padding:8px 12px;margin:0">
+          <div class="label" style="font-size:10px">Pressure (0–100) <span class="tip" tabindex="0" data-tip="0–100 from unlock ratio, trend, dormancy, upcoming, whales. Higher = more exit pressure.">?</span></div>
+          <div class="value" id="spiValue" style="font-size:20px;margin-top:2px">-</div>
+          <div class="sub" id="spiLabel" style="font-size:10px;margin-top:2px">-</div>
+          <div class="gauge" id="spiGauge" style="height:5px;margin-top:6px"><i id="spiFill"></i></div>
         </div>
       </div>
       <div class="health-metrics">
-        <div class="hmet"><div class="k">Total Staked</div><div class="v" id="totalStakedMetric">0 TIG</div></div>
-        <div class="hmet"><div class="k">Total Unstaked</div><div class="v c-yellow" id="totalUnstakedMetric">0 TIG</div></div>
-        <div class="hmet"><div class="k">Active Holders</div><div class="v" id="activeStakersMetric">0</div></div>
-        <div class="hmet"><div class="k">Total Events</div><div class="v" id="totalTxsMetric">0</div></div>
+        <div class="hmet"><div class="k">Net Staking 7d <span class="tip" tabindex="0" data-tip="Net change in locked TIG over last 7 days (Locks + Claims + Relocks − Unlocks).">?</span></div><div class="v" id="net7d">-</div><div class="sub" id="net7dSub" style="font-size:11px;color:var(--text2);margin-top:2px">+lock − unlock</div></div>
+        <div class="hmet"><div class="k">Can Leave in 7d <span class="tip" tabindex="0" data-tip="TIG ending their 28-day cooldown within the next 7 days that will become withdrawable.">?</span></div><div class="v c-yellow" id="unlock7d">-</div><div class="sub" id="unlock7dSub" style="font-size:11px;color:var(--text2);margin-top:2px">pending</div></div>
+        <div class="hmet"><div class="k">Active Locked <span class="tip" tabindex="0" data-tip="Total TIG actively staked and locked in the contract (earning rewards, not in unlock process).">?</span></div><div class="v" id="lockedKpi">-</div><div class="sub" id="lockedSub" style="font-size:11px;color:var(--text2);margin-top:2px">TIG actively earning</div></div>
+        <div class="hmet"><div class="k">Active Holders <span class="tip" tabindex="0" data-tip="Number of unique wallet addresses currently holding active locked TIG.">?</span></div><div class="v" id="holdersKpi">-</div><div class="sub" id="holdersSub" style="font-size:11px;color:var(--text2);margin-top:2px">active</div></div>
       </div>
     </div>
 
     <div class="tabs" role="tablist">
       <button type="button" class="tab-btn active" data-tab="overview">Overview</button>
+      <button type="button" class="tab-btn" data-tab="exits">Exits</button>
       <button type="button" class="tab-btn" data-tab="holders">Holders</button>
-      <button type="button" class="tab-btn" data-tab="inspector">🔍 Wallet Inspector</button>
+      <button type="button" class="tab-btn" data-tab="loyalty">Loyalty</button>
+      <button type="button" class="tab-btn tab-inspector" data-tab="inspector">🔍 Wallet Inspector</button>
     </div>
 
     <div class="tab-panel active" id="tab-overview">
+      <div class="funnel">
+        <div class="card"><div class="k">7d Unlock Requests <span class="tip" tabindex="0" data-tip="Total TIG requested to unlock in the last 7 days. Initiates mandatory 28d cooldown. Tokens remain in contract.">?</span></div><div class="v c-yellow" id="funnelUnlock">-</div><div class="s">Requested intent</div></div>
+        <div class="card"><div class="k">Active Cooldown <span class="tip" tabindex="0" data-tip="Tokens currently waiting in the 28-day cooldown period. Cannot be withdrawn yet.">?</span></div><div class="v c-yellow" id="funnelCooldown">-</div><div class="s">Locked in cooldown</div></div>
+        <div class="card"><div class="k">Ready to Withdraw <span class="tip" tabindex="0" data-tip="Tokens whose cooldown has completed but haven't been withdrawn or relocked yet. Eligible for immediate withdrawal.">?</span></div><div class="v c-red" id="funnelWithdrawable">-</div><div class="s">Withdrawable now</div></div>
+        <div class="card"><div class="k">7d Realized Withdraws <span class="tip" tabindex="0" data-tip="Total TIG physically withdrawn from the contract to user wallets in the last 7 days after cooldown.">?</span></div><div class="v c-red" id="funnelWithdraw">-</div><div class="s">Physically left</div></div>
+      </div>
+
+      <div class="charts">
+        <div class="card">
+          <h3>Flow (30d) <span class="tip" tabindex="0" data-tip="Daily volume of new locks/claims/relocks (green) vs unlock requests (red) and net flow (blue line) over 30 days.">?</span></h3>
+          <div class="hint">Green = Locks (+ above axis) · Red = Unlock Requests (- below axis) · Blue = Net Flow</div>
+          <canvas id="chartFlow" height="130"></canvas>
+          <div class="hint" id="flowSummary" style="margin-top:10px;padding:8px 10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;font-weight:600;color:var(--text)"></div>
+        </div>
+        <div class="card">
+          <h3>Unlock calendar <span class="tip" tabindex="0" data-tip="Daily schedule of when pending unlock lots complete their 28-day cooldown and become withdrawable.">?</span></h3>
+          <div class="hint">When pending lots become withdrawable</div>
+          <div class="unlock-pills">
+            <div class="pill"><div class="k">Ready Now</div><div class="v c-red" id="uPillReady">-</div></div>
+            <div class="pill"><div class="k">Next 7d</div><div class="v" id="uPill7">-</div></div>
+            <div class="pill"><div class="k">8–14d</div><div class="v" id="uPill14">-</div></div>
+            <div class="pill"><div class="k">15–28d</div><div class="v" id="uPill28">-</div></div>
+          </div>
+          <div class="near-list" id="nearUnlockList"></div>
+          <canvas id="chartUnlock" height="120"></canvas>
+          <div class="hint hidden" id="unlockEmptyHint" style="margin-top:8px;color:var(--green)">No open pending — calm inventory signal.</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin:12px 0">
+        <h3>Relock rate <span class="tip" tabindex="0" data-tip="Percentage of unlocked lots that were relocked back into staking rather than withdrawn. High relock rate signals staker retention.">?</span></h3>
+        <div class="hint">Share of unlocks that came back (relock / new lock) within window</div>
+        <div class="relock-row">
+          <div class="pill"><div class="k">7d</div><div class="v" id="relock7">-</div></div>
+          <div class="pill"><div class="k">14d</div><div class="v" id="relock14">-</div></div>
+          <div class="pill"><div class="k">30d</div><div class="v" id="relock30">-</div></div>
+        </div>
+        <div class="hint" style="margin-top:8px" id="extraMetrics"></div>
+      </div>
+
       <div class="card">
-        <h3>Latest Activity <span class="badge" id="txBadge">0</span></h3>
-        <div class="search">
-          <input type="text" id="searchInput" placeholder="Search address or tx hash..." oninput="filterTable()">
+        <h3>Latest activity <span class="badge" id="txBadge">0</span></h3>
+        <div class="chips" id="txChips">
+          <button type="button" class="chip active" data-filter="all">All</button>
+          <button type="button" class="chip" data-filter="unlock">Unlocks</button>
+          <button type="button" class="chip" data-filter="withdraw">Withdraws</button>
+          <button type="button" class="chip" data-filter="large">Large only</button>
         </div>
         <div class="table-wrap"><table>
-          <thead><tr><th>Type</th><th>Address</th><th>Amount (TIG)</th><th>Block</th><th>Tx Hash</th></tr></thead>
-          <tbody id="txTableBody"><tr><td colspan="5">Loading...</td></tr></tbody>
+          <thead><tr><th>Type</th><th>Address</th><th>Amount</th><th>When</th><th>Withdrawable</th><th></th></tr></thead>
+          <tbody id="txBody"><tr><td colspan="6">Sync to load</td></tr></tbody>
         </table></div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-exits">
+      <div class="grid-2">
+        <div class="card">
+          <h3>Unlocks 7d <span class="badge" id="unstakeCount7d">0</span></h3>
+          <div class="hint">Exit demand (intent), not realized sells</div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Address</th><th>Amt</th><th>When</th><th>Withdrawable</th><th>Dorm.</th><th></th></tr></thead>
+            <tbody id="unstakes7dBody"><tr><td colspan="6">Sync</td></tr></tbody>
+          </table></div>
+        </div>
+        <div class="card">
+          <h3>Upcoming withdrawable <span class="badge" id="unlockCount">0</span></h3>
+          <div class="hint">Pending inventory schedule</div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>When</th><th>Address</th><th>Amt</th><th>In</th><th></th></tr></thead>
+            <tbody id="unlocksBody"><tr><td colspan="5">Sync</td></tr></tbody>
+          </table></div>
+        </div>
       </div>
     </div>
 
     <div class="tab-panel" id="tab-holders">
       <div class="card">
-        <h3>Holders Overview</h3>
+        <h3>Holders <span class="badge" id="holderCount">0</span></h3>
+        <div class="search">
+          <input id="searchInput" placeholder="Find address 0x…">
+          <button type="button" class="btn btn-ghost btn-xs" id="searchBtn">Search</button>
+          <select class="sel" id="holderSort" style="flex:0 0 140px">
+            <option value="locked">Sort: Locked</option>
+            <option value="pending">Sort: Pending</option>
+            <option value="recent">Sort: Newest first lock</option>
+          </select>
+        </div>
+        <div id="searchResult" class="hint"></div>
         <div class="table-wrap"><table>
-          <thead><tr><th>#</th><th>Address</th><th>Staked Balance</th></tr></thead>
-          <tbody id="holdersBody"><tr><td colspan="3">Loading...</td></tr></tbody>
+          <thead><tr><th>#</th><th>Address</th><th>Locked</th><th>Pending</th><th>%</th><th>Since</th></tr></thead>
+          <tbody id="holdersBody"><tr><td colspan="6">Sync to load</td></tr></tbody>
         </table></div>
       </div>
     </div>
 
     <div class="tab-panel" id="tab-inspector">
       <div class="card" style="margin-bottom:12px;border-color:rgba(168,85,247,.3)">
-        <h3>🔍 Wallet Inspector</h3>
+        <h3>🔍 Wallet Inspector & History Audit <span class="tip" tabindex="0" data-tip="Audit any active or past staker wallet, including historical peak balances, peak rank position, and full timeline.">?</span></h3>
+        <div class="hint">Search any address to analyze its entire staking history, historical peak rank, and exit events</div>
         <div class="search" style="margin-top:10px">
           <input id="inspInput" placeholder="Enter wallet address 0x…">
-          <button type="button" class="btn btn-primary" id="inspBtn">Inspect Wallet</button>
+          <button type="button" class="btn btn-primary" id="inspBtn" style="background:linear-gradient(135deg,#a855f7,#7e22ce)">Inspect Wallet</button>
+        </div>
+        <div class="chips" id="inspQuickChips" style="margin-top:8px">
+          <span style="font-size:11px;color:var(--text2);align-self:center;margin-right:4px">Top Ex-Holders:</span>
         </div>
       </div>
 
       <div id="inspMain" class="hidden">
         <div class="inspector-stats">
-          <div class="inspector-card"><div class="k">Active Staked</div><div class="v" id="inspActive">0 TIG</div></div>
-          <div class="inspector-card"><div class="k">Total Withdrawn</div><div class="v c-red" id="inspTotalWithdrawn">0 TIG</div></div>
-          <div class="inspector-card"><div class="k">Total Events</div><div class="v" id="inspTxCount">0</div></div>
+          <div class="inspector-card">
+            <div class="k">Active Locked</div>
+            <div class="v" id="inspActive">-</div>
+            <div class="s" id="inspCurrentRank">Rank: -</div>
+          </div>
+          <div class="inspector-card">
+            <div class="k">Historical Peak</div>
+            <div class="v c-purple" id="inspPeakBal">-</div>
+            <div class="s" id="inspPeakRank">Peak Rank: -</div>
+          </div>
+          <div class="inspector-card">
+            <div class="k">Total Withdrawn</div>
+            <div class="v c-red" id="inspTotalWithdrawn">-</div>
+            <div class="s" id="inspPending">Pending: -</div>
+          </div>
+          <div class="inspector-card">
+            <div class="k">Staking Lifetime</div>
+            <div class="v" id="inspLifetime">-</div>
+            <div class="s" id="inspTxCount">Events: -</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+            <h3 style="margin:0">Historical Balance & Rank Timeline</h3>
+            <label style="font-size:11px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.04);padding:4px 10px;border-radius:8px;border:1px solid var(--border)">
+              <input type="checkbox" id="inspToggleRank" style="accent-color:#eab308">
+              <span>Show Rank Overlay (Gold)</span>
+            </label>
+          </div>
+          <canvas id="chartInspector" height="110"></canvas>
+        </div>
+
+        <div class="card">
+          <h3>Full Transaction Ledger <span class="badge" id="inspBadge">0</span></h3>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Type</th><th>Amount</th><th>Timestamp</th><th>Block</th><th>Withdrawable</th><th>Tx</th></tr></thead>
+            <tbody id="inspTableBody"><tr><td colspan="6">Enter address to load</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+      <div id="inspEmpty" class="empty" style="margin:12px 0">
+        <h2>Enter a wallet address above</h2>
+        <p>Analyze any present or past staker wallet, inspect their peak position, and trace all historical events.</p>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-loyalty">
+      <div class="grid-2">
+        <div class="card">
+          <h3>Cohorts <span class="badge" id="cohortCount">0</span></h3>
+          <div class="hint">By first-lock age</div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Cohort</th><th>Holders</th><th>Locked</th><th>%</th><th>Net 7d</th><th>Signal</th></tr></thead>
+            <tbody id="cohortBody"><tr><td colspan="6">Sync</td></tr></tbody>
+          </table></div>
         </div>
         <div class="card">
-          <h3>Transaction History</h3>
+          <h3>Tiers <span class="badge" id="tierCount">0</span></h3>
+          <div class="hint">By locked size</div>
           <div class="table-wrap"><table>
-            <thead><tr><th>Type</th><th>Amount (TIG)</th><th>Block</th><th>Tx Hash</th></tr></thead>
-            <tbody id="inspTableBody"></tbody>
+            <thead><tr><th>Tier</th><th>Holders</th><th>Locked</th><th>%</th><th>Net 7d</th></tr></thead>
+            <tbody id="tierBody"><tr><td colspan="5">Sync</td></tr></tbody>
           </table></div>
         </div>
       </div>
     </div>
 
-    <footer style="margin-top:24px;padding:16px 0;border-top:1px solid var(--border);text-align:center;font-size:12px;color:var(--text2);">
-      Enjoying this dashboard? Send TIG to: <code class="mono" style="color:var(--accent);">0x19c00b03bf1f2638fd45a3d48f0097863eb20bcf</code>
+    <footer style="margin-top:24px;padding:16px 0 8px;border-top:1px solid var(--border);text-align:center;font-size:12px;color:var(--text2);">
+      <div style="display:inline-flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;background:var(--card);border:1px solid var(--border);padding:10px 16px;border-radius:12px;">
+        <span>Enjoying this dashboard and want to support its development? Send TIG to:</span>
+        <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(0,0,0,0.2);border:1px solid var(--border);padding:4px 10px;border-radius:8px;">
+          <code class="mono" style="color:var(--accent);font-weight:600;font-size:11px;">0x19c00b03bf1f2638fd45a3d48f0097863eb20bcf</code>
+          <button type="button" class="btn btn-ghost btn-xs" onclick="navigator.clipboard.writeText('0x19c00b03bf1f2638fd45a3d48f0097863eb20bcf'); this.textContent='Copied!'; setTimeout(() => this.textContent='Copy', 2000);">
+            Copy
+          </button>
+        </div>
+      </div>
     </footer>
+
   </div>
 </div>
+
+<div class="drawer-bg" id="drawerBg"></div>
+<aside class="drawer" id="holderDrawer">
+  <button type="button" class="btn btn-ghost btn-xs close" id="drawerClose">Close</button>
+  <h3 id="drawerTitle">Holder</h3>
+  <div class="hint" id="drawerMeta"></div>
+  <div class="table-wrap" style="max-height:none;margin-top:12px">
+    <table>
+      <thead><tr><th>Type</th><th>Amt</th><th>When</th></tr></thead>
+      <tbody id="drawerBody"></tbody>
+    </table>
+  </div>
+  <p style="margin-top:12px"><a id="drawerLink" target="_blank" rel="noopener">Open on Basescan</a></p>
+</aside>
 
 <script>
 (function () {
@@ -195,11 +419,22 @@ a{color:var(--accent);text-decoration:none}
   var C = {
     TIG: '0x0c03ce270b4826ec62e7dd007f0b716068639f7b',
     STAKE: '0x9f6b29e498ef6bee4a050fa1f29c31dbe6c6aef4',
-    RPCS: ['https://mainnet.base.org', 'https://base.llamarpc.com'],
+    BLACKLIST: ['0x30fec1f3690f3207d1a239db392f62c9cd1def3f'],
+    RPCS: [
+      'https://mainnet.base.org',
+      'https://base.llamarpc.com',
+      'https://1rpc.io/base'
+    ],
     DB_NAME: 'TIGv14',
     DB_VERSION: 1,
     FIRST_BLOCK: 26498642,
-    INTERVAL: 60000
+    BATCH: 3000,
+    INTERVAL: 60000,
+    PENDING_PERIOD_FALLBACK_DAYS: 28,
+    COHORT_DIAMOND: 180,
+    COHORT_LONG: 90,
+    COHORT_MEDIUM: 30,
+    DORMANCY_DAYS: 90
   };
 
   var LOCKER_ABI = [
@@ -207,17 +442,69 @@ a{color:var(--accent);text-decoration:none}
     'event TokensUnlocked(address indexed user, uint256 amount, uint256 locked, uint256 withdrawableTime)',
     'event TokensWithdrawn(address indexed user, uint256 amount)',
     'event TokensRelocked(address indexed user, uint256 amount, uint256 locked)',
-    'event TokensClaimed(address indexed user, uint256 amount, uint256 locked)'
+    'event TokensClaimed(address indexed user, uint256 amount, uint256 locked)',
+    'event TokensRewarded(address indexed user, uint256 amount, uint256 totalClaimable)'
   ];
+
+  var EVENT_TYPE = {
+    TokensLocked: 'lock',
+    TokensUnlocked: 'unlock',
+    TokensWithdrawn: 'withdraw',
+    TokensRelocked: 'relock',
+    TokensClaimed: 'claim',
+    TokensRewarded: 'reward'
+  };
+
+  var BLACKLIST = {};
+  C.BLACKLIST.forEach(function (a) { BLACKLIST[String(a).toLowerCase()] = true; });
+  function isBlacklisted(addr) { return !!(addr && BLACKLIST[String(addr).toLowerCase()]); }
+
+  var TIERS = [
+    { key: 'shrimp', label: '<100', min: 0, max: 100 },
+    { key: 'crab', label: '100–1k', min: 100, max: 1000 },
+    { key: 'fish', label: '1k–5k', min: 1000, max: 5000 },
+    { key: 'dolphin', label: '5k–10k', min: 5000, max: 10000 },
+    { key: 'shark', label: '10k–50k', min: 10000, max: 50000 },
+    { key: 'whale', label: '50k–100k', min: 50000, max: 100000 },
+    { key: 'mega', label: '100k+', min: 100000, max: Infinity }
+  ];
+  function tierOf(bal) {
+    for (var i = 0; i < TIERS.length; i++) if (bal >= TIERS[i].min && bal < TIERS[i].max) return TIERS[i];
+    return TIERS[TIERS.length - 1];
+  }
+  function valueToTig(value) {
+    try {
+      if (value == null) return 0;
+      var n = Number(ethers.formatUnits(value.toString(), 18));
+      return isFinite(n) ? n : 0;
+    } catch (e) { return 0; }
+  }
+  function normalizeType(t) {
+    if (t === 'stake') return 'lock';
+    if (t === 'unstake') return 'withdraw';
+    return t;
+  }
+  function typeLabel(t) {
+    t = normalizeType(t);
+    return ({ lock: 'Lock', unlock: 'Unlock', withdraw: 'Withdraw', relock: 'Relock', claim: 'Claim', reward: 'Reward' })[t] || t || '?';
+  }
+  function typeTag(t) {
+    t = normalizeType(t);
+    return ({ lock: 'tag-lock', unlock: 'tag-unlock', withdraw: 'tag-withdraw', relock: 'tag-relock', claim: 'tag-claim' })[t] || 'tag-reward';
+  }
 
   function DB() { this.db = null; }
   DB.prototype.open = function () {
     var self = this;
+    if (self.db) return Promise.resolve(self.db);
     return new Promise(function (resolve, reject) {
       var req = indexedDB.open(C.DB_NAME, C.DB_VERSION);
       req.onupgradeneeded = function (e) {
         var d = e.target.result;
-        if (!d.objectStoreNames.contains('txs')) d.createObjectStore('txs', { keyPath: 'id' });
+        if (!d.objectStoreNames.contains('txs')) {
+          var s = d.createObjectStore('txs', { keyPath: 'id' });
+          s.createIndex('block', 'blockNumber');
+        }
         if (!d.objectStoreNames.contains('meta')) d.createObjectStore('meta', { keyPath: 'key' });
       };
       req.onsuccess = function (e) { self.db = e.target.result; resolve(self.db); };
@@ -238,17 +525,15 @@ a{color:var(--accent);text-decoration:none}
       r.onsuccess = function () { resolve(r.result || 0); };
     });
   };
-  DB.prototype.bulkAdd = function (items) {
+  DB.prototype.add = function (items) {
     var self = this;
+    if (!items || !items.length) return Promise.resolve(0);
     return new Promise(function (resolve, reject) {
-      if (!items || !items.length) return resolve();
       var tx = self.db.transaction('txs', 'readwrite');
       var store = tx.objectStore('txs');
-      for (var i = 0; i < items.length; i++) {
-        store.put(items[i]);
-      }
-      tx.oncomplete = function () { resolve(); };
-      tx.onerror = function (e) { reject(e.target.error); };
+      for (var i = 0; i < items.length; i++) store.put(items[i]);
+      tx.oncomplete = function () { resolve(items.length); };
+      tx.onerror = function (e) { reject(tx.error); };
     });
   };
   DB.prototype.meta = function (k) {
@@ -268,40 +553,80 @@ a{color:var(--accent);text-decoration:none}
   };
 
   var db = new DB();
-  var syncing = false;
-  var allTransactions = [];
+  var syncing = false, countdownTimer = null, statsCache = null, statsCacheTime = 0;
+  var pendingPeriodSec = C.PENDING_PERIOD_FALLBACK_DAYS * 86400;
+  var uiState = { txFilter: 'all', holderSort: 'locked', lastUiData: null, activityRows: [], largeThreshold: 1000 };
 
-  function fmt(n) { return (n || 0).toLocaleString('en-US', { maximumFractionDigits: 2 }); }
-  function shortAddr(a) { return (a && a.length >= 42) ? (a.substring(0, 6) + '…' + a.substring(38)) : (a || ''); }
+  function fmt(n) {
+    if (typeof n !== 'number' || !isFinite(n)) return '0';
+    var sign = n < 0 ? '-' : '', a = Math.abs(n);
+    if (a >= 1e6) return sign + (a / 1e6).toFixed(2) + 'M';
+    if (a >= 1e3) return sign + (a / 1e3).toFixed(a >= 10000 ? 1 : 2) + 'k';
+    return sign + a.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  }
+  function fmt2(n) { return (n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function fmtNet(n) { if (typeof n !== 'number' || !isFinite(n)) return '0'; return (n > 0 ? '+' : '') + fmt(n); }
+  function shortAddr(a) { if (!a || typeof a !== 'string') return ''; return a.length >= 10 ? (a.slice(0, 6) + '…' + a.slice(-4)) : a; }
+  function ago(ts) {
+    if (!ts) return '-';
+    var d = Date.now() / 1000 - ts;
+    if (d < 60) return 'now'; if (d < 3600) return Math.floor(d / 60) + 'm';
+    if (d < 86400) return Math.floor(d / 3600) + 'h'; if (d < 2592000) return Math.floor(d / 86400) + 'd';
+    return new Date(ts * 1000).toLocaleDateString();
+  }
+  function fullDate(ts) {
+    return new Date(ts * 1000).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+  function chartDate(ts) {
+    var d = new Date(ts * 1000);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + " '" + String(d.getFullYear()).slice(-2);
+  }
+  function dayGroupLabel(ts) {
+    var d0 = new Date(); d0.setHours(0, 0, 0, 0);
+    var t0 = Math.floor(d0.getTime() / 1000);
+    if (ts >= t0) return 'Today';
+    if (ts >= t0 - 86400) return 'Yesterday';
+    return fullDate(ts).split(',')[0];
+  }
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
   function setDot(cls) { document.getElementById('statusDot').className = 'dot ' + cls; }
   function toggleTheme() {
     var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('tig-theme', next);
+    try { localStorage.setItem('tig-theme', next); } catch (e) {}
   }
 
-  // Piorunująco szybki Bulk Preload Snapshotu
+  // Preload bazy danych z pliku data.json
   async function autoPreload() {
     try {
       var res = await fetch('./data.json?t=' + Date.now());
       if (!res.ok) return;
       var serverData = await res.json();
-      
+      if (!serverData || !serverData.transactions) return;
+
       var localLastBlock = (await db.meta('lastBlock')) || 0;
       var serverLastBlock = (serverData.metadata && serverData.metadata.lastBlock) || 0;
 
-      if (serverLastBlock > localLastBlock) {
-        document.getElementById('syncStatus').textContent = 'Fast loading snapshot...';
+      if (Number(serverLastBlock) > Number(localLastBlock)) {
+        document.getElementById('syncStatus').textContent = 'Preloading base snapshot...';
         var txs = serverData.transactions || [];
-        
-        // Zapis błyskawiczny w jednej transakcji
-        await db.bulkAdd(txs);
+        var norm = txs.map(function (tx, i) {
+          var o = Object.assign({}, tx);
+          o.id = tx.id || ((tx.hash || 'x') + '-' + (tx.logIndex != null ? tx.logIndex : i));
+          if (o.valueTig == null && o.value != null) o.valueTig = valueToTig(o.value);
+          if (o.type === 'stake') o.type = 'lock';
+          if (o.type === 'unstake') o.type = 'withdraw';
+          if (o.type === 'unlock' && !o.withdrawableTime) o.withdrawableTime = (o.timestamp || 0) + pendingPeriodSec;
+          o.blacklisted = isBlacklisted(o.address) ? 1 : 0;
+          return o;
+        });
 
+        await db.add(norm);
         if (serverData.metadata.lastBlock != null) await db.setMeta('lastBlock', serverData.metadata.lastBlock);
         if (serverData.metadata.lastSync != null) await db.setMeta('lastSync', serverData.metadata.lastSync);
       }
     } catch (e) {
-      console.warn('AutoPreload error:', e);
+      console.warn('AutoPreload status:', e);
     }
   }
 
@@ -309,7 +634,7 @@ a{color:var(--accent);text-decoration:none}
     if (syncing) return;
     syncing = true;
     setDot('dot-yellow');
-    document.getElementById('syncStatus').textContent = 'Syncing...';
+    document.getElementById('syncStatus').textContent = 'Syncing recent blocks...';
 
     try {
       var provider = new ethers.JsonRpcProvider(C.RPCS[0]);
@@ -318,28 +643,40 @@ a{color:var(--accent);text-decoration:none}
 
       if (lastBlock < currentBlock) {
         var iface = new ethers.Interface(LOCKER_ABI);
-        var logs = await provider.getLogs({ address: C.STAKE, fromBlock: lastBlock + 1, toBlock: currentBlock });
+        var logs = await provider.getLogs({
+          address: C.STAKE,
+          fromBlock: lastBlock + 1,
+          toBlock: currentBlock
+        });
 
         var parsed = logs.map(function (l) {
           var logData = null;
           try { logData = iface.parseLog(l); } catch (e) { return null; }
           if (!logData) return null;
+          var type = EVENT_TYPE[logData.name];
+          if (!type) return null;
+
           var args = logData.args;
           var u = args.user || args[0] || '0x0000000000000000000000000000000000000000';
-          var val = args.amount || args[1] || 0;
-          
+          var amt = args.amount || args[1] || 0;
+          var ts = Math.floor(Date.now() / 1000);
+
           return {
             id: l.transactionHash + '-' + l.index,
             hash: l.transactionHash,
+            logIndex: l.index,
             blockNumber: Number(l.blockNumber),
             address: u,
-            type: logData.name.replace('Tokens', '').toLowerCase(),
-            valueTig: Number(ethers.formatUnits(val, 18)),
-            timestamp: Math.floor(Date.now() / 1000)
+            type: type,
+            value: amt.toString(),
+            valueTig: valueToTig(amt),
+            timestamp: ts,
+            blacklisted: isBlacklisted(u) ? 1 : 0,
+            withdrawableTime: type === 'unlock' ? Number(args.withdrawableTime || args[3] || (ts + pendingPeriodSec)) : 0
           };
         }).filter(Boolean);
 
-        if (parsed.length > 0) await db.bulkAdd(parsed);
+        if (parsed.length > 0) await db.add(parsed);
         await db.setMeta('lastBlock', currentBlock);
         await db.setMeta('lastSync', Date.now());
       }
@@ -349,152 +686,590 @@ a{color:var(--accent);text-decoration:none}
       document.getElementById('syncModeBadge').textContent = 'Live';
       setDot('dot-green');
       await refreshAll();
+
     } catch (err) {
       console.error(err);
       document.getElementById('syncStatus').textContent = 'Sync Error';
       setDot('dot-red');
-    } finally { syncing = false; }
+    } finally {
+      syncing = false;
+    }
+  }
+
+  function consumePending(pendingMap, addr, amount) {
+    var q = pendingMap.get(addr);
+    if (!q || !q.length) return null;
+    var idx = -1, eps = 1e-9;
+    for (var i = 0; i < q.length; i++) if (Math.abs(q[i].valueTig - amount) < eps) { idx = i; break; }
+    if (idx < 0) idx = 0;
+    var item = q.splice(idx, 1)[0];
+    if (!q.length) pendingMap.delete(addr); else pendingMap.set(addr, q);
+    return item;
+  }
+  function addPending(pendingMap, lot) {
+    var q = pendingMap.get(lot.address) || [];
+    q.push(lot);
+    pendingMap.set(lot.address, q);
+  }
+
+  async function getStats() {
+    var txsAll = await db.all();
+    if (!txsAll.length) return null;
+    var txs = [], skippedBl = 0, i;
+    for (i = 0; i < txsAll.length; i++) {
+      if (!txsAll[i] || isBlacklisted(txsAll[i].address)) { skippedBl++; continue; }
+      if (normalizeType(txsAll[i].type) === 'reward') continue;
+      txs.push(txsAll[i]);
+    }
+    if (!txs.length) return null;
+
+    var sorted = txs.slice().sort(function (a, b) {
+      return (a.timestamp - b.timestamp) || ((a.logIndex || 0) - (b.logIndex || 0));
+    });
+    var now = Math.floor(Date.now() / 1000);
+    var d7 = now - 7 * 86400, d14 = now - 14 * 86400, d24 = now - 86400, d30 = now - 30 * 86400;
+    var inTotal = 0, unlockTotal = 0, withdrawTotal = 0, relockTotal = 0;
+    var s7 = 0, u7 = 0, s14 = 0, u14 = 0, s30 = 0, u30 = 0, w7 = 0;
+    var ever = new Set(), daily = {}, holders = new Map(), pendingBal = new Map();
+    var firstSeen = new Map(), txCount = new Map(), timeline = new Map();
+    var unlock7dByAddr = new Map(), openPending = new Map();
+
+    for (i = 0; i < sorted.length; i++) {
+      var tx = sorted[i];
+      if (tx.valueTig == null || !isFinite(Number(tx.valueTig))) tx.valueTig = valueToTig(tx.value);
+      var v = Number(tx.valueTig) || 0;
+      var addr = tx.address || tx.user || '0x0000000000000000000000000000000000000000';
+      var t = normalizeType(tx.type);
+      txCount.set(addr, (txCount.get(addr) || 0) + 1);
+      if (!timeline.has(addr)) timeline.set(addr, []);
+      timeline.get(addr).push({ ts: tx.timestamp, type: t, amount: v });
+
+      if (t === 'lock' || t === 'claim') {
+        inTotal += v; ever.add(addr);
+        if (tx.timestamp >= d7) s7 += v;
+        if (tx.timestamp >= d14) s14 += v;
+        if (tx.timestamp >= d30) s30 += v;
+        holders.set(addr, (holders.get(addr) || 0) + v);
+        if (!firstSeen.has(addr)) firstSeen.set(addr, tx.timestamp);
+        if (tx.timestamp >= d30) {
+          var dayIn = new Date(tx.timestamp * 1000).toISOString().slice(0, 10);
+          if (!daily[dayIn]) daily[dayIn] = { staked: 0, unstaked: 0 };
+          daily[dayIn].staked += v;
+        }
+      } else if (t === 'unlock') {
+        unlockTotal += v;
+        if (tx.timestamp >= d7) { u7 += v; unlock7dByAddr.set(addr, (unlock7dByAddr.get(addr) || 0) + v); }
+        if (tx.timestamp >= d14) u14 += v;
+        if (tx.timestamp >= d30) u30 += v;
+        holders.set(addr, Math.max(0, (holders.get(addr) || 0) - v));
+        pendingBal.set(addr, (pendingBal.get(addr) || 0) + v);
+        var wt = Number(tx.withdrawableTime) || (tx.timestamp + pendingPeriodSec);
+        addPending(openPending, { address: addr, valueTig: v, unlockTime: wt, timestamp: tx.timestamp, hash: tx.hash, id: tx.id });
+        if (tx.timestamp >= d30) {
+          var dayU = new Date(tx.timestamp * 1000).toISOString().slice(0, 10);
+          if (!daily[dayU]) daily[dayU] = { staked: 0, unstaked: 0 };
+          daily[dayU].unstaked += v;
+        }
+      } else if (t === 'relock') {
+        relockTotal += v;
+        holders.set(addr, (holders.get(addr) || 0) + v);
+        pendingBal.set(addr, Math.max(0, (pendingBal.get(addr) || 0) - v));
+        consumePending(openPending, addr, v);
+        if (!firstSeen.has(addr)) firstSeen.set(addr, tx.timestamp);
+        if (tx.timestamp >= d7) s7 += v;
+        if (tx.timestamp >= d14) s14 += v;
+        if (tx.timestamp >= d30) s30 += v;
+        if (tx.timestamp >= d30) {
+          var dayR = new Date(tx.timestamp * 1000).toISOString().slice(0, 10);
+          if (!daily[dayR]) daily[dayR] = { staked: 0, unstaked: 0 };
+          daily[dayR].staked += v;
+        }
+      } else if (t === 'withdraw') {
+        withdrawTotal += v;
+        if (tx.timestamp >= d7) w7 += v;
+        pendingBal.set(addr, Math.max(0, (pendingBal.get(addr) || 0) - v));
+        consumePending(openPending, addr, v);
+      }
+    }
+
+    var holderEntries = [], totalHeld = 0;
+    holders.forEach(function (bal, a3) {
+      if (bal > 1e-12 && !isBlacklisted(a3)) { holderEntries.push([a3, bal]); totalHeld += bal; }
+    });
+    var netStaked = totalHeld, totalPendingOpen = 0, pendingCooldown = 0, pendingWithdrawable = 0;
+    openPending.forEach(function (lots) {
+      for (var pi = 0; pi < lots.length; pi++) {
+        var val = lots[pi].valueTig;
+        totalPendingOpen += val;
+        if (lots[pi].unlockTime > now) pendingCooldown += val;
+        else pendingWithdrawable += val;
+      }
+    });
+
+    function cohortKey(days) {
+      if (days >= C.COHORT_DIAMOND) return 'diamond';
+      if (days >= C.COHORT_LONG) return 'long';
+      if (days >= C.COHORT_MEDIUM) return 'medium';
+      return 'short';
+    }
+    var cohorts = {
+      diamond: { label: 'Diamond ≥180d', holders: 0, staked: 0, s7: 0, u7: 0 },
+      long: { label: 'Long 90–180d', holders: 0, staked: 0, s7: 0, u7: 0 },
+      medium: { label: 'Medium 30–90d', holders: 0, staked: 0, s7: 0, u7: 0 },
+      short: { label: 'Short <30d', holders: 0, staked: 0, s7: 0, u7: 0 }
+    };
+    for (i = 0; i < holderEntries.length; i++) {
+      var ck = cohortKey(Math.floor((now - (firstSeen.get(holderEntries[i][0]) || now)) / 86400));
+      cohorts[ck].holders++; cohorts[ck].staked += holderEntries[i][1];
+    }
+    for (i = 0; i < sorted.length; i++) {
+      tx = sorted[i];
+      if (tx.timestamp < d7) continue;
+      var tt = normalizeType(tx.type);
+      ck = cohortKey(Math.floor((now - (firstSeen.get(tx.address) || now)) / 86400));
+      if (tt === 'lock' || tt === 'claim' || tt === 'relock') cohorts[ck].s7 += tx.valueTig;
+      else if (tt === 'unlock') cohorts[ck].u7 += tx.valueTig;
+    }
+    var cohortData = ['diamond', 'long', 'medium', 'short'].map(function (k) {
+      var c = cohorts[k];
+      return { key: k, label: c.label, holderCount: c.holders, staked: c.staked, share: totalHeld > 0 ? c.staked / totalHeld * 100 : 0, netFlow7d: c.s7 - c.u7 };
+    }).filter(function (c) { return c.holderCount || c.staked; });
+
+    var tierMap = {};
+    TIERS.forEach(function (tr) { tierMap[tr.key] = { key: tr.key, label: tr.label, holders: 0, staked: 0, s7: 0, u7: 0 }; });
+    for (i = 0; i < holderEntries.length; i++) {
+      var tr0 = tierOf(holderEntries[i][1]);
+      tierMap[tr0.key].holders++; tierMap[tr0.key].staked += holderEntries[i][1];
+    }
+    for (i = 0; i < sorted.length; i++) {
+      tx = sorted[i];
+      if (tx.timestamp < d7) continue;
+      var bal = holders.get(tx.address) || 0;
+      var tr1 = tierOf(bal > 0 ? bal : (tx.valueTig || 0));
+      var t2 = normalizeType(tx.type);
+      if (t2 === 'lock' || t2 === 'claim' || t2 === 'relock') tierMap[tr1.key].s7 += tx.valueTig;
+      else if (t2 === 'unlock') tierMap[tr1.key].u7 += tx.valueTig;
+    }
+    var tierData = TIERS.map(function (tr) {
+      var x = tierMap[tr.key];
+      return { key: x.key, label: x.label, holders: x.holders, staked: x.staked, share: totalHeld > 0 ? x.staked / totalHeld * 100 : 0, netFlow7d: x.s7 - x.u7 };
+    }).filter(function (x) { return x.holders || x.staked || x.netFlow7d; });
+
+    var unTotal = 0, r7 = 0, r14 = 0, r30 = 0, relockCount = 0;
+    timeline.forEach(function (arr) {
+      arr.sort(function (a, b) { return a.ts - b.ts; });
+      var pendingTs = null;
+      for (var j = 0; j < arr.length; j++) {
+        if (arr[j].type === 'unlock') { unTotal++; pendingTs = arr[j].ts; }
+        else if (arr[j].type === 'relock') {
+          relockCount++;
+          if (pendingTs != null) {
+            var ddR = (arr[j].ts - pendingTs) / 86400;
+            if (ddR <= 7) r7++; if (ddR <= 14) r14++; if (ddR <= 30) r30++;
+            pendingTs = null;
+          }
+        } else if ((arr[j].type === 'lock' || arr[j].type === 'claim') && pendingTs != null) {
+          var dd = (arr[j].ts - pendingTs) / 86400;
+          if (dd <= 7) r7++; if (dd <= 14) r14++; if (dd <= 30) r30++;
+          pendingTs = null;
+        } else if (arr[j].type === 'withdraw') pendingTs = null;
+      }
+    });
+
+    var dormancyAlerts = [], unstakes7d = [];
+    for (i = sorted.length - 1; i >= 0; i--) {
+      tx = sorted[i];
+      if (normalizeType(tx.type) !== 'unlock' || tx.timestamp < d7) continue;
+      tx._withdrawableTime = Number(tx.withdrawableTime) || (tx.timestamp + pendingPeriodSec);
+      unstakes7d.push(tx);
+      var tl = timeline.get(tx.address) || [], prev = null;
+      for (var j2 = tl.length - 1; j2 >= 0; j2--) if (tl[j2].ts < tx.timestamp) { prev = tl[j2].ts; break; }
+      var gap = prev != null ? (tx.timestamp - prev) / 86400 : Infinity;
+      tx._dormancyGap = gap;
+      if (gap >= C.DORMANCY_DAYS) dormancyAlerts.push(tx);
+    }
+
+    var allUnlocks = [];
+    openPending.forEach(function (lots) {
+      for (var ui = 0; ui < lots.length; ui++) if (lots[ui].unlockTime > now) allUnlocks.push(lots[ui]);
+    });
+    allUnlocks.sort(function (a, b) { return a.unlockTime - b.unlockTime; });
+
+    var unlockDay = {}, uBands = { d7: 0, d14: 0, d28: 0 };
+    for (i = 0; i < allUnlocks.length; i++) {
+      var off = Math.floor((allUnlocks[i].unlockTime - now) / 86400);
+      if (off < 0) continue;
+      if (off < 28) unlockDay[off] = (unlockDay[off] || 0) + allUnlocks[i].valueTig;
+      if (off < 7) uBands.d7 += allUnlocks[i].valueTig;
+      else if (off < 14) uBands.d14 += allUnlocks[i].valueTig;
+      else if (off < 28) uBands.d28 += allUnlocks[i].valueTig;
+    }
+    var unlockBars = [];
+    for (var d = 0; d < 28; d++) unlockBars.push({ day: d, value: unlockDay[d] || 0 });
+
+    var ratio7d = s7 > 0 ? u7 / s7 : (u7 > 0 ? 2 : 0);
+    var spiRatio = clamp(Math.round(ratio7d * 25), 0, 25);
+    var net7 = s7 - u7, net14avg = (s14 - u14) / 2, spiTrend = 12;
+    if (net7 < 0 && net14avg < 0) {
+      var acc = net14avg !== 0 ? net7 / net14avg : 2;
+      spiTrend = clamp(Math.round(12 + acc * 13), 0, 25);
+    } else if (net7 < 0 && net14avg >= 0) spiTrend = 20;
+    else if (net7 >= 0 && net14avg < 0) spiTrend = 5;
+    else spiTrend = clamp(Math.round(12 - net7 / Math.max(Math.abs(net14avg), 1) * 6), 0, 25);
+
+    var spiDorm = 0;
+    if (dormancyAlerts.length) {
+      var dvol = dormancyAlerts.reduce(function (s, x) { return s + x.valueTig; }, 0);
+      spiDorm = clamp(Math.round(dvol / Math.max(u7, 1) * 20), 0, 20);
+    }
+    var avgU = u7 / 7;
+    var spiUnl = clamp(Math.round((avgU > 0 ? uBands.d7 / (avgU * 7) : 0) * 15), 0, 20);
+
+    holderEntries.sort(function (a, b) { return b[1] - a[1]; });
+    var top10 = holderEntries.slice(0, 10), spiWh = 0, whaleAlerts = [];
+    for (i = 0; i < top10.length; i++) {
+      var aa = top10[i][0], bb = top10[i][1], uu = unlock7dByAddr.get(aa) || 0;
+      if (bb > 0 && uu > bb * 0.05) {
+        spiWh++;
+        whaleAlerts.push({ address: aa, unstaked: uu, balance: bb, percentage: uu / bb * 100 });
+      }
+    }
+    spiWh = clamp(spiWh * 2, 0, 10);
+    var spi = spiRatio + spiTrend + spiDorm + spiUnl + spiWh;
+    var spiLevel = spi <= 30 ? 'bullish' : spi <= 60 ? 'neutral' : 'bearish';
+    var drivers = [];
+    if (spiRatio >= 15) drivers.push('unlock ratio');
+    if (spiTrend >= 16) drivers.push('flow trend');
+    if (spiDorm >= 8) drivers.push('dormancy');
+    if (spiUnl >= 8) drivers.push('pending unlocks');
+    if (spiWh >= 4) drivers.push('whales');
+
+    var holdersMeta = holderEntries.map(function (e) {
+      return { address: e[0], balance: e[1], firstSeen: firstSeen.get(e[0]) || now, txCount: txCount.get(e[0]) || 0, tier: tierOf(e[1]).label, pending: pendingBal.get(e[0]) || 0 };
+    });
+
+    var days30 = [];
+    for (var di = 29; di >= 0; di--) days30.push(new Date((now - di * 86400) * 1000).toISOString().slice(0, 10));
+    var flowSeries = days30.map(function (day) {
+      var x = daily[day] || { staked: 0, unstaked: 0 };
+      return { day: day, staked: x.staked, unstaked: x.unstaked, net: x.staked - x.unstaked };
+    });
+    var seen24 = new Set();
+    for (i = 0; i < sorted.length; i++) if (sorted[i].timestamp >= d24) seen24.add(sorted[i].address);
+
+    return {
+      sorted: sorted, storedTotal: txsAll.length, skippedBlacklist: skippedBl, now: now,
+      stats: {
+        netStaked: netStaked, totalPendingOpen: totalPendingOpen,
+        pendingCooldown: pendingCooldown, pendingWithdrawable: pendingWithdrawable,
+        s7: s7, u7: u7, s14: s14, u14: u14, s30: s30, u30: u30, w7: w7,
+        net7: s7 - u7, net14: s14 - u14, net30: s30 - u30,
+        totalStakers: ever.size, activeHolders: holderEntries.length, active24: seen24.size,
+        concentration: totalHeld > 0 ? top10.reduce(function (s, x) { return s + x[1]; }, 0) / totalHeld * 100 : 0,
+        withdrawTotal: withdrawTotal, relockTotal: relockTotal
+      },
+      spi: spi, spiLevel: spiLevel, spiDrivers: drivers, holders: holdersMeta, totalHeld: totalHeld,
+      cohorts: cohortData, tiers: tierData,
+      restakeRate7d: unTotal ? r7 / unTotal * 100 : 0,
+      restakeRate14d: unTotal ? r14 / unTotal * 100 : 0,
+      restakeRate30d: unTotal ? r30 / unTotal * 100 : 0,
+      relockCount: relockCount, dormancyAlerts: dormancyAlerts, whaleAlerts: whaleAlerts,
+      unlocks: allUnlocks.slice(0, 40), unlockBars: unlockBars, unlockBands: uBands,
+      unstakes7d: unstakes7d.slice(0, 40), flowSeries: flowSeries, pendingPeriodSec: pendingPeriodSec
+    };
+  }
+
+  function makeChart(id, type, labels, datasets, customScales) {
+    var canvas = document.getElementById(id);
+    if (!canvas || typeof Chart === 'undefined') return;
+    var key = '__c_' + id;
+    if (window[key]) { try { window[key].destroy(); } catch (e) {} }
+    var ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    var defaultScales = {
+      x: { ticks: { color: '#9aa3b5', maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }, grid: { display: false } },
+      y: { ticks: { color: '#9aa3b5', callback: function (v) { return fmt(v); } }, grid: { color: 'rgba(100,120,255,.08)' } }
+    };
+    window[key] = new Chart(ctx, {
+      type: type, data: { labels: labels, datasets: datasets },
+      options: {
+        responsive: true, animation: false, interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { labels: { color: '#9aa3b5', boxWidth: 10, font: { size: 11 } } },
+          tooltip: { callbacks: { label: function (c) {
+            var v = c.parsed.y;
+            if (c.dataset.yAxisID === 'yRank') return 'Rank: #' + Math.abs(v);
+            return c.dataset.label + ': ' + (typeof v === 'number' ? fmt2(v) : v) + ' TIG';
+          } } }
+        },
+        scales: customScales || defaultScales
+      }
+    });
+  }
+
+  function drawCharts(data) {
+    if (typeof Chart === 'undefined') return;
+    try {
+      var labels = data.flowSeries.map(function (x) { return x.day.slice(5); });
+      var last7 = data.flowSeries.slice(-7);
+      var avg7 = last7.length ? last7.reduce(function (s, x) { return s + x.net; }, 0) / last7.length : 0;
+      makeChart('chartFlow', 'bar', labels, [
+        { label: 'Lock/Claim (+)', data: data.flowSeries.map(function (x) { return x.staked; }), backgroundColor: 'rgba(34,197,94,.65)', borderRadius: 3 },
+        { label: 'Unlock req (-)', data: data.flowSeries.map(function (x) { return -x.unstaked; }), backgroundColor: 'rgba(239,68,68,.65)', borderRadius: 3 },
+        { label: 'Net Flow', data: data.flowSeries.map(function (x) { return x.net; }), type: 'line', borderColor: '#60a5fa', tension: 0.1, pointRadius: 0, borderWidth: 2.5 },
+        { label: 'Avg Net 7d', data: data.flowSeries.map(function () { return avg7; }), type: 'line', borderColor: 'rgba(234,179,8,.85)', borderDash: [4, 4], tension: 0, pointRadius: 0, borderWidth: 1.5 }
+      ]);
+      makeChart('chartUnlock', 'bar', data.unlockBars.map(function (x) { return 'D' + x.day; }),
+        [{ label: 'Withdrawable', data: data.unlockBars.map(function (x) { return x.value; }), backgroundColor: 'rgba(234,179,8,.55)', borderRadius: 3 }]);
+    } catch (e) { console.warn(e); }
+  }
+
+  function renderActivity() {
+    var rows = uiState.activityRows || [];
+    var f = uiState.txFilter;
+    var filtered = rows.filter(function (tx) {
+      var t = normalizeType(tx.type);
+      if (f === 'unlock') return t === 'unlock';
+      if (f === 'withdraw') return t === 'withdraw';
+      if (f === 'large') return (Number(tx.valueTig) || 0) >= uiState.largeThreshold;
+      return true;
+    });
+    var body = document.getElementById('txBody');
+    if (!filtered.length) {
+      body.innerHTML = '<tr><td colspan="6">No matching activity</td></tr>';
+      return;
+    }
+    var html = '';
+    var lastGroup = '';
+    filtered.forEach(function (tx) {
+      var t = normalizeType(tx.type);
+      var g = dayGroupLabel(tx.timestamp);
+      if (g !== lastGroup) {
+        html += '<tr class="group-label"><td colspan="6">' + g + '</td></tr>';
+        lastGroup = g;
+      }
+      var wd = '-';
+      if (t === 'unlock') {
+        var wt = Number(tx.withdrawableTime) || Number(tx._withdrawableTime) || 0;
+        wd = wt ? fullDate(wt) : '-';
+      }
+      var addr = tx.address || tx.user || '';
+      var amtCls = (Number(tx.valueTig) || 0) >= uiState.largeThreshold ? ' style="font-weight:750"' : '';
+      html += '<tr><td><span class="tag ' + typeTag(t) + '">' + typeLabel(t) + '</span></td><td><a class="mono" target="_blank" href="https://basescan.org/address/' + addr + '">' + shortAddr(addr) + '</a></td><td' + amtCls + '>' + fmt2(tx.valueTig) + ' TIG</td><td>' + ago(tx.timestamp) + '</td><td>' + wd + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
+    });
+    body.innerHTML = html;
+  }
+
+  function renderHoldersTable(data) {
+    var list = (data.holders || []).slice();
+    var sort = uiState.holderSort;
+    if (sort === 'pending') list.sort(function (a, b) { return (b.pending || 0) - (a.pending || 0); });
+    else if (sort === 'recent') list.sort(function (a, b) { return (b.firstSeen || 0) - (a.firstSeen || 0); });
+    else list.sort(function (a, b) { return (b.balance || 0) - (a.balance || 0); });
+    document.getElementById('holderCount').textContent = String(data.holders.length);
+    document.getElementById('holdersBody').innerHTML = list.slice(0, 40).map(function (h, idx) {
+      var share = data.totalHeld > 0 ? h.balance / data.totalHeld * 100 : 0;
+      var pend = h.pending || 0;
+      var badge = pend > 1e-9 ? '<span class="tag tag-pending">unlocking</span>' : '';
+      return '<tr class="row-btn" data-addr="' + h.address + '"><td>' + (idx + 1) + '</td><td><span class="mono">' + shortAddr(h.address) + '</span> ' + badge + '</td><td>' + fmt(h.balance) + ' TIG</td><td class="' + (pend > 0 ? 'c-yellow' : '') + '">' + (pend > 0 ? fmt(pend) + ' TIG' : '—') + '</td><td>' + share.toFixed(1) + '%</td><td>' + Math.floor((data.now - h.firstSeen) / 86400) + 'd</td></tr>';
+    }).join('') || '<tr><td colspan="6">None</td></tr>';
+  }
+
+  function openHolderDrawer(addr) {
+    var data = uiState.lastUiData;
+    if (!data || !addr) return;
+    var h = data.holders.find(function (x) { return x.address.toLowerCase() === addr.toLowerCase(); });
+    var events = data.sorted.filter(function (tx) { return String(tx.address).toLowerCase() === addr.toLowerCase(); }).slice(-30).reverse();
+    document.getElementById('drawerTitle').textContent = shortAddr(addr);
+    var meta = h
+      ? ('Locked <strong>' + fmt(h.balance) + ' TIG</strong> · pending <strong>' + fmt(h.pending || 0) + '</strong> · first lock ' + Math.floor((data.now - h.firstSeen) / 86400) + 'd ago')
+      : 'No active locked balance';
+    document.getElementById('drawerMeta').innerHTML = meta;
+    document.getElementById('drawerBody').innerHTML = events.map(function (tx) {
+      var t = normalizeType(tx.type);
+      return '<tr><td><span class="tag ' + typeTag(t) + '">' + typeLabel(t) + '</span></td><td>' + fmt2(tx.valueTig) + '</td><td>' + fullDate(tx.timestamp) + '</td></tr>';
+    }).join('') || '<tr><td colspan="3">No events</td></tr>';
+    document.getElementById('drawerLink').href = 'https://basescan.org/address/' + addr;
+    document.getElementById('drawerBg').classList.add('open');
+    document.getElementById('holderDrawer').classList.add('open');
+  }
+  function closeDrawer() {
+    document.getElementById('drawerBg').classList.remove('open');
+    document.getElementById('holderDrawer').classList.remove('open');
   }
 
   async function refreshAll() {
-    allTransactions = await db.all();
-    if (!allTransactions.length) return;
-
-    allTransactions.sort(function (a, b) { return (b.blockNumber || 0) - (a.blockNumber || 0); });
-
-    var totalStaked = 0, totalUnstaked = 0;
-    var stakersMap = {};
-
-    allTransactions.forEach(function (tx) {
-      var amt = parseFloat(tx.valueTig || tx.value || 0);
-      var userAddr = tx.address || tx.user || 'unknown';
-      var type = (tx.type || tx.event || '').toLowerCase();
-
-      if (type === 'lock' || type === 'tokenslocked') {
-        totalStaked += amt;
-        stakersMap[userAddr] = (stakersMap[userAddr] || 0) + amt;
-      } else if (type === 'withdraw' || type === 'tokenswithdrawn' || type === 'unlock') {
-        totalUnstaked += amt;
-        stakersMap[userAddr] = (stakersMap[userAddr] || 0) - amt;
-      }
-    });
-
-    var activeStakers = 0;
-    var holdersList = [];
-    Object.keys(stakersMap).forEach(function (a) {
-      if (stakersMap[a] > 0.001) {
-        activeStakers++;
-        holdersList.push({ address: a, balance: stakersMap[a] });
-      }
-    });
-
-    holdersList.sort(function(a,b){ return b.balance - a.balance; });
-
-    document.getElementById('totalStakedMetric').textContent = fmt(totalStaked) + ' TIG';
-    document.getElementById('totalUnstakedMetric').textContent = fmt(totalUnstaked) + ' TIG';
-    document.getElementById('activeStakersMetric').textContent = activeStakers.toLocaleString();
-    document.getElementById('totalTxsMetric').textContent = allTransactions.length.toLocaleString();
-    document.getElementById('txBadge').textContent = allTransactions.length.toLocaleString();
-
+    var data = await getStats();
+    if (!data) return;
+    uiState.lastUiData = data;
+    var st = data.stats;
+    document.getElementById('totalTx').textContent = data.storedTotal.toLocaleString();
     var lb = await db.meta('lastBlock');
-    document.getElementById('lastBlock').textContent = lb ? lb.toLocaleString() : '-';
+    document.getElementById('lastBlock').textContent = lb != null ? Number(lb).toLocaleString() : '-';
     var ls = await db.meta('lastSync');
     document.getElementById('lastSync').textContent = ls ? new Date(ls).toLocaleTimeString() : 'never';
-    document.getElementById('healthSentence').textContent = 'All ' + allTransactions.length.toLocaleString() + ' events active and synced.';
 
-    renderTable(allTransactions.slice(0, 50));
-    renderHolders(holdersList.slice(0, 50));
+    var level = data.spiLevel;
+    var health = document.getElementById('healthStrip');
+    health.className = 'health ' + level;
+    document.getElementById('healthEmoji').textContent = level === 'bullish' ? '🟢' : level === 'neutral' ? '🟡' : '🔴';
+    document.getElementById('healthTitle').textContent = level === 'bullish' ? 'Healthy staking pressure' : level === 'neutral' ? 'Elevated exit pressure' : 'High exit pressure';
+    
+    var sentence = st.net7 < 0 ? ('More unlocks than locks (7d). ~' + fmt(data.unlockBands.d7) + ' TIG can leave in 7d.') : ('More locks than unlocks (7d). ~' + fmt(data.unlockBands.d7) + ' TIG freeable in 7d.');
+    document.getElementById('healthSentence').textContent = sentence;
+
+    document.getElementById('net7d').textContent = fmtNet(st.net7) + ' TIG';
+    document.getElementById('net7d').className = 'v ' + (st.net7 >= 0 ? 'c-green' : 'c-red');
+    document.getElementById('net7dSub').textContent = '14d ' + fmtNet(st.net14) + ' · in ' + fmt(st.s7) + ' / out ' + fmt(st.u7);
+
+    document.getElementById('spiValue').textContent = data.spi;
+    document.getElementById('spiValue').className = 'value ' + (level === 'bullish' ? 'c-green' : level === 'neutral' ? 'c-yellow' : 'c-red');
+    document.getElementById('spiLabel').textContent = (level === 'bullish' ? 'Low' : level === 'neutral' ? 'Mid' : 'High') + (data.spiDrivers.length ? ' · ' + data.spiDrivers.join(', ') : '');
+    document.getElementById('spiCard').className = 'kpi spi ' + level;
+    document.getElementById('spiGauge').className = 'gauge ' + level;
+    document.getElementById('spiFill').style.width = data.spi + '%';
+
+    document.getElementById('unlock7d').textContent = fmt(data.unlockBands.d7) + ' TIG';
+    document.getElementById('unlock7dSub').textContent = '8–14d ' + fmt(data.unlockBands.d14) + ' · 15–28d ' + fmt(data.unlockBands.d28);
+    document.getElementById('uPillReady').textContent = fmt(st.pendingWithdrawable);
+    document.getElementById('uPill7').textContent = fmt(data.unlockBands.d7);
+    document.getElementById('uPill14').textContent = fmt(data.unlockBands.d14);
+    document.getElementById('uPill28').textContent = fmt(data.unlockBands.d28);
+    document.getElementById('lockedKpi').textContent = fmt(st.netStaked) + ' TIG';
+    document.getElementById('lockedSub').textContent = 'cooldown ' + fmt(st.pendingCooldown) + ' · ready ' + fmt(st.pendingWithdrawable);
+    document.getElementById('holdersKpi').textContent = st.activeHolders.toLocaleString();
+    document.getElementById('holdersSub').textContent = 'top10 ' + st.concentration.toFixed(1) + '% · 24h active ' + st.active24;
+
+    document.getElementById('funnelUnlock').textContent = fmt(st.u7) + ' TIG';
+    document.getElementById('funnelCooldown').textContent = fmt(st.pendingCooldown) + ' TIG';
+    document.getElementById('funnelWithdrawable').textContent = fmt(st.pendingWithdrawable) + ' TIG';
+    document.getElementById('funnelWithdraw').textContent = fmt(st.w7) + ' TIG';
+
+    document.getElementById('relock7').textContent = data.restakeRate7d.toFixed(1) + '%';
+    document.getElementById('relock14').textContent = data.restakeRate14d.toFixed(1) + '%';
+    document.getElementById('relock30').textContent = data.restakeRate30d.toFixed(1) + '%';
+
+    var near = document.getElementById('nearUnlockList');
+    var byDay = {};
+    data.unlockBars.slice(0, 3).forEach(function (b) { if (b.value > 0) byDay[b.day] = b.value; });
+    var nearHtml = '';
+    for (var nd = 0; nd < 3; nd++) {
+      var val = byDay[nd] || 0;
+      var label = nd === 0 ? 'Today' : nd === 1 ? 'Tomorrow' : 'In ' + nd + ' days';
+      nearHtml += '<div class="near-item"><span>' + label + '</span><strong class="' + (val > 0 ? 'c-yellow' : '') + '">' + fmt(val) + ' TIG</strong></div>';
+    }
+    near.innerHTML = nearHtml;
+
+    document.getElementById('flowSummary').textContent = '30d net ' + fmtNet(st.net30) + ' TIG · in ' + fmt(st.s30) + ' · unlock ' + fmt(st.u30) + ' · withdraw 7d ' + fmt(st.w7) + ' TIG';
+
+    uiState.activityRows = data.sorted.slice(-80).reverse();
+    document.getElementById('txBadge').textContent = String(Math.min(80, data.sorted.length));
+    renderActivity();
+    renderHoldersTable(data);
+
+    document.getElementById('cohortCount').textContent = String(data.cohorts.reduce(function (s, c) { return s + c.holderCount; }, 0));
+    document.getElementById('cohortBody').innerHTML = data.cohorts.map(function (c) {
+      var cls = c.netFlow7d >= 0 ? 'c-green' : 'c-red';
+      return '<tr><td><span class="tag tag-' + (c.key === 'diamond' ? 'diamond' : c.key) + '">' + c.label + '</span></td><td>' + c.holderCount + '</td><td>' + fmt(c.staked) + ' TIG</td><td>' + c.share.toFixed(1) + '%</td><td class="' + cls + '">' + fmtNet(c.netFlow7d) + '</td><td>-</td></tr>';
+    }).join('') || '<tr><td colspan="6">None</td></tr>';
+
+    document.getElementById('tierCount').textContent = String(data.tiers.reduce(function (s, t) { return s + t.holders; }, 0));
+    document.getElementById('tierBody').innerHTML = data.tiers.map(function (t) {
+      return '<tr><td>' + t.label + '</td><td>' + t.holders + '</td><td>' + fmt(t.staked) + ' TIG</td><td>' + t.share.toFixed(1) + '%</td><td class="' + (t.netFlow7d >= 0 ? 'c-green' : 'c-red') + '">' + fmtNet(t.netFlow7d) + '</td></tr>';
+    }).join('') || '<tr><td colspan="5">None</td></tr>';
+
+    document.getElementById('unstakeCount7d').textContent = String(data.unstakes7d.length);
+    document.getElementById('unstakes7dBody').innerHTML = data.unstakes7d.length ? data.unstakes7d.map(function (tx) {
+      return '<tr><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a></td><td class="c-yellow">' + fmt2(tx.valueTig) + ' TIG</td><td>' + ago(tx.timestamp) + '</td><td>' + fullDate(tx._withdrawableTime) + '</td><td>-</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
+    }).join('') : '<tr><td colspan="6" class="c-green">No unlocks in 7d</td></tr>';
+
+    document.getElementById('unlockCount').textContent = String(data.unlocks.length);
+    document.getElementById('unlocksBody').innerHTML = data.unlocks.length ? data.unlocks.slice(0, 30).map(function (tx) {
+      var rem = tx.unlockTime - data.now;
+      var cd = rem < 86400 ? Math.floor(rem / 3600) + 'h' : Math.floor(rem / 86400) + 'd';
+      return '<tr><td>' + fullDate(tx.unlockTime) + '</td><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a></td><td>' + fmt2(tx.valueTig) + ' TIG</td><td>in ' + cd + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
+    }).join('') : '<tr><td colspan="5" class="c-green">No open pending</td></tr>';
+
+    drawCharts(data);
   }
 
-  function renderTable(txs) {
-    var tbody = document.getElementById('txTableBody');
-    tbody.innerHTML = '';
-
-    txs.forEach(function (tx) {
-      var addr = tx.address || tx.user || '0x0000000000000000000000000000000000000000';
-      var formattedAddr = shortAddr(addr);
-      var type = tx.type || tx.event || 'lock';
-      var amt = tx.valueTig ? fmt(tx.valueTig) : (tx.value ? fmt(parseFloat(tx.value)) : '0.00');
-      var hash = tx.hash || tx.transactionHash || '#';
-
-      var tr = document.createElement('tr');
-      tr.innerHTML = 
-        '<td><span class="tag tag-' + type + '">' + type + '</span></td>' +
-        '<td><a class="mono" href="https://basescan.org/address/' + addr + '" target="_blank">' + formattedAddr + '</a></td>' +
-        '<td><strong>' + amt + '</strong></td>' +
-        '<td>' + (tx.blockNumber || '-') + '</td>' +
-        '<td><a href="https://basescan.org/tx/' + hash + '" target="_blank">View</a></td>';
-      tbody.appendChild(tr);
-    });
-  }
-
-  function renderHolders(holders) {
-    var tbody = document.getElementById('holdersBody');
-    tbody.innerHTML = '';
-    holders.forEach(function (h, idx) {
-      var tr = document.createElement('tr');
-      tr.innerHTML = 
-        '<td>' + (idx + 1) + '</td>' +
-        '<td><a class="mono" href="https://basescan.org/address/' + h.address + '" target="_blank">' + shortAddr(h.address) + '</a></td>' +
-        '<td><strong>' + fmt(h.balance) + ' TIG</strong></td>';
-      tbody.appendChild(tr);
-    });
-  }
-
-  window.filterTable = function () {
-    var query = document.getElementById('searchInput').value.toLowerCase();
-    var filtered = allTransactions.filter(function (tx) {
-      var a = tx.address || tx.user || '';
-      var h = tx.hash || tx.transactionHash || '';
-      return a.toLowerCase().includes(query) || h.toLowerCase().includes(query);
-    });
-    renderTable(filtered.slice(0, 50));
-  };
-
-  function inspectWallet(addr) {
-    if (!addr) return;
+  function computeWalletHistory(addr, sortedTxs) {
+    if (!addr || !sortedTxs) return null;
     var target = addr.toLowerCase();
-    var userTxs = allTransactions.filter(function (tx) {
-      var a = tx.address || tx.user || '';
-      return a.toLowerCase() === target;
+    var userTxs = sortedTxs.filter(function (tx) { return String(tx.address || tx.user || '').toLowerCase() === target; });
+    if (!userTxs.length) return null;
+
+    var curStaked = 0, curPending = 0, totalWithdrawn = 0, peakBal = 0, peakTime = userTxs[0].timestamp;
+    var timeline = [];
+
+    userTxs.forEach(function (tx) {
+      var v = Number(tx.valueTig) || 0;
+      var t = normalizeType(tx.type);
+      if (t === 'lock' || t === 'claim' || t === 'relock') {
+        curStaked += v;
+        if (t === 'relock') curPending = Math.max(0, curPending - v);
+      } else if (t === 'unlock') {
+        curStaked = Math.max(0, curStaked - v);
+        curPending += v;
+      } else if (t === 'withdraw') {
+        curPending = Math.max(0, curPending - v);
+        totalWithdrawn += v;
+      }
+      if (curStaked > peakBal) {
+        peakBal = curStaked;
+        peakTime = tx.timestamp;
+      }
+      timeline.push({ ts: tx.timestamp, staked: curStaked, type: t, value: v, tx: tx });
     });
 
+    return {
+      address: addr, userTxs: userTxs, curStaked: curStaked, curPending: curPending,
+      totalWithdrawn: totalWithdrawn, peakBal: peakBal, peakTime: peakTime,
+      firstSeen: userTxs[0].timestamp, timeline: timeline
+    };
+  }
+
+  function renderInspector(addr) {
+    var data = uiState.lastUiData;
+    if (!data || !addr) return;
+    var res = computeWalletHistory(addr, data.sorted);
     var main = document.getElementById('inspMain');
-    main.classList.remove('hidden');
+    var empty = document.getElementById('inspEmpty');
 
-    var staked = 0, withdrawn = 0;
-    userTxs.forEach(function (tx) {
-      var amt = parseFloat(tx.valueTig || tx.value || 0);
-      var type = (tx.type || tx.event || '').toLowerCase();
-      if (type === 'lock' || type === 'tokenslocked') staked += amt;
-      if (type === 'withdraw' || type === 'tokenswithdrawn') withdrawn += amt;
-    });
+    if (!res) {
+      if (main) main.classList.add('hidden');
+      if (empty) empty.classList.remove('hidden');
+      return;
+    }
 
-    document.getElementById('inspActive').textContent = fmt(staked) + ' TIG';
-    document.getElementById('inspTotalWithdrawn').textContent = fmt(withdrawn) + ' TIG';
-    document.getElementById('inspTxCount').textContent = userTxs.length;
+    if (empty) empty.classList.add('hidden');
+    if (main) main.classList.remove('hidden');
 
-    var tbody = document.getElementById('inspTableBody');
-    tbody.innerHTML = '';
-    userTxs.forEach(function (tx) {
-      var amt = tx.valueTig ? fmt(tx.valueTig) : fmt(parseFloat(tx.value || 0));
-      var type = tx.type || tx.event || 'lock';
-      var hash = tx.hash || tx.transactionHash || '#';
+    document.getElementById('inspActive').textContent = fmt(res.curStaked) + ' TIG';
+    document.getElementById('inspPeakBal').textContent = fmt(res.peakBal) + ' TIG';
+    document.getElementById('inspTotalWithdrawn').textContent = fmt(res.totalWithdrawn) + ' TIG';
+    document.getElementById('inspPending').textContent = 'Pending: ' + fmt(res.curPending) + ' TIG';
+    document.getElementById('inspLifetime').textContent = Math.floor((data.now - res.firstSeen) / 86400) + ' days';
+    document.getElementById('inspTxCount').textContent = res.userTxs.length + ' events';
 
-      var tr = document.createElement('tr');
-      tr.innerHTML = 
-        '<td><span class="tag tag-' + type + '">' + type + '</span></td>' +
-        '<td><strong>' + amt + ' TIG</strong></td>' +
-        '<td>' + (tx.blockNumber || '-') + '</td>' +
-        '<td><a href="https://basescan.org/tx/' + hash + '" target="_blank">View</a></td>';
-      tbody.appendChild(tr);
-    });
+    var chartLabels = res.timeline.map(function(pt){ return chartDate(pt.ts); });
+    var chartData = res.timeline.map(function(pt){ return pt.staked; });
+
+    makeChart('chartInspector', 'line', chartLabels, [{
+      label: 'Staked TIG Balance', data: chartData, borderColor: '#a855f7', backgroundColor: 'rgba(168,85,247,.1)', fill: true, tension: 0.1, pointRadius: 2
+    }]);
+
+    document.getElementById('inspBadge').textContent = String(res.userTxs.length);
+    document.getElementById('inspTableBody').innerHTML = res.userTxs.slice().reverse().map(function(tx){
+      var t = normalizeType(tx.type);
+      var wt = (t === 'unlock' && tx.withdrawableTime) ? fullDate(tx.withdrawableTime) : '—';
+      return '<tr><td><span class="tag ' + typeTag(t) + '">' + typeLabel(t) + '</span></td><td style="font-weight:700">' + fmt2(tx.valueTig) + ' TIG</td><td>' + fullDate(tx.timestamp) + '</td><td>' + (tx.blockNumber || '-') + '</td><td>' + wt + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
+    }).join('');
   }
 
   function bindUI() {
-    document.getElementById('fastBtn').onclick = fastSync;
-    document.getElementById('inspBtn').onclick = function () { inspectWallet(document.getElementById('inspInput').value.trim()); };
-
+    document.getElementById('fastBtn').onclick = function () { fastSync(); };
+    
     Array.prototype.forEach.call(document.querySelectorAll('.tab-btn'), function (btn) {
       btn.onclick = function () {
         var tab = btn.getAttribute('data-tab');
@@ -502,37 +1277,68 @@ a{color:var(--accent);text-decoration:none}
         Array.prototype.forEach.call(document.querySelectorAll('.tab-panel'), function (p) { p.classList.toggle('active', p.id === 'tab-' + tab); });
       };
     });
+
+    Array.prototype.forEach.call(document.querySelectorAll('#txChips .chip'), function (chip) {
+      chip.onclick = function () {
+        uiState.txFilter = chip.getAttribute('data-filter');
+        Array.prototype.forEach.call(document.querySelectorAll('#txChips .chip'), function (c) { c.classList.toggle('active', c === chip); });
+        renderActivity();
+      };
+    });
+
+    document.getElementById('holdersBody').onclick = function (e) {
+      var tr = e.target.closest('tr[data-addr]');
+      if (tr) openHolderDrawer(tr.getAttribute('data-addr'));
+    };
+    document.getElementById('drawerClose').onclick = closeDrawer;
+    document.getElementById('drawerBg').onclick = closeDrawer;
+
+    var inspBtn = document.getElementById('inspBtn');
+    if (inspBtn) {
+      inspBtn.onclick = function() {
+        var addr = document.getElementById('inspInput').value.trim();
+        if (addr) renderInspector(addr);
+      };
+    }
   }
 
   async function init() {
     bindUI();
     try { document.documentElement.setAttribute('data-theme', localStorage.getItem('tig-theme') || 'dark'); } catch (e) {}
 
+    if (typeof ethers === 'undefined') {
+      document.getElementById('syncStatus').textContent = 'Failed to load ethers.js';
+      setDot('dot-red');
+      return;
+    }
+
     try {
       await db.open();
-      
-      // 1. Dociągnięcie snapshotu z data.json z GitHub Pages w ułamku sekundy
+
+      // Dociągnięcie snapshotu z data.json z GitHub Pages w ułamku sekundy
       await autoPreload();
 
-      var count = await db.count();
-      if (count > 0) {
-        document.getElementById('syncStatus').textContent = 'Loaded ' + count.toLocaleString() + ' txs';
+      var c = await db.count();
+      if (c > 0) {
+        document.getElementById('syncStatus').textContent = 'Loaded ' + c.toLocaleString() + ' txs';
+        document.getElementById('syncModeBadge').textContent = 'Loaded';
         setDot('dot-green');
         await refreshAll();
       }
 
-      // 2. Dociągnięcie najświeższych bloków z RPC w tle
+      // Szybka synchronizacja najświeższych bloków z RPC w tle
       fastSync();
     } catch (err) {
       console.error(err);
-      document.getElementById('syncStatus').textContent = 'DB Error';
+      document.getElementById('syncStatus').textContent = 'DB error';
       setDot('dot-red');
     }
 
-    setInterval(function () { if (!syncing) fastSync(); }, C.INTERVAL);
+    setInterval(function () {
+      if (!syncing) fastSync();
+    }, C.INTERVAL);
   }
 
-  window.toggleTheme = toggleTheme;
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();
