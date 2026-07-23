@@ -295,9 +295,12 @@
       },
       async add(items) {
         return new Promise((resolve, reject) => {
+          if (!items || items.length === 0) return resolve();
           const tx = dbInstance.transaction(['txs'], 'readwrite');
           const store = tx.objectStore('txs');
-          items.forEach(item => store.put(item));
+          for (let i = 0; i < items.length; i++) {
+            store.put(items[i]);
+          }
           tx.oncomplete = () => resolve();
           tx.onerror = (e) => reject(e.target.error);
         });
@@ -357,7 +360,7 @@
 
     async function autoPreload() {
       try {
-        const res = await fetch('./data.json?t=' + Date.now());
+        const res = await fetch('./data.json');
         if (!res.ok) return;
         const serverData = await res.json();
         
@@ -367,9 +370,8 @@
         if (serverLastBlock > localLastBlock) {
           document.getElementById('syncStatus').textContent = 'Loading snapshot from server...';
           const txs = serverData.transactions || [];
-          for (let i = 0; i < txs.length; i += 1000) {
-            await db.add(txs.slice(i, i + 1000));
-          }
+          await db.add(txs);
+
           if (serverData.metadata.lastBlock != null) await db.setMeta('lastBlock', serverData.metadata.lastBlock);
           if (serverData.metadata.lastSync != null) await db.setMeta('lastSync', serverData.metadata.lastSync);
         }
