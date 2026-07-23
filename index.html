@@ -398,7 +398,6 @@ a{color:var(--accent);text-decoration:none}
       </div>
     </div>
 
-    <!-- Support & Donation Footer -->
     <footer style="margin-top:24px;padding:16px 0 8px;border-top:1px solid var(--border);text-align:center;font-size:12px;color:var(--text2);">
       <div style="display:inline-flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;background:var(--card);border:1px solid var(--border);padding:10px 16px;border-radius:12px;">
         <span>Enjoying this dashboard and want to support its development? Send 1 TIG to:</span>
@@ -428,7 +427,6 @@ a{color:var(--accent);text-decoration:none}
   <p style="margin-top:12px"><a id="drawerLink" target="_blank" rel="noopener">Open on Basescan</a></p>
 </aside>
 
-<!-- hidden compat for any external hooks -->
 <button type="button" id="toggleDetails" class="hidden" tabindex="-1" aria-hidden="true"></button>
 <div id="detailsPanel" class="hidden"></div>
 
@@ -476,7 +474,7 @@ a{color:var(--accent);text-decoration:none}
     COHORT_MEDIUM: 30,
     DORMANCY_DAYS: 90,
     MAX_BATCH_RETRIES: 10,
-    SNAPSHOT_CHUNK: 2000  // chunk size for snapshot IndexedDB writes
+    SNAPSHOT_CHUNK: 2000
   };
 
   var LOCKER_ABI = [
@@ -555,7 +553,7 @@ a{color:var(--accent);text-decoration:none}
   }
 
   // ────────────────────────────
-  //  IndexedDB wrapper (optimized)
+  //  IndexedDB wrapper
   // ────────────────────────────
   function DB() { this.db = null; this._opening = null; }
   DB.prototype.open = function () {
@@ -601,10 +599,8 @@ a{color:var(--accent);text-decoration:none}
     });
   };
 
-  // ---- optimized add: routes small batches to one-shot, large batches to chunked ----
   DB.prototype.add = function (items) {
     if (!items || !items.length) return Promise.resolve(0);
-    // For RPC scan batches (< 4000 items) use fast single-transaction path
     if (items.length <= 4000) {
       return this.open().then(function (db) {
         return new Promise(function (resolve, reject) {
@@ -616,11 +612,9 @@ a{color:var(--accent);text-decoration:none}
         });
       });
     }
-    // Large snapshot → chunked writes
     return this.addChunked(items, C.SNAPSHOT_CHUNK);
   };
 
-  // ---- CHUNKED INSERT – the key optimization ----
   DB.prototype.addChunked = function (items, chunkSize, onProgress) {
     if (!items || !items.length) return Promise.resolve(0);
     chunkSize = chunkSize || C.SNAPSHOT_CHUNK;
@@ -642,7 +636,6 @@ a{color:var(--accent);text-decoration:none}
       }).then(function (n) {
         inserted += n;
         if (onProgress) onProgress(inserted, total);
-        // Yield to event loop between chunks – lets GC breathe & progress bar update
         return new Promise(function (r) { setTimeout(r, 8); })
           .then(function () { return insertChunk(offset + chunkSize); });
       });
@@ -728,7 +721,7 @@ a{color:var(--accent);text-decoration:none}
     var d = new Date(ts * 1000);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + " '" + String(d.getFullYear()).slice(-2);
   }
-  function dayGroupLabel(ts, now) {
+  function dayGroupLabel(ts) {
     var d0 = new Date(); d0.setHours(0, 0, 0, 0);
     var t0 = Math.floor(d0.getTime() / 1000);
     if (ts >= t0) return 'Today';
@@ -1010,12 +1003,24 @@ a{color:var(--accent);text-decoration:none}
         }
         currentBatchSize = batchSize;
         setProgress(((s - start) / total) * 100, 'RPC: ' + msg.slice(0, 90) + ' · retry ' + consecutiveFails + ' · batch ' + batchSize, mode);
+
+        // CRITICAL FIX: never skip block ranges — that creates permanent holes.
+        // Keep lastBlock at lastOk (last successful end). Stop sync so next run retries.
+        if (consecutiveFails >= C.MAX_BATCH_RETRIES) {
+          if (lastOk >= start - 1 && lastOk >= C.FIRST_BLOCK - 1) {
+            await db.setMeta('lastBlock', lastOk);
+          }
+          document.getElementById('syncStatus').textContent =
+            'Sync paused @ ' + Math.max(lastOk, 0).toLocaleString() + ' (RPC retries exceeded, will retry later)';
+          setDot('dot-yellow');
+          document.getElementById('syncModeBadge').textContent = 'Retry later';
+          console.warn('scanBlocks stopping to avoid hole. lastOk=', lastOk, 'failed range', s, e, msg);
+          return false;
+        }
+
         var backoff = rate
           ? Math.min(20000, 2500 * Math.pow(1.6, Math.min(consecutiveFails, 6)))
           : Math.min(12000, 800 * Math.pow(1.7, Math.min(consecutiveFails, 6)));
-        if (consecutiveFails >= C.MAX_BATCH_RETRIES) {
-          lastOk = e; await db.setMeta('lastBlock', e); s = e + 1; consecutiveFails = 0; continue;
-        }
         await sleep(backoff);
       }
     }
@@ -1024,79 +1029,130 @@ a{color:var(--accent);text-decoration:none}
     return true;
   }
 
-  // ────────────────────────────────────────
-  //  OPTIMIZED snapshot loader (chunked IDB)
-  // ────────────────────────────────────────
-  async function loadSnapshotIfEmpty() {
-    var c = await db.count();
-    if (c === 0) {
-      var statusEl = document.getElementById('syncStatus');
-      statusEl.textContent = 'Loading data.json snapshot...';
-      setProgress(2, 'Downloading snapshot...', 'fast');
-      try {
-        var res = await fetch('./data.json?t=' + Date.now());
-        if (res.ok) {
-          setProgress(25, 'Reading snapshot data...', 'fast');
-          var d = await res.json();
+  // ────────────────────────────────────────────────
+  //  DYNAMIC snapshot loader
+  //  Compares against LAST APPLIED SNAPSHOT meta,
+  //  NOT against live db.count() (which includes RPC txs).
+  // ────────────────────────────────────────────────
+  async function loadSnapshotIfNeeded() {
+    var statusEl = document.getElementById('syncStatus');
+    try {
+      var res = await fetch('./data.json?t=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) return false;
 
-          var txList = Array.isArray(d) ? d : (d && d.transactions ? d.transactions : null);
-          if (txList && txList.length) {
-            setProgress(35, 'Normalizing ' + txList.length.toLocaleString() + ' records...', 'fast');
+      var d = await res.json();
+      var txList = Array.isArray(d) ? d : (d && d.transactions ? d.transactions : null);
+      if (!txList || !txList.length) return false;
 
-            // Extract metadata BEFORE we mutate/invalidate `d`
-            var snapMeta = d && d.metadata ? d.metadata : null;
-            var snapLastBlock = snapMeta && snapMeta.lastBlock != null ? Number(snapMeta.lastBlock) : 0;
-            var snapLastSync = snapMeta && snapMeta.lastSync != null ? Number(snapMeta.lastSync) : 0;
+      var snapMeta = d && d.metadata ? d.metadata : null;
+      var snapLastBlockMeta = snapMeta && snapMeta.lastBlock != null ? Number(snapMeta.lastBlock) : 0;
+      var snapLastSync = snapMeta && snapMeta.lastSync != null ? Number(snapMeta.lastSync) : 0;
+      var snapVersion = snapMeta && snapMeta.version != null ? String(snapMeta.version) : '';
 
-            var maxBlock = 0, maxTime = 0;
-
-            // Normalize in-place (no Object.assign – saves memory & time)
-            for (var i = 0; i < txList.length; i++) {
-              var o = txList[i];
-              o.id = o.id || ((o.hash || 'x') + '-' + (o.logIndex != null ? o.logIndex : i));
-              if (o.valueTig == null && o.value != null) o.valueTig = valueToTig(o.value);
-              if (o.type === 'stake') o.type = 'lock';
-              if (o.type === 'unstake') o.type = 'withdraw';
-              if (o.type === 'unlock' && !o.withdrawableTime) o.withdrawableTime = (o.timestamp || 0) + pendingPeriodSec;
-              o.blacklisted = isBlacklisted(o.address) ? 1 : 0;
-
-              var bn = Number(o.blockNumber) || 0;
-              if (bn > maxBlock) maxBlock = bn;
-              var ts = Number(o.timestamp) || 0;
-              if (ts > maxTime) maxTime = ts;
-            }
-
-            setProgress(42, 'Writing to IndexedDB (chunked)...', 'fast');
-
-            // ── KEY: chunked write with live progress ──
-            var totalCount = txList.length;
-            await db.addChunked(txList, C.SNAPSHOT_CHUNK, function (done, total) {
-              var pct = 42 + (done / total) * 50; // 42% → 92%
-              setProgress(pct, 'Importing snapshot ' + done.toLocaleString() + ' / ' + total.toLocaleString() + ' records', 'fast');
-            });
-
-            // Free memory
-            d = null;
-            txList = null;
-
-            setProgress(94, 'Saving metadata...', 'fast');
-
-            // Determine final block & sync time
-            var lastBlock = snapLastBlock > 0 ? snapLastBlock : maxBlock;
-            var lastSync = snapLastSync > 0 ? snapLastSync : (maxTime ? maxTime * 1000 : Date.now());
-
-            if (lastBlock > 0) await db.setMeta('lastBlock', lastBlock);
-            if (lastSync > 0) await db.setMeta('lastSync', lastSync);
-
-            setProgress(100, 'Snapshot ready: ' + totalCount.toLocaleString() + ' transactions', 'fast');
-            console.log('Snapshot loaded:', totalCount, 'transactions. Last block set to:', lastBlock);
-          }
-        }
-      } catch (e) {
-        console.warn('Could not load data.json snapshot:', e);
+      // Full scan of snapshot — NO artificial limit (loads ALL records)
+      var maxBlock = 0, maxTime = 0, i;
+      for (i = 0; i < txList.length; i++) {
+        var bn0 = Number(txList[i].blockNumber) || 0;
+        if (bn0 > maxBlock) maxBlock = bn0;
+        var ts0 = Number(txList[i].timestamp) || 0;
+        if (ts0 > maxTime) maxTime = ts0;
       }
+
+      // End of contiguous snapshot coverage.
+      // Prefer metadata.lastBlock when present (may be > max tx block if trailing empty blocks).
+      var snapEndBlock = Math.max(snapLastBlockMeta || 0, maxBlock || 0);
+      var snapSignature = [
+        txList.length,
+        snapEndBlock,
+        maxTime,
+        snapVersion
+      ].join('|');
+
+      var prevSignature = await db.meta('snapshotSig');
+      var prevSnapCount = Number(await db.meta('snapshotCount')) || 0;
+      var prevSnapBlock = Number(await db.meta('snapshotLastBlock')) || 0;
+      var dbCount = await db.count();
+
+      // Apply when:
+      //  - DB empty
+      //  - never applied any snapshot yet (migration from old code)
+      //  - data.json grew vs last *applied snapshot* (count or end block)
+      //  - snapshot signature changed to a strictly newer one
+      // NEVER compare txList.length to live dbCount (RPC adds txs → false negatives / gaps).
+      var shouldApply = false;
+      if (dbCount === 0) {
+        shouldApply = true;
+      } else if (!prevSignature) {
+        // First run after upgrade: merge full snapshot once to catch any newer file.
+        shouldApply = true;
+      } else if (prevSignature === snapSignature) {
+        shouldApply = false;
+      } else if (txList.length > prevSnapCount || snapEndBlock > prevSnapBlock) {
+        shouldApply = true;
+      } else if (snapVersion && prevSignature.indexOf(snapVersion) < 0 && snapEndBlock >= prevSnapBlock) {
+        shouldApply = true;
+      }
+
+      if (!shouldApply) {
+        console.log('Snapshot up-to-date:', snapSignature, 'dbCount=', dbCount, 'prev=', prevSignature);
+        return false;
+      }
+
+      statusEl.textContent = 'Updating from data.json snapshot...';
+      setProgress(5, 'Checking snapshot data (' + txList.length.toLocaleString() + ' records)...', 'fast');
+
+      for (i = 0; i < txList.length; i++) {
+        var o = txList[i];
+        o.id = o.id || ((o.hash || 'x') + '-' + (o.logIndex != null ? o.logIndex : i));
+        if (o.valueTig == null && o.value != null) o.valueTig = valueToTig(o.value);
+        if (o.type === 'stake') o.type = 'lock';
+        if (o.type === 'unstake') o.type = 'withdraw';
+        if (o.type === 'unlock' && !o.withdrawableTime) o.withdrawableTime = (o.timestamp || 0) + pendingPeriodSec;
+        o.blacklisted = isBlacklisted(o.address) ? 1 : 0;
+      }
+
+      setProgress(30, 'Writing snapshot to IndexedDB...', 'fast');
+
+      // put() upsert by id → merges new snapshot rows without dropping live RPC rows
+      await db.addChunked(txList, C.SNAPSHOT_CHUNK, function (done, total) {
+        var pct = 30 + (done / total) * 60;
+        setProgress(pct, 'Importing snapshot ' + done.toLocaleString() + ' / ' + total.toLocaleString() + ' records', 'fast');
+      });
+
+      var currentStoredBlock = Number(await db.meta('lastBlock')) || 0;
+      // Advance resume pointer only forward. Never shrink live progress.
+      var lastBlock = Math.max(currentStoredBlock, snapEndBlock);
+      var currentLastSync = Number(await db.meta('lastSync')) || 0;
+      var lastSync = snapLastSync > 0 ? snapLastSync : (maxTime ? maxTime * 1000 : Date.now());
+
+      if (lastBlock > 0) await db.setMeta('lastBlock', lastBlock);
+      if (lastSync > currentLastSync) await db.setMeta('lastSync', lastSync);
+
+      await db.setMeta('snapshotSig', snapSignature);
+      await db.setMeta('snapshotCount', txList.length);
+      await db.setMeta('snapshotLastBlock', snapEndBlock);
+
+      setProgress(
+        100,
+        'Snapshot ready: ' + txList.length.toLocaleString() + ' records · resume block ' + lastBlock.toLocaleString(),
+        'fast'
+      );
+      console.log(
+        'Snapshot applied:', snapSignature,
+        '| resume lastBlock=', lastBlock,
+        '| previous dbCount=', dbCount,
+        '| prevSnap=', prevSignature
+      );
+      invalidateCache();
+      return true;
+    } catch (e) {
+      console.warn('Could not load data.json snapshot:', e);
+      return false;
     }
   }
+
+  // Back-compat alias
+  async function loadSnapshotIfEmpty() { return loadSnapshotIfNeeded(); }
 
   async function runSync(mode) {
     if (syncing) return;
@@ -1106,7 +1162,8 @@ a{color:var(--accent);text-decoration:none}
     document.getElementById('syncStatus').textContent = mode === 'fast' ? 'Fast sync…' : 'Full sync…';
     try {
       await db.open();
-      await loadSnapshotIfEmpty();
+      // Always check data.json first — may have grown since last visit
+      await loadSnapshotIfNeeded();
       buildIface();
 
       var c0 = await db.count();
@@ -1139,6 +1196,11 @@ a{color:var(--accent);text-decoration:none}
         setProgress(100, 'Done', mode);
         await refreshAll({ skipCharts: false });
       } else if (stopReq) {
+        invalidateCache();
+        await refreshAll({ skipCharts: false });
+      } else {
+        // paused due to retries — keep partial data visible, retry later via interval
+        await db.setMeta('lastSync', Date.now());
         invalidateCache();
         await refreshAll({ skipCharts: false });
       }
@@ -2066,7 +2128,7 @@ a{color:var(--accent);text-decoration:none}
     try {
       buildIface();
       await db.open();
-      await loadSnapshotIfEmpty();
+      await loadSnapshotIfNeeded();
       var c = await db.count();
       if (c > 0) {
         document.getElementById('syncStatus').textContent = 'Loaded ' + c.toLocaleString() + ' txs';
@@ -2091,6 +2153,7 @@ a{color:var(--accent);text-decoration:none}
     updateCountdown();
   }
   window.fastSync = fastSync;
+  window.loadSnapshotIfNeeded = loadSnapshotIfNeeded;
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();
