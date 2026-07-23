@@ -114,6 +114,7 @@ a{color:var(--accent);text-decoration:none}
 .tag-medium{background:rgba(234,179,8,.16);color:#facc15}
 .tag-short{background:rgba(239,68,68,.16);color:#f87171}
 .tag-pending{background:rgba(234,179,8,.16);color:#facc15;margin-left:4px}
+.tag-foundation{background:rgba(168,85,247,.25);color:#d8b4fe;border:1px solid rgba(168,85,247,.4);margin-left:4px}
 .tip,.th-tip{display:inline-flex;align-items:center;justify-content:center;cursor:help;position:relative}
 .tip{width:15px;height:15px;border-radius:50%;font-size:10px;font-weight:800;color:var(--text2);border:1px solid rgba(110,168,254,.35);background:rgba(110,168,254,.12);flex-shrink:0}
 .th-tip{border-bottom:1px dotted rgba(154,163,181,.55);color:inherit;font:inherit;text-transform:inherit;letter-spacing:inherit}
@@ -437,6 +438,14 @@ a{color:var(--accent);text-decoration:none}
     TIG: '0x0C03Ce270B4826Ec62e7DD007f0B716068639F7B',
     STAKE: '0x9f6b29e498ef6bee4a050fa1f29c31dbe6c6aef4',
     BLACKLIST: ['0x30FeC1f3690F3207d1A239dB392f62C9CD1deF3F'],
+    FOUNDATION_WALLETS: [
+      '0xb787d8059689402dabc0a05832be526f79aa6b57',
+      '0x7a1478b4eb84390c1b87b647cfde53ba280d1795',
+      '0x29730d102eb159525111ac2d63532095e710c7d7',
+      '0x998e22f53ff7d1aeb29fbeaa155376aceba77bbf',
+      '0x0bf860653e4a21553d9507dde3f9e59c88e8514a',
+      '0x97478e3ea8461aae3c5f5dbe30fe19ab4bfaee0c'
+    ],
     RPCS: [
       'https://mainnet.base.org',
       'https://base.llamarpc.com',
@@ -490,6 +499,10 @@ a{color:var(--accent);text-decoration:none}
   var BLACKLIST = {};
   C.BLACKLIST.forEach(function (a) { BLACKLIST[String(a).toLowerCase()] = true; });
   function isBlacklisted(addr) { return !!(addr && BLACKLIST[String(addr).toLowerCase()]); }
+
+  var FOUNDATION = {};
+  C.FOUNDATION_WALLETS.forEach(function (a) { FOUNDATION[String(a).toLowerCase()] = true; });
+  function isFoundation(addr) { return !!(addr && FOUNDATION[String(addr).toLowerCase()]); }
 
   var TIERS = [
     { key: 'shrimp', label: '<100', min: 0, max: 100 },
@@ -1246,9 +1259,16 @@ a{color:var(--accent);text-decoration:none}
       totalStakedSeries.push({ ts: tx.timestamp, val: runningGlobalStaked });
     }
 
-    var holderEntries = [], totalHeld = 0;
+    var holderEntries = [], totalHeld = 0, foundationHoldersCount = 0, foundationStakedTotal = 0;
     holders.forEach(function (bal, a3) {
-      if (bal > 1e-12 && !isBlacklisted(a3)) { holderEntries.push([a3, bal]); totalHeld += bal; }
+      if (bal > 1e-12 && !isBlacklisted(a3)) {
+        holderEntries.push([a3, bal]);
+        totalHeld += bal;
+        if (isFoundation(a3)) {
+          foundationHoldersCount++;
+          foundationStakedTotal += bal;
+        }
+      }
     });
     var netStaked = totalHeld, totalPendingOpen = 0, pendingCooldown = 0, pendingWithdrawable = 0;
     openPending.forEach(function (lots) {
@@ -1381,7 +1401,7 @@ a{color:var(--accent);text-decoration:none}
     if (spiWh >= 4) drivers.push('whales');
 
     var holdersMeta = holderEntries.map(function (e) {
-      return { address: e[0], balance: e[1], firstSeen: firstSeen.get(e[0]) || now, txCount: txCount.get(e[0]) || 0, tier: tierOf(e[1]).label, pending: pendingBal.get(e[0]) || 0 };
+      return { address: e[0], balance: e[1], firstSeen: firstSeen.get(e[0]) || now, txCount: txCount.get(e[0]) || 0, tier: tierOf(e[1]).label, pending: pendingBal.get(e[0]) || 0, isFoundation: isFoundation(e[0]) };
     });
 
     var days30 = [];
@@ -1402,7 +1422,9 @@ a{color:var(--accent);text-decoration:none}
         net7: s7 - u7, net14: s14 - u14, net30: s30 - u30,
         totalStakers: ever.size, activeHolders: holderEntries.length, active24: seen24.size,
         concentration: totalHeld > 0 ? top10.reduce(function (s, x) { return s + x[1]; }, 0) / totalHeld * 100 : 0,
-        withdrawTotal: withdrawTotal, relockTotal: relockTotal
+        withdrawTotal: withdrawTotal, relockTotal: relockTotal,
+        foundationHoldersCount: foundationHoldersCount,
+        foundationStakedTotal: foundationStakedTotal
       },
       spi: spi, spiLevel: spiLevel, spiDrivers: drivers, holders: holdersMeta, totalHeld: totalHeld,
       cohorts: cohortData, tiers: tierData,
@@ -1507,8 +1529,9 @@ a{color:var(--accent);text-decoration:none}
           wd = fullDate(wt) + ' · in ' + cd;
         } else if (wt) wd = fullDate(wt);
       }
+      var fTag = isFoundation(tx.address) ? '<span class="tag tag-foundation">Foundation</span>' : '';
       var amtCls = (Number(tx.valueTig) || 0) >= uiState.largeThreshold ? ' style="font-weight:750"' : '';
-      html += '<tr><td><span class="tag ' + typeTag(t) + '">' + typeLabel(t) + '</span></td><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a></td><td' + amtCls + '>' + fmt2(tx.valueTig) + ' TIG</td><td>' + ago(tx.timestamp) + '</td><td>' + wd + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
+      html += '<tr><td><span class="tag ' + typeTag(t) + '">' + typeLabel(t) + '</span></td><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a>' + fTag + '</td><td' + amtCls + '>' + fmt2(tx.valueTig) + ' TIG</td><td>' + ago(tx.timestamp) + '</td><td>' + wd + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
     });
     body.innerHTML = html;
   }
@@ -1524,7 +1547,8 @@ a{color:var(--accent);text-decoration:none}
       var share = data.totalHeld > 0 ? h.balance / data.totalHeld * 100 : 0;
       var pend = h.pending || 0;
       var badge = pend > 1e-9 ? '<span class="tag tag-pending">unlocking</span>' : '';
-      return '<tr class="row-btn" data-addr="' + h.address + '"><td>' + (idx + 1) + '</td><td><span class="mono">' + shortAddr(h.address) + '</span> ' + badge + '</td><td>' + fmt(h.balance) + ' TIG</td><td class="' + (pend > 0 ? 'c-yellow' : '') + '">' + (pend > 0 ? fmt(pend) + ' TIG' : '—') + '</td><td>' + share.toFixed(1) + '%</td><td>' + Math.floor((data.now - h.firstSeen) / 86400) + 'd</td></tr>';
+      var fTag = h.isFoundation ? '<span class="tag tag-foundation">Foundation</span>' : '';
+      return '<tr class="row-btn" data-addr="' + h.address + '"><td>' + (idx + 1) + '</td><td><span class="mono">' + shortAddr(h.address) + '</span> ' + badge + fTag + '</td><td>' + fmt(h.balance) + ' TIG</td><td class="' + (pend > 0 ? 'c-yellow' : '') + '">' + (pend > 0 ? fmt(pend) + ' TIG' : '—') + '</td><td>' + share.toFixed(1) + '%</td><td>' + Math.floor((data.now - h.firstSeen) / 86400) + 'd</td></tr>';
     }).join('') || '<tr><td colspan="6">None</td></tr>';
   }
 
@@ -1533,7 +1557,8 @@ a{color:var(--accent);text-decoration:none}
     if (!data || !addr) return;
     var h = data.holders.find(function (x) { return x.address.toLowerCase() === addr.toLowerCase(); });
     var events = data.sorted.filter(function (tx) { return String(tx.address).toLowerCase() === addr.toLowerCase(); }).slice(-30).reverse();
-    document.getElementById('drawerTitle').textContent = shortAddr(addr);
+    var fBadge = isFoundation(addr) ? ' <span class="tag tag-foundation">Foundation</span>' : '';
+    document.getElementById('drawerTitle').innerHTML = shortAddr(addr) + fBadge;
     var meta = h
       ? ('Locked <strong>' + fmt(h.balance) + ' TIG</strong> · pending <strong>' + fmt(h.pending || 0) + '</strong> · first lock ' + Math.floor((data.now - h.firstSeen) / 86400) + 'd ago · ' + (h.txCount || 0) + ' events')
       : 'No active locked balance';
@@ -1616,7 +1641,7 @@ a{color:var(--accent);text-decoration:none}
     document.getElementById('lockedKpi').textContent = fmt(st.netStaked) + ' TIG';
     document.getElementById('lockedSub').textContent = 'cooldown ' + fmt(st.pendingCooldown) + ' · ready ' + fmt(st.pendingWithdrawable);
     document.getElementById('holdersKpi').textContent = st.activeHolders.toLocaleString();
-    document.getElementById('holdersSub').textContent = 'top10 ' + st.concentration.toFixed(1) + '% · 24h active ' + st.active24;
+    document.getElementById('holdersSub').textContent = 'Foundation: ' + st.foundationHoldersCount + ' (' + fmt(st.foundationStakedTotal) + ' TIG) · 24h active ' + st.active24;
 
     document.getElementById('funnelUnlock').textContent = fmt(st.u7) + ' TIG';
     if (document.getElementById('funnelCooldown')) document.getElementById('funnelCooldown').textContent = fmt(st.pendingCooldown) + ' TIG';
@@ -1661,7 +1686,8 @@ a{color:var(--accent);text-decoration:none}
     var html = '';
     if (data.skippedBlacklist > 0) html += '<div class="alert info">Blacklist skipped ' + data.skippedBlacklist + ' events.</div>';
     data.whaleAlerts.forEach(function (w) {
-      html += '<div class="alert warn">Large holder ' + shortAddr(w.address) + ' unlocked ' + fmt(w.unstaked) + ' TIG (' + w.percentage.toFixed(1) + '% of their locked)</div>';
+      var fTag = isFoundation(w.address) ? ' (Foundation)' : '';
+      html += '<div class="alert warn">Large holder ' + shortAddr(w.address) + fTag + ' unlocked ' + fmt(w.unstaked) + ' TIG (' + w.percentage.toFixed(1) + '% of their locked)</div>';
     });
     document.getElementById('alertsSection').innerHTML = html;
     document.getElementById('flowSummary').textContent = '30d net ' + fmtNet(st.net30) + ' TIG · in ' + fmt(st.s30) + ' · unlock ' + fmt(st.u30) + ' · withdraw 7d ' + fmt(st.w7) + ' TIG';
@@ -1688,7 +1714,8 @@ a{color:var(--accent);text-decoration:none}
       var g = tx._dormancyGap, dlab = 'Active';
       if (g >= C.DORMANCY_DAYS) dlab = '<span class="c-purple">' + Math.floor(g) + 'd</span>';
       else if (g >= 30) dlab = '<span class="c-yellow">' + Math.floor(g) + 'd idle</span>';
-      return '<tr><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a></td><td class="c-yellow">' + fmt2(tx.valueTig) + ' TIG</td><td>' + ago(tx.timestamp) + '</td><td>' + fullDate(tx._withdrawableTime) + '</td><td>' + dlab + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
+      var fTag = isFoundation(tx.address) ? '<span class="tag tag-foundation">Foundation</span>' : '';
+      return '<tr><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a>' + fTag + '</td><td class="c-yellow">' + fmt2(tx.valueTig) + ' TIG</td><td>' + ago(tx.timestamp) + '</td><td>' + fullDate(tx._withdrawableTime) + '</td><td>' + dlab + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
     }).join('') : '<tr><td colspan="6" class="c-green">No unlocks in 7d — quiet exits</td></tr>';
 
     document.getElementById('unlockCount').textContent = String(data.unlocks.length);
@@ -1696,7 +1723,8 @@ a{color:var(--accent);text-decoration:none}
       var rem = tx.unlockTime - data.now;
       var cd = rem < 86400 ? Math.floor(rem / 3600) + 'h' : Math.floor(rem / 86400) + 'd';
       var cls = rem < 7 * 86400 ? 'c-red' : rem < 14 * 86400 ? 'c-yellow' : '';
-      return '<tr><td class="' + cls + '">' + fullDate(tx.unlockTime) + '</td><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a></td><td class="' + cls + '">' + fmt2(tx.valueTig) + ' TIG</td><td class="' + cls + '">in ' + cd + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
+      var fTag = isFoundation(tx.address) ? '<span class="tag tag-foundation">Foundation</span>' : '';
+      return '<tr><td class="' + cls + '">' + fullDate(tx.unlockTime) + '</td><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a>' + fTag + '</td><td class="' + cls + '">' + fmt2(tx.valueTig) + ' TIG</td><td class="' + cls + '">in ' + cd + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
     }).join('') : '<tr><td colspan="5" class="c-green">No open pending</td></tr>';
 
     document.getElementById('extraMetrics').textContent =
@@ -1729,7 +1757,8 @@ a{color:var(--accent);text-decoration:none}
       }
       var rank = data.holders.findIndex(function (x) { return x.address === h.address; }) + 1;
       var share = data.totalHeld > 0 ? h.balance / data.totalHeld * 100 : 0;
-      box.innerHTML = '#' + rank + ' · <strong>' + fmt(h.balance) + ' TIG</strong> locked · pending ' + fmt(h.pending || 0) + ' · ' + share.toFixed(2) + '% · <a href="#" id="openFound">Details</a>';
+      var fTag = h.isFoundation ? ' <span class="tag tag-foundation">Foundation</span>' : '';
+      box.innerHTML = '#' + rank + ' · <strong>' + fmt(h.balance) + ' TIG</strong> locked' + fTag + ' · pending ' + fmt(h.pending || 0) + ' · ' + share.toFixed(2) + '% · <a href="#" id="openFound">Details</a>';
       var of2 = document.getElementById('openFound');
       if (of2) of2.onclick = function (ev) { ev.preventDefault(); openHolderDrawer(h.address); };
     }, 250);
@@ -1835,7 +1864,8 @@ a{color:var(--accent);text-decoration:none}
       peakRank: peakRank,
       firstSeen: userTxs[0].timestamp,
       lastSeen: userTxs[userTxs.length - 1].timestamp,
-      timeline: timeline
+      timeline: timeline,
+      isFoundation: isFoundation(addr)
     };
   }
 
@@ -1863,6 +1893,7 @@ a{color:var(--accent);text-decoration:none}
     var curHolders = data.holders.slice().sort(function(a,b){ return b.balance - a.balance; });
     var curRankIdx = curHolders.findIndex(function(x){ return x.address.toLowerCase() === addr.toLowerCase(); });
     var curRankText = curRankIdx >= 0 ? 'Current Rank: #' + (curRankIdx + 1) : 'Ex-Holder (0 active)';
+    if (res.isFoundation) curRankText += ' · 🏛️ Foundation Wallet';
     document.getElementById('inspCurrentRank').textContent = curRankText;
 
     document.getElementById('inspPeakBal').textContent = fmt(res.peakBal) + ' TIG';
