@@ -179,7 +179,7 @@ a{color:var(--accent);text-decoration:none}
 
   <div class="empty" id="emptyState">
     <h2>Connecting to Base Network...</h2>
-    <p>Downloading TokenLocker history into browser cache...</p>
+    <p>Loading data snapshot or fetching latest TokenLocker history...</p>
   </div>
 
   <div id="appMain" class="hidden">
@@ -962,6 +962,39 @@ a{color:var(--accent);text-decoration:none}
     return true;
   }
 
+  async function loadSnapshotIfEmpty() {
+    var c = await db.count();
+    if (c === 0) {
+      document.getElementById('syncStatus').textContent = 'Loading snapshot data...';
+      try {
+        var res = await fetch('./data.json');
+        if (res.ok) {
+          var d = await res.json();
+          if (d && d.transactions && d.transactions.length) {
+            var norm = d.transactions.map(function (tx, i) {
+              var o = Object.assign({}, tx);
+              o.id = tx.id || ((tx.hash || 'x') + '-' + (tx.logIndex != null ? tx.logIndex : i));
+              if (o.valueTig == null && o.value != null) o.valueTig = valueToTig(o.value);
+              if (o.type === 'stake') o.type = 'lock';
+              if (o.type === 'unstake') o.type = 'withdraw';
+              if (o.type === 'unlock' && !o.withdrawableTime) o.withdrawableTime = (o.timestamp || 0) + pendingPeriodSec;
+              o.blacklisted = isBlacklisted(o.address) ? 1 : 0;
+              return o;
+            });
+            await db.add(norm);
+            if (d.metadata) {
+              if (d.metadata.lastBlock != null) await db.setMeta('lastBlock', d.metadata.lastBlock);
+              if (d.metadata.lastSync != null) await db.setMeta('lastSync', d.metadata.lastSync);
+            }
+            console.log('Snapshot loaded:', norm.length, 'transactions');
+          }
+        }
+      } catch (e) {
+        console.warn('Could not load data.json snapshot automatically:', e);
+      }
+    }
+  }
+
   async function runSync(mode) {
     if (syncing) return;
     if (typeof ethers === 'undefined') { return; }
@@ -970,6 +1003,7 @@ a{color:var(--accent);text-decoration:none}
     document.getElementById('syncStatus').textContent = mode === 'fast' ? 'Fast sync…' : 'Full sync…';
     try {
       await db.open();
+      await loadSnapshotIfEmpty();
       buildIface();
       var cur = await connectRPC(false);
       chainHead = cur;
@@ -1052,7 +1086,6 @@ a{color:var(--accent);text-decoration:none}
     var firstSeen = new Map(), txCount = new Map(), timeline = new Map();
     var unlock7dByAddr = new Map(), openPending = new Map();
 
-    // Global historical cumulative curve tracker
     var totalStakedSeries = [];
     var runningGlobalStaked = 0;
 
@@ -1329,7 +1362,6 @@ a{color:var(--accent);text-decoration:none}
       makeChart('chartUnlock', 'bar', data.unlockBars.map(function (x) { return 'D' + x.day; }),
         [{ label: 'Withdrawable', data: data.unlockBars.map(function (x) { return x.value; }), backgroundColor: 'rgba(234,179,8,.55)', borderRadius: 3 }]);
 
-      // Draw Historical Active Staked Supply Chart
       var step = Math.max(1, Math.floor(data.totalStakedSeries.length / 100));
       var downsampled = data.totalStakedSeries.filter(function(_, idx) { return idx % step === 0 || idx === data.totalStakedSeries.length - 1; });
       makeChart('chartTotalStaked', 'line', downsampled.map(function(pt) { return chartDate(pt.ts); }), [
@@ -1906,6 +1938,7 @@ a{color:var(--accent);text-decoration:none}
     try {
       buildIface();
       await db.open();
+      await loadSnapshotIfEmpty();
       var c = await db.count();
       if (c > 0) {
         document.getElementById('syncStatus').textContent = 'Loaded ' + c.toLocaleString() + ' txs';
