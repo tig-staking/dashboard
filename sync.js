@@ -29,9 +29,9 @@ const CONFIG = {
   FILE_PATH: './data.json',
   PENDING_PERIOD_SEC: 2419200, // 28d
   BLACKLIST: ['0x30FeC1f3690F3207d1A239dB392f62C9CD1deF3F'],
-  CHUNK_SIZE: 3000,          // safer for public RPCs (was 5000)
-  CHUNK_MIN: 400,
-  MAX_RETRIES: 8,
+  CHUNK_SIZE: 2000,          // bezpieczny start dla publicznych RPC (max 2k-3k bloków)
+  CHUNK_MIN: 200,            // minimalna wielkość paczki awaryjnej
+  MAX_RETRIES: 12,           // zwiększono, by skrypt miał czas płynnie zmniejszyć zakres
   RPC_DELAY_MS: 250,
   BLOCK_TS_CONCURRENCY: 8,
   BASE_BLOCK_TIME: 2         // fallback estimate only
@@ -95,7 +95,10 @@ function isRateLimit(err) {
     m.includes('-32016') ||
     m.includes('over rate') ||
     m.includes('capacity') ||
-    m.includes('timeout')
+    m.includes('timeout') ||
+    m.includes('413') ||
+    m.includes('payload too large') ||
+    m.includes('limited to')
   );
 }
 
@@ -177,11 +180,9 @@ function dedupeById(txs) {
   const map = new Map();
   for (const t of txs) {
     if (!t || !t.id) continue;
-    // Prefer record that already has a real-looking historical timestamp if collision
     if (!map.has(t.id)) map.set(t.id, t);
     else {
       const prev = map.get(t.id);
-      // keep older (more "on-chain") timestamps when re-merging
       if ((Number(t.timestamp) || 0) > 0 && (Number(t.timestamp) || 0) < (Number(prev.timestamp) || Infinity)) {
         map.set(t.id, t);
       }
@@ -191,7 +192,8 @@ function dedupeById(txs) {
 }
 
 async function getLogsChunk(provider, address, topics, fromBlock, toBlock) {
-  let size = toBlock - fromBlock + 1;
+  // Ograniczamy wielkość pierwszej paczki do bezpiecznego CHUNK_SIZE
+  let size = Math.min(CONFIG.CHUNK_SIZE, toBlock - fromBlock + 1);
   let start = fromBlock;
   const out = [];
 
@@ -208,7 +210,7 @@ async function getLogsChunk(provider, address, topics, fromBlock, toBlock) {
         });
         out.push(...logs);
         start = end + 1;
-        // slowly grow batch again after success
+        // powoli rośnij po udanym zapytaniu (max CHUNK_SIZE)
         size = Math.min(CONFIG.CHUNK_SIZE, Math.floor(size * 1.15) || CONFIG.CHUNK_SIZE);
         await sleep(CONFIG.RPC_DELAY_MS);
         break;
@@ -218,8 +220,8 @@ async function getLogsChunk(provider, address, topics, fromBlock, toBlock) {
         if (attempt >= CONFIG.MAX_RETRIES) {
           throw new Error(`getLogs failed ${start}-${end} after ${attempt} tries: ${msg}`);
         }
-        // shrink range on failures / rate limits
-        if (isRateLimit(err) || /range|limit|response size|too large/i.test(msg)) {
+        // w przypadku przekroczenia limitu RPC, natychmiast zmniejsz rozmiar zapytania
+        if (isRateLimit(err) || /range|limit|response size|too large|413/i.test(msg)) {
           size = Math.max(CONFIG.CHUNK_MIN, Math.floor(size / 2));
         }
         const backoff = Math.min(20000, 800 * Math.pow(1.7, attempt));
@@ -237,7 +239,6 @@ async function run() {
   const iface = new ethers.Interface(LOCKER_ABI);
   const stake = normalizeAddr(CONFIG.STAKE);
 
-  // Optional: live pendingPeriod from contract
   let pendingPeriodSec =
     Number(existingData.config?.pendingPeriodSec) || CONFIG.PENDING_PERIOD_SEC;
   try {
@@ -271,11 +272,9 @@ async function run() {
     Object.keys(EVENT_TYPE).map((name) => iface.getEvent(name).topicHash)
   ];
 
-  // ── collect logs with adaptive chunking ──
   const logs = await getLogsChunk(provider, stake, topics, resumeFrom, currentBlock);
   console.log(`Zebrano ${logs.length} logów. Parsowanie…`);
 
-  // Parse first (with temporary estimated ts); then fix real block timestamps.
   const headBlock = await provider.getBlock(currentBlock);
   const headTs = headBlock && headBlock.timestamp != null
     ? Number(headBlock.timestamp)
@@ -295,7 +294,6 @@ async function run() {
       const user = normalizeAddr(args.user != null ? args.user : args[0]);
       const amt = args.amount != null ? args.amount : args[1];
       const bn = Number(log.blockNumber);
-      // Temporary estimate from head (overwritten with real getBlock timestamps below)
       const estTs = Math.floor(headTs + (bn - currentBlock) * CONFIG.BASE_BLOCK_TIME);
 
       let withdrawableTime = 0;
@@ -317,7 +315,7 @@ async function run() {
         type,
         value: amt.toString(),
         valueTig: valueToTig(amt),
-        timestamp: estTs, // fixed below
+        timestamp: estTs,
         blacklisted: blacklist.has(user.toLowerCase()) ? 1 : 0,
         withdrawableTime
       });
@@ -326,7 +324,6 @@ async function run() {
     }
   }
 
-  // ── CRITICAL FIX: real block timestamps ──
   console.log(`Pobieranie timestampów bloków (${new Set(needBlocks).size} unikalnych)…`);
   const tsMap = await fetchBlockTimestamps(provider, needBlocks);
 
@@ -335,7 +332,6 @@ async function run() {
     if (real != null) {
       const prev = tx.timestamp;
       tx.timestamp = real;
-      // If withdrawableTime looked like "est + period", fix it to real + period
       if (tx.type === 'unlock' && tx.withdrawableTime) {
         const delta = tx.withdrawableTime - prev;
         if (Math.abs(delta - pendingPeriodSec) < 5 || tx.withdrawableTime < real) {
@@ -347,10 +343,8 @@ async function run() {
     }
   }
 
-  // Merge + dedupe (safe if re-run overlaps)
   const allTxs = dedupeById([...(existingData.transactions || []), ...newTxs]);
 
-  // Prefer stable chronological-ish order for smaller diffs (optional)
   allTxs.sort((a, b) => {
     const db = (a.blockNumber || 0) - (b.blockNumber || 0);
     if (db !== 0) return db;
@@ -371,11 +365,9 @@ async function run() {
       pendingPeriodSec
     },
     metadata: {
-      // Contiguous coverage end — dashboard uses max(this, max tx block) as snap end
       lastBlock: currentBlock,
       lastSync: Date.now(),
       total: allTxs.length,
-      // Helps dashboard signature change detection (optional)
       version: existingData.exported || existingData.metadata?.version || '4',
       fromBlock: resumeFrom,
       added: newTxs.length
@@ -383,7 +375,6 @@ async function run() {
     transactions: allTxs
   };
 
-  // Atomic-ish write
   const tmp = CONFIG.FILE_PATH + '.tmp';
   fs.writeFileSync(tmp, JSON.stringify(payload));
   fs.renameSync(tmp, CONFIG.FILE_PATH);
@@ -392,7 +383,7 @@ async function run() {
     `OK. +${newTxs.length} nowych (po dedupe w pliku: ${allTxs.length}). ` +
     `metadata.lastBlock=${currentBlock}, head=${currentBlock}`
   );
-  console.log('Dashboard przy starcie porówna snapshotCount/snapshotLastBlock i zmerguje@Injecty.');
+  console.log('Dashboard przy starcie porówna snapshotCount/snapshotLastBlock i zmerguje.');
 }
 
 run().catch((e) => {
