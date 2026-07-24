@@ -139,10 +139,10 @@ a{color:var(--accent);text-decoration:none}
 [data-theme="light"] .tag-foundation{color:#6b21a8}
 .tip,.th-tip{display:inline-flex;align-items:center;justify-content:center;cursor:help;position:relative}
 .tip{width:15px;height:15px;border-radius:50%;font-size:10px;font-weight:800;color:var(--text2);border:1px solid rgba(110,168,254,.35);background:rgba(110,168,254,.12);flex-shrink:0}
-.th-tip{border-bottom:1px dotted rgba(154,163,181,.55);color:inherit;font:inherit;text-transform:inherit;letter-spacing:inherit}
+.th-tip{border-bottom:1px dotted rgba(154,163,181,.55);color:inherit;font:inherit;letter-spacing:inherit}
 
 /* Position Tooltip BELOW cursor/icon to avoid render out-of-screen at header */
-.tip::after,.th-tip::after{content:attr(data-tip);position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);width:min(340px,82vw);background:var(--tip-bg);color:var(--tip-text);border:1px solid rgba(148,163,184,.35);padding:10px 12px;border-radius:8px;font-size:11px;font-weight:400;line-height:1.45;white-space:pre-line;opacity:0;pointer-events:none;z-index:100;box-shadow:0 12px 28px rgba(0,0,0,.3)}
+.tip::after,.th-tip::after{content:attr(data-tip);position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);width:min(340px,82vw);background:var(--tip-bg);color:var(--tip-text);border:1px solid rgba(148,163,184,.35);padding:10px 12px;border-radius:8px;font-size:11px;font-weight:400;line-height:1.45;white-space:pre-line;opacity:0;pointer-events:none;z-index:100;box-shadow:0 12px 28px rgba(0,0,0,.3);text-transform:none}
 .tip:hover::after,.tip:focus::after,.th-tip:hover::after,.th-tip:focus::after{opacity:1}
 
 #fileInput{display:none}.hidden{display:none!important}
