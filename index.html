@@ -7,8 +7,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js"></script>
 <style>
-:root{--bg:#0b1020;--bg2:#12182b;--card:rgba(18,24,43,.92);--border:rgba(120,140,255,.12);--text:#e8eaf2;--text2:#aab2c8;--accent:#6ea8fe;--green:#22c55e;--red:#ef4444;--yellow:#eab308;--purple:#a855f7;--ok:rgba(34,197,94,.12);--mid:rgba(234,179,8,.12);--bad:rgba(239,68,68,.12)}
-[data-theme="light"]{--bg:#f3f5f9;--bg2:#fff;--card:#fff;--border:rgba(0,0,0,.08);--text:#141820;--text2:#525b6e;--accent:#2563eb;--ok:rgba(34,197,94,.1);--mid:rgba(234,179,8,.1);--bad:rgba(239,68,68,.08)}
+:root{--bg:#0b1020;--bg2:#12182b;--card:rgba(18,24,43,.92);--border:rgba(120,140,255,.12);--text:#e8eaf2;--text2:#aab2c8;--accent:#6ea8fe;--green:#22c55e;--red:#ef4444;--yellow:#eab308;--purple:#a855f7;--ok:rgba(34,197,94,.12);--mid:rgba(234,179,8,.12);--bad:rgba(239,68,68,.12);--tip-bg:#0f172a;--tip-text:#e5e5e8}
+[data-theme="light"]{--bg:#f3f5f9;--bg2:#fff;--card:#fff;--border:rgba(0,0,0,.08);--text:#141820;--text2:#525b6e;--accent:#2563eb;--ok:rgba(34,197,94,.1);--mid:rgba(234,179,8,.1);--bad:rgba(239,68,68,.08);--tip-bg:#1e293b;--tip-text:#f8fafc}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.45}
 .container{max-width:1280px;margin:0 auto;padding:16px}
@@ -43,6 +43,7 @@ header{position:sticky;top:0;z-index:50;background:rgba(11,16,32,.92);backdrop-f
 .health-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}
 @media(max-width:900px){.health-metrics{grid-template-columns:repeat(2,1fr)}}
 .hmet{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:10px}
+[data-theme="light"] .hmet{background:rgba(0,0,0,.02)}
 .hmet .k{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text2)}
 .hmet .v{font-size:18px;font-weight:750;margin-top:4px}
 .hmet .sub-group{margin-top:6px;display:flex;flex-direction:column;gap:3px}
@@ -59,6 +60,7 @@ header{position:sticky;top:0;z-index:50;background:rgba(11,16,32,.92);backdrop-f
 .kpi.spi{border-width:2px;position:relative}
 .kpi.spi.bullish{border-color:rgba(34,197,94,.45)}.kpi.spi.neutral{border-color:rgba(234,179,8,.45)}.kpi.spi.bearish{border-color:rgba(239,68,68,.4)}
 .gauge{height:7px;border-radius:99px;background:rgba(255,255,255,.06);margin-top:10px;overflow:hidden}.gauge>i{display:block;height:100%;width:0}
+[data-theme="light"] .gauge{background:rgba(0,0,0,.06)}
 .gauge.bullish>i{background:linear-gradient(90deg,#16a34a,#4ade80)}
 .gauge.neutral>i{background:linear-gradient(90deg,#ca8a04,#facc15)}
 .gauge.bearish>i{background:linear-gradient(90deg,#dc2626,#f87171)}
@@ -79,6 +81,7 @@ header{position:sticky;top:0;z-index:50;background:rgba(11,16,32,.92);backdrop-f
 .funnel .v{font-size:22px;font-weight:760;margin-top:4px}
 .funnel .s{font-size:12px;font-weight:600;color:var(--text2);margin-top:6px}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 10px;padding:4px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px}
+[data-theme="light"] .tabs{background:rgba(0,0,0,.02)}
 .tab-btn{border:0;background:transparent;color:var(--text2);padding:8px 12px;border-radius:99px;font-size:12px;font-weight:700;cursor:pointer}
 .tab-btn.active{background:rgba(110,168,254,.14);color:var(--text)}
 .tab-panel{display:none}.tab-panel.active{display:block}
@@ -88,16 +91,20 @@ header{position:sticky;top:0;z-index:50;background:rgba(11,16,32,.92);backdrop-f
 .card h3{font-size:14px;font-weight:700;margin-bottom:4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .card .hint{font-size:11px;color:var(--text2);margin-bottom:10px}
 .badge{font-size:11px;background:rgba(255,255,255,.06);border:1px solid var(--border);padding:2px 8px;border-radius:999px;color:var(--text2)}
+[data-theme="light"] .badge{background:rgba(0,0,0,.04)}
 .unlock-pills{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 .pill{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:10px}
+[data-theme="light"] .pill{background:rgba(0,0,0,.02)}
 .pill .k{font-size:10px;color:var(--text2);text-transform:uppercase}.pill .v{font-size:18px;font-weight:740;margin-top:4px}
 .near-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
 .near-item{display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid var(--border);font-size:12px}
+[data-theme="light"] .near-item{background:rgba(0,0,0,.02)}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
 @media(max-width:960px){.grid-2{grid-template-columns:1fr}}
 .table-wrap{max-height:340px;overflow:auto}
 table{width:100%;border-collapse:collapse;font-size:12px}
 th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,.04);text-align:left;vertical-align:top}
+[data-theme="light"] th, [data-theme="light"] td{border-bottom-color:rgba(0,0,0,.06)}
 th{position:sticky;top:0;background:var(--card);color:var(--text2);font-size:10px;text-transform:uppercase;letter-spacing:.3px;z-index:1}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}
 a{color:var(--accent);text-decoration:none}
@@ -106,32 +113,44 @@ a{color:var(--accent);text-decoration:none}
 .search input{font-family:ui-monospace,monospace}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
 .chip{border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--text2);border-radius:999px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer}
+[data-theme="light"] .chip{background:rgba(0,0,0,.02)}
 .chip.active{background:rgba(110,168,254,.14);color:var(--text);border-color:rgba(110,168,254,.35)}
 .tag{display:inline-block;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:700}
 .tag-lock{background:rgba(34,197,94,.14);color:#4ade80}
+[data-theme="light"] .tag-lock{color:#15803d}
 .tag-unlock{background:rgba(234,179,8,.16);color:#facc15}
+[data-theme="light"] .tag-unlock{color:#a16207}
 .tag-withdraw{background:rgba(239,68,68,.14);color:#f87171}
+[data-theme="light"] .tag-withdraw{color:#b91c1c}
 .tag-relock{background:rgba(59,130,246,.16);color:#60a5fa}
+[data-theme="light"] .tag-relock{color:#1d4ed8}
 .tag-claim{background:rgba(168,85,247,.16);color:#c084fc}
+[data-theme="light"] .tag-claim{color:#6b21a8}
 .tag-reward{background:rgba(148,163,184,.16);color:#cbd5e1}
+[data-theme="light"] .tag-reward{color:#475569}
 .tag-diamond{background:rgba(168,85,247,.16);color:#c084fc}
+[data-theme="light"] .tag-diamond{color:#6b21a8}
 .tag-long{background:rgba(59,130,246,.16);color:#60a5fa}
 .tag-medium{background:rgba(234,179,8,.16);color:#facc15}
 .tag-short{background:rgba(239,68,68,.16);color:#f87171}
 .tag-pending{background:rgba(234,179,8,.16);color:#facc15;margin-left:4px}
+[data-theme="light"] .tag-pending{color:#a16207}
 .tag-foundation{background:rgba(168,85,247,.25);color:#d8b4fe;border:1px solid rgba(168,85,247,.4);margin-left:4px}
+[data-theme="light"] .tag-foundation{color:#6b21a8}
 .tip,.th-tip{display:inline-flex;align-items:center;justify-content:center;cursor:help;position:relative}
 .tip{width:15px;height:15px;border-radius:50%;font-size:10px;font-weight:800;color:var(--text2);border:1px solid rgba(110,168,254,.35);background:rgba(110,168,254,.12);flex-shrink:0}
 .th-tip{border-bottom:1px dotted rgba(154,163,181,.55);color:inherit;font:inherit;text-transform:inherit;letter-spacing:inherit}
 
 /* Position Tooltip BELOW cursor/icon to avoid render out-of-screen at header */
-.tip::after,.th-tip::after{content:attr(data-tip);position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);width:min(340px,82vw);background:#0f172a;color:#e5e7eb;border:1px solid rgba(148,163,184,.35);padding:10px 12px;border-radius:8px;font-size:11px;font-weight:400;line-height:1.45;white-space:pre-line;opacity:0;pointer-events:none;z-index:100;box-shadow:0 12px 28px rgba(0,0,0,.5)}
+.tip::after,.th-tip::after{content:attr(data-tip);position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);width:min(340px,82vw);background:var(--tip-bg);color:var(--tip-text);border:1px solid rgba(148,163,184,.35);padding:10px 12px;border-radius:8px;font-size:11px;font-weight:400;line-height:1.45;white-space:pre-line;opacity:0;pointer-events:none;z-index:100;box-shadow:0 12px 28px rgba(0,0,0,.3)}
 .tip:hover::after,.tip:focus::after,.th-tip:hover::after,.th-tip:focus::after{opacity:1}
 
 #fileInput{display:none}.hidden{display:none!important}
 .live{display:none;margin-left:6px;font-size:10px;padding:2px 7px;border-radius:99px;background:rgba(34,197,94,.14);color:#4ade80}
+[data-theme="light"] .live{color:#15803d}
 .live.on{display:inline-block;animation:pulse 1.5s infinite}
 .empty{border:1px dashed rgba(120,140,255,.25);border-radius:16px;padding:36px 20px;text-align:center;background:rgba(18,24,43,.45);margin:18px 0}
+[data-theme="light"] .empty{background:rgba(255,255,255,.6)}
 .empty h2{font-size:20px;margin-bottom:8px}
 .empty p{color:var(--text2);font-size:13px;max-width:460px;margin:0 auto 16px}
 .drawer-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:80}
@@ -142,6 +161,7 @@ a{color:var(--accent);text-decoration:none}
 .drawer .close{float:right}
 .row-btn{cursor:pointer}.row-btn:hover td{background:rgba(110,168,254,.06)}
 .group-label td{color:var(--text2);font-size:10px;text-transform:uppercase;letter-spacing:.4px;background:rgba(255,255,255,.02);font-weight:700}
+[data-theme="light"] .group-label td{background:rgba(0,0,0,.02)}
 .skeleton{opacity:.55;filter:saturate(.7)}
 @media(max-width:700px){
   .header-inner{padding:10px 12px}
@@ -150,6 +170,7 @@ a{color:var(--accent);text-decoration:none}
 }
 
 .tab-btn.tab-inspector{background:rgba(168,85,247,.12);color:#c084fc;border:1px solid rgba(168,85,247,.3)}
+[data-theme="light"] .tab-btn.tab-inspector{color:#7e22ce}
 .tab-btn.tab-inspector:hover{background:rgba(168,85,247,.22)}
 .tab-btn.tab-inspector.active{background:linear-gradient(135deg,#a855f7,#7e22ce);color:#fff;border-color:transparent}
 .inspector-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
@@ -160,9 +181,11 @@ a{color:var(--accent);text-decoration:none}
 .inspector-card .s{font-size:12px;font-weight:600;color:var(--text2);margin-top:4px}
 
 .btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text);background:rgba(255,255,255,.04)}
+[data-theme="light"] .btn{background:rgba(0,0,0,.02)}
 .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
 .btn-ghost{background:transparent;border-color:transparent;color:var(--text2)}
 .btn-info{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.25);color:#60a5fa}
+[data-theme="light"] .btn-info{color:#1d4ed8}
 </style>
 </head>
 <body>
@@ -173,6 +196,7 @@ a{color:var(--accent);text-decoration:none}
       <p>Base Network · scanner <span id="syncModeBadge">Ready to withdraw:</span> · <span id="countdown"></span></p>
     </div>
     <div class="header-badges">
+      <button type="button" class="btn btn-xs" id="themeToggleBtn">☀️ Light Mode</button>
       <span class="badge-auto">🔄 Refresh: Every 5 min</span>
     </div>
   </div>
@@ -206,7 +230,7 @@ a{color:var(--accent);text-decoration:none}
           <div class="health-sentence" id="healthSentence">Sync to load staking health.</div>
         </div>
         <div class="kpi spi neutral" id="spiCard" style="min-width:130px;max-width:180px;padding:8px 12px;margin:0">
-          <div class="label" style="font-size:10px">Pressure (0–100) <span class="tip" id="spiTip" tabindex="0" data-tip="Exit Pressure Score (0–100). Higher = stronger unbonding intent. Hover to see active live factors.">?</span></div>
+          <div class="label" style="font-size:10px">Pressure (0–100) <span class="tip" id="spiTip" tabindex="0" data-tip="Exit pressure score (0–100). Higher value indicates stronger unbonding intent. Hover to view active live factors.">?</span></div>
           <div class="value" id="spiValue" style="font-size:20px;margin-top:2px">-</div>
           <div class="sub" id="spiLabel" style="font-size:11px;margin-top:2px">-</div>
           <div class="gauge" id="spiGauge" style="height:5px;margin-top:6px"><i id="spiFill"></i></div>
@@ -214,7 +238,7 @@ a{color:var(--accent);text-decoration:none}
       </div>
       <div class="health-metrics">
         <div class="hmet">
-          <div class="k">Net Staking 7d <span class="tip" tabindex="0" data-tip="Net change in locked TIG over last 7 days (Locks + Claims + Relocks − Unlocks).">?</span></div>
+          <div class="k">Net Staking 7d <span class="tip" tabindex="0" data-tip="Net change in locked TIG over the last 7 days (Locks + Claims + Relocks − Unlocks).">?</span></div>
           <div class="v" id="net7d">-</div>
           <div class="sub-group">
             <div class="sub-line"><span class="lbl">14d net flow:</span><span class="val" id="net14dSubVal">-</span></div>
@@ -258,7 +282,7 @@ a{color:var(--accent);text-decoration:none}
 
     <div class="tab-panel active" id="tab-overview">
       <div class="funnel">
-        <div class="card"><div class="k">7d Unlock Requests <span class="tip" tabindex="0" data-tip="Total TIG requested to unlock in the last 7 days. Initiates mandatory 28d cooldown. Tokens remain in contract.">?</span></div><div class="v c-yellow" id="funnelUnlock">-</div><div class="s">Requested intent</div></div>
+        <div class="card"><div class="k">7d Unlock Requests <span class="tip" tabindex="0" data-tip="Total TIG requested to unlock in the last 7 days. Initiates mandatory 28-day cooldown. Tokens remain in contract.">?</span></div><div class="v c-yellow" id="funnelUnlock">-</div><div class="s">Requested intent</div></div>
         <div class="card"><div class="k">Active Cooldown <span class="tip" tabindex="0" data-tip="Tokens currently waiting in the 28-day cooldown period. Cannot be withdrawn yet.">?</span></div><div class="v c-yellow" id="funnelCooldown">-</div><div class="s">Locked in cooldown</div></div>
         <div class="card"><div class="k">Ready to Withdraw <span class="tip" tabindex="0" data-tip="Tokens whose cooldown has completed but haven't been withdrawn or relocked yet. Eligible for immediate withdrawal.">?</span></div><div class="v c-red" id="funnelWithdrawable">-</div><div class="s">Withdrawable now</div></div>
         <div class="card"><div class="k">7d Realized Withdraws <span class="tip" tabindex="0" data-tip="Total TIG physically withdrawn from the contract to user wallets in the last 7 days after cooldown.">?</span></div><div class="v c-red" id="funnelWithdraw">-</div><div class="s">Physically left</div></div>
@@ -266,13 +290,13 @@ a{color:var(--accent);text-decoration:none}
 
       <div class="charts">
         <div class="card">
-          <h3>Flow (30d) <span class="tip" tabindex="0" data-tip="Daily volume of new locks/claims/relocks (green) vs unlock requests (red) and net flow (blue line) over 30 days.">?</span></h3>
+          <h3>Flow (30d) <span class="tip" tabindex="0" data-tip="Daily volume of new locks, claims, and relocks (green) vs unlock requests (red) and net flow (blue line) over 30 days.">?</span></h3>
           <div class="hint">Green = Locks (+ above axis) · Red = Unlock Requests (- below axis) · Blue = Net Flow</div>
           <canvas id="chartFlow" height="130"></canvas>
           <div class="hint" id="flowSummary" style="margin-top:10px;padding:8px 10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;font-weight:600;color:var(--text)"></div>
         </div>
         <div class="card">
-          <h3>Unlock calendar <span class="tip" tabindex="0" data-tip="Daily schedule of when pending unlock lots complete their 28-day cooldown and become withdrawable.">?</span></h3>
+          <h3>Unlock calendar <span class="tip" tabindex="0" data-tip="Daily schedule showing when pending unlock lots complete their 28-day cooldown and become withdrawable.">?</span></h3>
           <div class="hint">When pending lots become withdrawable</div>
           <div class="unlock-pills" style="grid-template-columns: repeat(4, 1fr);">
             <div class="pill"><div class="k">Ready Now</div><div class="v c-red" id="uPillReady">-</div></div>
@@ -804,6 +828,22 @@ a{color:var(--accent);text-decoration:none}
     var isPartial = partial || (cov && cov !== '-' && parseFloat(cov) < 99.5);
     if (isPartial) el.innerHTML = '· <strong>Partial</strong> · synced ' + agoTxt;
     else el.innerHTML = '· Data fresh · synced <strong>' + agoTxt + '</strong>';
+  }
+
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    try { localStorage.setItem('tig-theme', theme); } catch (e) {}
+    var btn = document.getElementById('themeToggleBtn');
+    if (btn) {
+      btn.textContent = theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode';
+    }
+    if (uiState.lastUiData) {
+      drawCharts(uiState.lastUiData);
+      var inspInput = document.getElementById('inspInput');
+      if (inspInput && inspInput.value.trim()) {
+        renderInspector(inspInput.value.trim());
+      }
+    }
   }
 
   function buildIface() {
@@ -1518,16 +1558,28 @@ a{color:var(--accent);text-decoration:none}
     if (window[key]) { try { window[key].destroy(); } catch (e) {} }
     var ctx = canvas.getContext('2d');
     if (!ctx) return;
+    
+    var isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    var textColor = isLight ? '#525b6e' : '#9aa3b5';
+    var gridColor = isLight ? 'rgba(0,0,0,.06)' : 'rgba(100,120,255,.08)';
+
     var defaultScales = {
-      x: { ticks: { color: '#9aa3b5', maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }, grid: { display: false } },
-      y: { ticks: { color: '#9aa3b5', callback: function (v) { return fmt(v); } }, grid: { color: 'rgba(100,120,255,.08)' } }
+      x: { ticks: { color: textColor, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }, grid: { display: false } },
+      y: { ticks: { color: textColor, callback: function (v) { return fmt(v); } }, grid: { color: gridColor } }
     };
+    
+    if (customScales) {
+      if (customScales.x && customScales.x.ticks) customScales.x.ticks.color = textColor;
+      if (customScales.y && customScales.y.ticks) customScales.y.ticks.color = textColor;
+      if (customScales.y && customScales.y.grid) customScales.y.grid.color = gridColor;
+    }
+
     window[key] = new Chart(ctx, {
       type: type, data: { labels: labels, datasets: datasets },
       options: {
         responsive: true, animation: false, interaction: { mode: 'index', intersect: false },
         plugins: {
-          legend: { labels: { color: '#9aa3b5', boxWidth: 10, font: { size: 11 } } },
+          legend: { labels: { color: textColor, boxWidth: 10, font: { size: 11 } } },
           tooltip: { callbacks: { label: function (c) {
             var v = c.parsed.y;
             if (c.dataset.yAxisID === 'yRank') return 'Rank: #' + Math.abs(v);
@@ -1538,6 +1590,7 @@ a{color:var(--accent);text-decoration:none}
       }
     });
   }
+
   function drawCharts(data) {
     if (typeof Chart === 'undefined') return;
     try {
@@ -1723,14 +1776,14 @@ a{color:var(--accent);text-decoration:none}
     document.getElementById('spiFill').style.width = data.spi + '%';
 
     var sb = data.spiBreakdown || {};
-    var detailedTip = "EXIT PRESSURE SCORE (0–100)\n" +
+    var detailedTip = "Exit pressure score (0–100)\n" +
       "Quantifies current unbonding/exit intensity:\n\n" +
-      "• 7d Unlock Ratio: " + (sb.ratio || 0) + "/25 pts (Unlocks vs Locks: " + fmt(st.u7) + " / " + fmt(st.s7) + " TIG)\n" +
-      "• Flow Acceleration: " + (sb.trend || 0) + "/25 pts (Net 7d " + fmtNet(st.net7) + " vs Net 14d avg " + fmtNet(st.net14 / 2) + ")\n" +
-      "• Dormant Wallet Activity: " + (sb.dormancy || 0) + "/20 pts (" + data.dormancyAlerts.length + " idle wallets unbonding)\n" +
-      "• Pending Cooldown Load: " + (sb.pending || 0) + "/20 pts (" + fmt(data.unlockBands.d7) + " TIG completing 28d cooldown in 7d)\n" +
-      "• Whale Unbond Activity: " + (sb.whales || 0) + "/10 pts (" + data.whaleAlerts.length + " top-10 whales unbonding >5%)\n\n" +
-      "Current Total Score: " + data.spi + "/100 (" + plabel.toUpperCase() + " PRESSURE)";
+      "• 7d Unlock ratio: " + (sb.ratio || 0) + "/25 pts (Unlocks vs Locks: " + fmt(st.u7) + " / " + fmt(st.s7) + " TIG)\n" +
+      "• Flow acceleration: " + (sb.trend || 0) + "/25 pts (Net 7d " + fmtNet(st.net7) + " vs Net 14d avg " + fmtNet(st.net14 / 2) + ")\n" +
+      "• Dormant wallet activity: " + (sb.dormancy || 0) + "/20 pts (" + data.dormancyAlerts.length + " idle wallets unbonding)\n" +
+      "• Pending cooldown load: " + (sb.pending || 0) + "/20 pts (" + fmt(data.unlockBands.d7) + " TIG completing 28d cooldown in 7d)\n" +
+      "• Whale unbond activity: " + (sb.whales || 0) + "/10 pts (" + data.whaleAlerts.length + " top-10 whales unbonding >5%)\n\n" +
+      "Current total score: " + data.spi + "/100 (" + plabel.toLowerCase() + " pressure)";
     
     var spiTipEl = document.getElementById('spiTip');
     if (spiTipEl) spiTipEl.setAttribute('data-tip', detailedTip);
@@ -2096,6 +2149,14 @@ a{color:var(--accent);text-decoration:none}
   }
 
   function bindUI() {
+    var themeBtn = document.getElementById('themeToggleBtn');
+    if (themeBtn) {
+      themeBtn.onclick = function () {
+        var currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+      };
+    }
+
     document.getElementById('searchBtn').onclick = function () { searchHolder(); };
     document.getElementById('searchInput').oninput = function () { searchHolder(); };
 
@@ -2150,7 +2211,10 @@ a{color:var(--accent);text-decoration:none}
 
   async function init() {
     bindUI();
-    try { document.documentElement.setAttribute('data-theme', localStorage.getItem('tig-theme') || 'dark'); } catch (e) {}
+    var savedTheme = 'dark';
+    try { savedTheme = localStorage.getItem('tig-theme') || 'dark'; } catch (e) {}
+    applyTheme(savedTheme);
+
     document.getElementById('batchSizeLabel').textContent = String(C.BATCH);
     currentBatchSize = C.BATCH;
     setAppVisibility(false);
