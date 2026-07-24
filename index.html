@@ -40,12 +40,15 @@ header{position:sticky;top:0;z-index:50;background:rgba(11,16,32,.92);backdrop-f
 .health-top{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
 .health-title{font-size:18px;font-weight:760;display:flex;align-items:center;gap:8px}
 .health-sentence{font-size:13px;color:var(--text2);margin-top:6px;max-width:820px}
-.health-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}
-@media(max-width:900px){.health-metrics{grid-template-columns:repeat(2,1fr)}}
+.health-metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:14px}
+@media(max-width:1100px){.health-metrics{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:700px){.health-metrics{grid-template-columns:repeat(2,1fr)}}
 .hmet{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:10px}
 .hmet .k{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text2)}
 .hmet .v{font-size:18px;font-weight:750;margin-top:4px}
-.hmet .sub{font-size:12px!important;font-weight:600!important;color:var(--text2)!important;margin-top:4px!important;opacity:.9}
+/* POPRAWIONA WIDOCZNOŚĆ PODTEKSTÓW W KPI */
+.hmet .sub{font-size:11.5px!important;font-weight:600!important;color:#d1d5db!important;margin-top:6px!important;opacity:1!important}
+[data-theme="light"] .hmet .sub{color:#374151!important}
 .partial-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(234,179,8,.16);color:#facc15;border:1px solid rgba(234,179,8,.28)}
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
 @media(max-width:900px){.kpi-grid{display:flex;overflow-x:auto;gap:10px;padding-bottom:4px;scroll-snap-type:x mandatory}.kpi-grid .kpi{min-width:68vw;scroll-snap-align:start;flex:0 0 auto}}
@@ -67,10 +70,10 @@ header{position:sticky;top:0;z-index:50;background:rgba(11,16,32,.92);backdrop-f
 .alert.bad{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.25)}
 .alert.soft{background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.25)}
 .alert .dismiss{border:0;background:transparent;color:var(--text2);cursor:pointer;font-size:12px;padding:2px 6px}
-.funnel{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
-@media(max-width:900px){.funnel{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:500px){.funnel{grid-template-columns:1fr}}
-@media(max-width:700px){.funnel{grid-template-columns:1fr}}
+.funnel{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:12px 0}
+@media(max-width:1050px){.funnel{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:650px){.funnel{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:450px){.funnel{grid-template-columns:1fr}}
 .funnel .card{padding:12px}
 .funnel .k{font-size:11px;color:var(--text2);text-transform:uppercase}
 .funnel .v{font-size:22px;font-weight:760;margin-top:4px}
@@ -146,8 +149,9 @@ a{color:var(--accent);text-decoration:none}
 .tab-btn.tab-inspector{background:rgba(168,85,247,.12);color:#c084fc;border:1px solid rgba(168,85,247,.3)}
 .tab-btn.tab-inspector:hover{background:rgba(168,85,247,.22)}
 .tab-btn.tab-inspector.active{background:linear-gradient(135deg,#a855f7,#7e22ce);color:#fff;border-color:transparent}
-.inspector-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
-@media(max-width:900px){.inspector-stats{grid-template-columns:repeat(2,1fr)}}
+.inspector-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:1100px){.inspector-stats{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:700px){.inspector-stats{grid-template-columns:repeat(2,1fr)}}
 .inspector-card{background:rgba(168,85,247,.05);border:1px solid rgba(168,85,247,.2);border-radius:12px;padding:12px}
 .inspector-card .k{font-size:10px;text-transform:uppercase;color:var(--text2);letter-spacing:.3px}
 .inspector-card .v{font-size:20px;font-weight:750;margin-top:4px}
@@ -210,6 +214,8 @@ a{color:var(--accent);text-decoration:none}
         <div class="hmet"><div class="k">Net Staking 7d <span class="tip" tabindex="0" data-tip="Net change in locked TIG over last 7 days (Locks + Claims + Relocks − Unlocks).">?</span></div><div class="v" id="net7d">-</div><div class="sub" id="net7dSub">+lock − unlock</div></div>
         <div class="hmet"><div class="k">Can Leave in 7d <span class="tip" tabindex="0" data-tip="TIG ending their 28-day cooldown within the next 7 days that will become withdrawable.">?</span></div><div class="v c-yellow" id="unlock7d">-</div><div class="sub" id="unlock7dSub">pending</div></div>
         <div class="hmet"><div class="k">Active Locked <span class="tip" tabindex="0" data-tip="Total TIG actively staked and locked in the contract (earning rewards, not in unlock process).">?</span></div><div class="v" id="lockedKpi">-</div><div class="sub" id="lockedSub">TIG actively earning</div></div>
+        <!-- OPCJA 1B: Karta Est. APY & Unclaimed Rewards -->
+        <div class="hmet"><div class="k">Est. APY (7d) <span class="tip" tabindex="0" data-tip="Estimated annualized yield calculated from newly issued rewards over last 7 days vs active locked supply. Also shows total unclaimed rewards buffer.">?</span></div><div class="v c-purple" id="apyKpi">-</div><div class="sub" id="unclaimedSub">unclaimed buffer</div></div>
         <div class="hmet"><div class="k">Active Holders <span class="tip" tabindex="0" data-tip="Number of unique wallet addresses currently holding active locked TIG.">?</span></div><div class="v" id="holdersKpi">-</div><div class="sub" id="holdersSub">active</div></div>
       </div>
     </div>
@@ -224,6 +230,8 @@ a{color:var(--accent);text-decoration:none}
 
     <div class="tab-panel active" id="tab-overview">
       <div class="funnel">
+        <!-- OPCJA 2: Nowa karta w lejku ze statystyką wyemitowanych nagród -->
+        <div class="card"><div class="k">7d Rewards Issued <span class="tip" tabindex="0" data-tip="Total new TIG rewards generated and added to the contract by the protocol in the last 7 days.">?</span></div><div class="v c-purple" id="funnelRewards">-</div><div class="s">New protocol yield</div></div>
         <div class="card"><div class="k">7d Unlock Requests <span class="tip" tabindex="0" data-tip="Total TIG requested to unlock in the last 7 days. Initiates mandatory 28d cooldown. Tokens remain in contract.">?</span></div><div class="v c-yellow" id="funnelUnlock">-</div><div class="s">Requested intent</div></div>
         <div class="card"><div class="k">Active Cooldown <span class="tip" tabindex="0" data-tip="Tokens currently waiting in the 28-day cooldown period. Cannot be withdrawn yet.">?</span></div><div class="v c-yellow" id="funnelCooldown">-</div><div class="s">Locked in cooldown</div></div>
         <div class="card"><div class="k">Ready to Withdraw <span class="tip" tabindex="0" data-tip="Tokens whose cooldown has completed but haven't been withdrawn or relocked yet. Eligible for immediate withdrawal.">?</span></div><div class="v c-red" id="funnelWithdrawable">-</div><div class="s">Withdrawable now</div></div>
@@ -329,6 +337,7 @@ a{color:var(--accent);text-decoration:none}
       </div>
 
       <div id="inspMain" class="hidden">
+        <!-- OPCJA 3: Dwa rzędy statystyk w Wallet Inspectorze z dołączonymi nagrodami -->
         <div class="inspector-stats">
           <div class="inspector-card">
             <div class="k">Active Locked <span class="tip" tabindex="0" data-tip="Currently staked and earning rewards.">?</span></div>
@@ -339,6 +348,11 @@ a{color:var(--accent);text-decoration:none}
             <div class="k">Historical Peak <span class="tip" tabindex="0" data-tip="Maximum staked TIG held at a single moment in time.">?</span></div>
             <div class="v c-purple" id="inspPeakBal">-</div>
             <div class="s" id="inspPeakRank">Peak Rank: -</div>
+          </div>
+          <div class="inspector-card">
+            <div class="k">Rewards Claimed <span class="tip" tabindex="0" data-tip="Total TIG rewards claimed from contract by this wallet.">?</span></div>
+            <div class="v c-purple" id="inspRewardsClaimed">-</div>
+            <div class="s" id="inspRewardsSub">Claimed yield</div>
           </div>
           <div class="inspector-card">
             <div class="k">Total Withdrawn <span class="tip" tabindex="0" data-tip="Total TIG physically realized and withdrawn to wallet.">?</span></div>
@@ -552,9 +566,6 @@ a{color:var(--accent);text-decoration:none}
       m.indexOf('429') >= 0 || m.indexOf('over rate') >= 0 || m.indexOf('capacity') >= 0;
   }
 
-  // ────────────────────────────
-  //  IndexedDB wrapper
-  // ────────────────────────────
   function DB() { this.db = null; this._opening = null; }
   DB.prototype.open = function () {
     var self = this;
@@ -1004,8 +1015,6 @@ a{color:var(--accent);text-decoration:none}
         currentBatchSize = batchSize;
         setProgress(((s - start) / total) * 100, 'RPC: ' + msg.slice(0, 90) + ' · retry ' + consecutiveFails + ' · batch ' + batchSize, mode);
 
-        // CRITICAL FIX: never skip block ranges — that creates permanent holes.
-        // Keep lastBlock at lastOk (last successful end). Stop sync so next run retries.
         if (consecutiveFails >= C.MAX_BATCH_RETRIES) {
           if (lastOk >= start - 1 && lastOk >= C.FIRST_BLOCK - 1) {
             await db.setMeta('lastBlock', lastOk);
@@ -1014,7 +1023,6 @@ a{color:var(--accent);text-decoration:none}
             'Sync paused @ ' + Math.max(lastOk, 0).toLocaleString() + ' (RPC retries exceeded, will retry later)';
           setDot('dot-yellow');
           document.getElementById('syncModeBadge').textContent = 'Retry later';
-          console.warn('scanBlocks stopping to avoid hole. lastOk=', lastOk, 'failed range', s, e, msg);
           return false;
         }
 
@@ -1029,11 +1037,6 @@ a{color:var(--accent);text-decoration:none}
     return true;
   }
 
-  // ────────────────────────────────────────────────
-  //  DYNAMIC snapshot loader
-  //  Compares against LAST APPLIED SNAPSHOT meta,
-  //  NOT against live db.count() (which includes RPC txs).
-  // ────────────────────────────────────────────────
   async function loadSnapshotIfNeeded() {
     var statusEl = document.getElementById('syncStatus');
     try {
@@ -1049,7 +1052,6 @@ a{color:var(--accent);text-decoration:none}
       var snapLastSync = snapMeta && snapMeta.lastSync != null ? Number(snapMeta.lastSync) : 0;
       var snapVersion = snapMeta && snapMeta.version != null ? String(snapMeta.version) : '';
 
-      // Full scan of snapshot — NO artificial limit (loads ALL records)
       var maxBlock = 0, maxTime = 0, i;
       for (i = 0; i < txList.length; i++) {
         var bn0 = Number(txList[i].blockNumber) || 0;
@@ -1058,8 +1060,6 @@ a{color:var(--accent);text-decoration:none}
         if (ts0 > maxTime) maxTime = ts0;
       }
 
-      // End of contiguous snapshot coverage.
-      // Prefer metadata.lastBlock when present (may be > max tx block if trailing empty blocks).
       var snapEndBlock = Math.max(snapLastBlockMeta || 0, maxBlock || 0);
       var snapSignature = [
         txList.length,
@@ -1073,17 +1073,10 @@ a{color:var(--accent);text-decoration:none}
       var prevSnapBlock = Number(await db.meta('snapshotLastBlock')) || 0;
       var dbCount = await db.count();
 
-      // Apply when:
-      //  - DB empty
-      //  - never applied any snapshot yet (migration from old code)
-      //  - data.json grew vs last *applied snapshot* (count or end block)
-      //  - snapshot signature changed to a strictly newer one
-      // NEVER compare txList.length to live dbCount (RPC adds txs → false negatives / gaps).
       var shouldApply = false;
       if (dbCount === 0) {
         shouldApply = true;
       } else if (!prevSignature) {
-        // First run after upgrade: merge full snapshot once to catch any newer file.
         shouldApply = true;
       } else if (prevSignature === snapSignature) {
         shouldApply = false;
@@ -1093,10 +1086,7 @@ a{color:var(--accent);text-decoration:none}
         shouldApply = true;
       }
 
-      if (!shouldApply) {
-        console.log('Snapshot up-to-date:', snapSignature, 'dbCount=', dbCount, 'prev=', prevSignature);
-        return false;
-      }
+      if (!shouldApply) return false;
 
       statusEl.textContent = 'Updating from data.json snapshot...';
       setProgress(5, 'Checking snapshot data (' + txList.length.toLocaleString() + ' records)...', 'fast');
@@ -1113,14 +1103,12 @@ a{color:var(--accent);text-decoration:none}
 
       setProgress(30, 'Writing snapshot to IndexedDB...', 'fast');
 
-      // put() upsert by id → merges new snapshot rows without dropping live RPC rows
       await db.addChunked(txList, C.SNAPSHOT_CHUNK, function (done, total) {
         var pct = 30 + (done / total) * 60;
         setProgress(pct, 'Importing snapshot ' + done.toLocaleString() + ' / ' + total.toLocaleString() + ' records', 'fast');
       });
 
       var currentStoredBlock = Number(await db.meta('lastBlock')) || 0;
-      // Advance resume pointer only forward. Never shrink live progress.
       var lastBlock = Math.max(currentStoredBlock, snapEndBlock);
       var currentLastSync = Number(await db.meta('lastSync')) || 0;
       var lastSync = snapLastSync > 0 ? snapLastSync : (maxTime ? maxTime * 1000 : Date.now());
@@ -1132,17 +1120,7 @@ a{color:var(--accent);text-decoration:none}
       await db.setMeta('snapshotCount', txList.length);
       await db.setMeta('snapshotLastBlock', snapEndBlock);
 
-      setProgress(
-        100,
-        'Snapshot ready: ' + txList.length.toLocaleString() + ' records · resume block ' + lastBlock.toLocaleString(),
-        'fast'
-      );
-      console.log(
-        'Snapshot applied:', snapSignature,
-        '| resume lastBlock=', lastBlock,
-        '| previous dbCount=', dbCount,
-        '| prevSnap=', prevSignature
-      );
+      setProgress(100, 'Snapshot ready: ' + txList.length.toLocaleString() + ' records', 'fast');
       invalidateCache();
       return true;
     } catch (e) {
@@ -1151,7 +1129,6 @@ a{color:var(--accent);text-decoration:none}
     }
   }
 
-  // Back-compat alias
   async function loadSnapshotIfEmpty() { return loadSnapshotIfNeeded(); }
 
   async function runSync(mode) {
@@ -1162,7 +1139,6 @@ a{color:var(--accent);text-decoration:none}
     document.getElementById('syncStatus').textContent = mode === 'fast' ? 'Fast sync…' : 'Full sync…';
     try {
       await db.open();
-      // Always check data.json first — may have grown since last visit
       await loadSnapshotIfNeeded();
       buildIface();
 
@@ -1199,7 +1175,6 @@ a{color:var(--accent);text-decoration:none}
         invalidateCache();
         await refreshAll({ skipCharts: false });
       } else {
-        // paused due to retries — keep partial data visible, retry later via interval
         await db.setMeta('lastSync', Date.now());
         invalidateCache();
         await refreshAll({ skipCharts: false });
@@ -1238,10 +1213,25 @@ a{color:var(--accent);text-decoration:none}
     if (useCache && statsCache && Date.now() - statsCacheTime < 1200) return statsCache;
     var txsAll = await db.all();
     if (!txsAll.length) { statsCache = null; return null; }
+    
+    // NATIVE REWARDS CALCULATION (OPCJA 1B i OPCJA 2)
+    var totalRewardedGlobal = 0, totalClaimedGlobal = 0, rewards7d = 0;
+    var now = Math.floor(Date.now() / 1000);
+    var d7 = now - 7 * 86400, d14 = now - 14 * 86400, d24 = now - 86400, d30 = now - 30 * 86400;
+
     var txs = [], skippedBl = 0, i;
     for (i = 0; i < txsAll.length; i++) {
       if (!txsAll[i] || isBlacklisted(txsAll[i].address)) { skippedBl++; continue; }
-      if (normalizeType(txsAll[i].type) === 'reward') continue;
+      var normT = normalizeType(txsAll[i].type);
+      var valTig = Number(txsAll[i].valueTig) || valueToTig(txsAll[i].value);
+      if (normT === 'reward') {
+        totalRewardedGlobal += valTig;
+        if (txsAll[i].timestamp >= d7) rewards7d += valTig;
+        continue;
+      }
+      if (normT === 'claim') {
+        totalClaimedGlobal += valTig;
+      }
       txs.push(txsAll[i]);
     }
     if (!txs.length) { statsCache = null; return null; }
@@ -1249,8 +1239,7 @@ a{color:var(--accent);text-decoration:none}
     var sorted = txs.slice().sort(function (a, b) {
       return (a.timestamp - b.timestamp) || ((a.logIndex || 0) - (b.logIndex || 0));
     });
-    var now = Math.floor(Date.now() / 1000);
-    var d7 = now - 7 * 86400, d14 = now - 14 * 86400, d24 = now - 86400, d30 = now - 30 * 86400;
+
     var inTotal = 0, unlockTotal = 0, withdrawTotal = 0, relockTotal = 0;
     var s7 = 0, u7 = 0, s14 = 0, u14 = 0, s30 = 0, u30 = 0, w7 = 0;
     var ever = new Set(), daily = {}, holders = new Map(), pendingBal = new Map();
@@ -1477,6 +1466,9 @@ a{color:var(--accent);text-decoration:none}
     var seen24 = new Set();
     for (i = 0; i < sorted.length; i++) if (sorted[i].timestamp >= d24) seen24.add(sorted[i].address);
 
+    var estApyPct = netStaked > 0 ? ((rewards7d / netStaked) * (365 / 7)) * 100 : 0;
+    var unclaimedBuffer = Math.max(0, totalRewardedGlobal - totalClaimedGlobal);
+
     var result = {
       sorted: sorted, storedTotal: txsAll.length, skippedBlacklist: skippedBl, now: now,
       stats: {
@@ -1488,7 +1480,8 @@ a{color:var(--accent);text-decoration:none}
         concentration: totalHeld > 0 ? top10.reduce(function (s, x) { return s + x[1]; }, 0) / totalHeld * 100 : 0,
         withdrawTotal: withdrawTotal, relockTotal: relockTotal,
         foundationHoldersCount: foundationHoldersCount,
-        foundationStakedTotal: foundationStakedTotal
+        foundationStakedTotal: foundationStakedTotal,
+        rewards7d: rewards7d, estApyPct: estApyPct, unclaimedBuffer: unclaimedBuffer
       },
       spi: spi, spiLevel: spiLevel, spiDrivers: drivers, holders: holdersMeta, totalHeld: totalHeld,
       cohorts: cohortData, tiers: tierData,
@@ -1704,9 +1697,16 @@ a{color:var(--accent);text-decoration:none}
     document.getElementById('uPill28').textContent = fmt(data.unlockBands.d28);
     document.getElementById('lockedKpi').textContent = fmt(st.netStaked) + ' TIG';
     document.getElementById('lockedSub').textContent = 'cooldown ' + fmt(st.pendingCooldown) + ' · ready ' + fmt(st.pendingWithdrawable);
+    
+    // AKTUALIZACJA METRYKI APY I UNCLAIMED BUFFER
+    if (document.getElementById('apyKpi')) document.getElementById('apyKpi').textContent = (st.estApyPct > 0 ? st.estApyPct.toFixed(1) + '%' : '0.0%');
+    if (document.getElementById('unclaimedSub')) document.getElementById('unclaimedSub').textContent = 'Unclaimed: ' + fmt(st.unclaimedBuffer) + ' TIG';
+
     document.getElementById('holdersKpi').textContent = st.activeHolders.toLocaleString();
     document.getElementById('holdersSub').textContent = 'Foundation: ' + st.foundationHoldersCount + ' (' + fmt(st.foundationStakedTotal) + ' TIG) · 24h active ' + st.active24;
 
+    // AKTUALIZACJA LEJKA O NAGRODY (OPCJA 2)
+    if (document.getElementById('funnelRewards')) document.getElementById('funnelRewards').textContent = fmt(st.rewards7d) + ' TIG';
     document.getElementById('funnelUnlock').textContent = fmt(st.u7) + ' TIG';
     if (document.getElementById('funnelCooldown')) document.getElementById('funnelCooldown').textContent = fmt(st.pendingCooldown) + ' TIG';
     if (document.getElementById('funnelWithdrawable')) document.getElementById('funnelWithdrawable').textContent = fmt(st.pendingWithdrawable) + ' TIG';
@@ -1850,11 +1850,24 @@ a{color:var(--accent);text-decoration:none}
   function computeWalletHistory(addr, sortedTxs) {
     if (!addr || !sortedTxs) return null;
     var target = addr.toLowerCase();
+    
+    // POBRANIE PEŁNYCH ZDARZEŃ DLA WALLET INSPECTORA (W TYM CLAIM/REWARDS - OPCJA 3)
+    var allDbTxs = uiState.lastUiData ? uiState.lastUiData.sorted : sortedTxs;
     var userTxs = sortedTxs.filter(function (tx) { return String(tx.address).toLowerCase() === target; });
     if (!userTxs.length) return null;
 
     var curStaked = 0, curPending = 0, totalWithdrawn = 0, peakBal = 0, peakTime = userTxs[0].timestamp;
+    var totalClaimedRewards = 0;
     var timeline = [];
+
+    // Sumowanie odebranych nagród użytkownika
+    if (allDbTxs) {
+      allDbTxs.forEach(function(tx) {
+        if (String(tx.address).toLowerCase() === target && normalizeType(tx.type) === 'claim') {
+          totalClaimedRewards += Number(tx.valueTig) || 0;
+        }
+      });
+    }
 
     userTxs.forEach(function (tx) {
       var v = Number(tx.valueTig) || 0;
@@ -1923,6 +1936,7 @@ a{color:var(--accent);text-decoration:none}
       curStaked: curStaked,
       curPending: curPending,
       totalWithdrawn: totalWithdrawn,
+      totalClaimedRewards: totalClaimedRewards,
       peakBal: peakBal,
       peakTime: peakTime,
       peakRank: peakRank,
@@ -1963,6 +1977,8 @@ a{color:var(--accent);text-decoration:none}
     document.getElementById('inspPeakBal').textContent = fmt(res.peakBal) + ' TIG';
     document.getElementById('inspPeakRank').textContent = 'Peak Rank: ' + res.peakRank + ' (' + fullDate(res.peakTime) + ')';
 
+    // AKTUALIZACJA METRYK WALLET INSPECTORA (OPCJA 3)
+    if (document.getElementById('inspRewardsClaimed')) document.getElementById('inspRewardsClaimed').textContent = fmt(res.totalClaimedRewards) + ' TIG';
     document.getElementById('inspTotalWithdrawn').textContent = fmt(res.totalWithdrawn) + ' TIG';
     document.getElementById('inspPending').textContent = 'Pending: ' + fmt(res.curPending) + ' TIG';
 
