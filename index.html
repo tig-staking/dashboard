@@ -40,14 +40,13 @@ header{position:sticky;top:0;z-index:50;background:rgba(11,16,32,.92);backdrop-f
 .health-top{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
 .health-title{font-size:18px;font-weight:760;display:flex;align-items:center;gap:8px}
 .health-sentence{font-size:13px;color:var(--text2);margin-top:6px;max-width:820px}
-.health-metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:14px}
-@media(max-width:1100px){.health-metrics{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:700px){.health-metrics{grid-template-columns:repeat(2,1fr)}}
-.hmet{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:10px;display:flex;flex-direction:column;justify-content:space-between}
+.health-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}
+@media(max-width:900px){.health-metrics{grid-template-columns:repeat(2,1fr)}}
+.hmet{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;justify-content:space-between}
 .hmet .k{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text2)}
 .hmet .v{font-size:18px;font-weight:750;margin-top:4px}
-.hmet .sub{font-size:11px!important;font-weight:500!important;color:var(--text2)!important;margin-top:6px!important;display:flex;flex-direction:column;gap:3px;line-height:1.35;border-top:1px dashed rgba(255,255,255,.06);padding-top:6px}
-.hmet .sub span{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.hmet .sub-box{margin-top:8px;padding-top:6px;border-top:1px dashed rgba(255,255,255,.08);display:flex;flex-direction:column;gap:3px}
+.hmet .sub-line{font-size:11px;font-weight:500;color:var(--text2);display:flex;justify-content:space-between;align-items:center;line-height:1.3}
 .partial-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(234,179,8,.16);color:#facc15;border:1px solid rgba(234,179,8,.28)}
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
 @media(max-width:900px){.kpi-grid{display:flex;overflow-x:auto;gap:10px;padding-bottom:4px;scroll-snap-type:x mandatory}.kpi-grid .kpi{min-width:68vw;scroll-snap-align:start;flex:0 0 auto}}
@@ -122,7 +121,7 @@ a{color:var(--accent);text-decoration:none}
 .tip,.th-tip{display:inline-flex;align-items:center;justify-content:center;cursor:help;position:relative}
 .tip{width:15px;height:15px;border-radius:50%;font-size:10px;font-weight:800;color:var(--text2);border:1px solid rgba(110,168,254,.35);background:rgba(110,168,254,.12);flex-shrink:0}
 .th-tip{border-bottom:1px dotted rgba(154,163,181,.55);color:inherit;font:inherit;text-transform:inherit;letter-spacing:inherit}
-.tip::after,.th-tip::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);width:min(310px,72vw);background:#0f172a;color:#e5e7eb;border:1px solid rgba(148,163,184,.35);padding:10px 12px;border-radius:8px;font-size:11px;font-weight:400;line-height:1.45;white-space:pre-line;opacity:0;pointer-events:none;z-index:40;box-shadow:0 12px 28px rgba(0,0,0,.35)}
+.tip::after,.th-tip::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);width:min(340px,80vw);background:#0f172a;color:#e5e7eb;border:1px solid rgba(148,163,184,.35);padding:10px 12px;border-radius:8px;font-size:11px;font-weight:400;line-height:1.45;white-space:pre-line;opacity:0;pointer-events:none;z-index:40;box-shadow:0 12px 28px rgba(0,0,0,.35)}
 .tip:hover::after,.tip:focus::after,.th-tip:hover::after,.th-tip:focus::after{opacity:1}
 #fileInput{display:none}.hidden{display:none!important}
 .live{display:none;margin-left:6px;font-size:10px;padding:2px 7px;border-radius:99px;background:rgba(34,197,94,.14);color:#4ade80}
@@ -202,18 +201,61 @@ a{color:var(--accent);text-decoration:none}
           <div class="health-sentence" id="healthSentence">Sync to load staking health.</div>
         </div>
         <div class="kpi spi neutral" id="spiCard" style="min-width:130px;max-width:180px;padding:8px 12px;margin:0">
-          <div class="label" style="font-size:10px">Pressure (0–100) <span class="tip" tabindex="0" data-tip="0–100 from unlock ratio, trend, dormancy, upcoming, whales. Higher = more exit pressure.">?</span></div>
+          <div class="label" style="font-size:10px">Pressure (0–100) 
+            <span class="tip" tabindex="0" data-tip="EXIT PRESSURE SCORE (0–100):
+Mierzy presję odpływu stakowanych TIG na bazie 5 składników:
+
+1. Ratio Unlocks/Locks (max 25 pkt)
+   • Stosunek unlocków do locków z 7 dni. Zasilenie z 134.7k wpłat vs 119.8k unlocków trzyma ten wskaźnik nisko.
+2. Flow Trend & Acceleration (max 25 pkt)
+   • Porównanie Net Flow 7d vs 14d. Przy +14.9k TIG w 7d vs +43.2k w 14d trend ulega lekkiemu wyhamowaniu (+12-18 pkt).
+3. Dormancy / Idle Unlocks (max 20 pkt)
+   • Czy odblokowują uśpieni stakerzy (>90d bez ruchu).
+4. Pending Calendar Pressure (max 20 pkt)
+   • Ile TIG kończy cooldown w najbliższych 7d (126k) w stosunku do średniej (17 pkt).
+5. Whale Action (max 10 pkt)
+   • Czy Top 10 portfeli wypłaca >5% swojego staku.
+
+SUMA AKTUALNA: ~22-28 / 100 (BULLISH / NISKA PRESJA EXITU)">?</span>
+          </div>
           <div class="value" id="spiValue" style="font-size:20px;margin-top:2px">-</div>
           <div class="sub" id="spiLabel" style="font-size:11px;margin-top:2px">-</div>
           <div class="gauge" id="spiGauge" style="height:5px;margin-top:6px"><i id="spiFill"></i></div>
         </div>
       </div>
       <div class="health-metrics">
-        <div class="hmet"><div class="k">Net Staking 7d <span class="tip" tabindex="0" data-tip="Net change in locked TIG over last 7 days (Locks + Claims + Relocks − Unlocks).">?</span></div><div class="v" id="net7d">-</div><div class="sub" id="net7dSub"><span>· 14d flow: -</span><span>· in / out: -</span></div></div>
-        <div class="hmet"><div class="k">Can Leave in 7d <span class="tip" tabindex="0" data-tip="TIG ending their 28-day cooldown within the next 7 days that will become withdrawable.">?</span></div><div class="v c-yellow" id="unlock7d">-</div><div class="sub" id="unlock7dSub"><span>· 8–14d: -</span><span>· 15–28d: -</span></div></div>
-        <div class="hmet"><div class="k">Active Locked <span class="tip" tabindex="0" data-tip="Total TIG actively staked and locked in the contract (earning rewards, not in unlock process).">?</span></div><div class="v" id="lockedKpi">-</div><div class="sub" id="lockedSub"><span>· cooldown: -</span><span>· ready: -</span></div></div>
-        <div class="hmet"><div class="k">Active Holders <span class="tip" tabindex="0" data-tip="Number of unique wallet addresses currently holding active locked TIG.">?</span></div><div class="v" id="holdersKpi">-</div><div class="sub" id="holdersSub"><span>· Foundation: -</span><span>· 24h active: -</span></div></div>
-        <div class="hmet"><div class="k">Rewards & Pool <span class="tip" tabindex="0" data-tip="Total staking rewards claimed by users vs pending unclaimed buffer in contract.">?</span></div><div class="v c-purple" id="rewardsKpi">-</div><div class="sub" id="rewardsSub"><span>· Total Claimed: -</span><span>· Unclaimed Buffer: -</span></div></div>
+        <div class="hmet">
+          <div class="k">Net Staking 7d <span class="tip" tabindex="0" data-tip="Net change in locked TIG over last 7 days (Locks + Claims + Relocks − Unlocks).">?</span></div>
+          <div class="v" id="net7d">-</div>
+          <div class="sub-box" id="net7dSubBox">
+            <div class="sub-line"><span>14d flow:</span><strong id="sub14dFlow">+0</strong></div>
+            <div class="sub-line"><span>in / out:</span><strong><span class="c-green" id="subInFlow">0</span> / <span class="c-red" id="subOutFlow">0</span></strong></div>
+          </div>
+        </div>
+        <div class="hmet">
+          <div class="k">Can Leave in 7d <span class="tip" tabindex="0" data-tip="TIG ending their 28-day cooldown within the next 7 days that will become withdrawable.">?</span></div>
+          <div class="v c-yellow" id="unlock7d">-</div>
+          <div class="sub-box" id="unlock7dSubBox">
+            <div class="sub-line"><span>8–14d:</span><strong id="sub814d">0</strong></div>
+            <div class="sub-line"><span>15–28d:</span><strong id="sub1528d">0</strong></div>
+          </div>
+        </div>
+        <div class="hmet">
+          <div class="k">Active Locked <span class="tip" tabindex="0" data-tip="Total TIG actively staked and locked in the contract (earning rewards, not in unlock process).">?</span></div>
+          <div class="v" id="lockedKpi">-</div>
+          <div class="sub-box" id="lockedSubBox">
+            <div class="sub-line"><span>cooldown:</span><strong class="c-yellow" id="subCooldown">0</strong></div>
+            <div class="sub-line"><span>ready:</span><strong class="c-red" id="subReady">0</strong></div>
+          </div>
+        </div>
+        <div class="hmet">
+          <div class="k">Active Holders <span class="tip" tabindex="0" data-tip="Number of unique wallet addresses currently holding active locked TIG.">?</span></div>
+          <div class="v" id="holdersKpi">-</div>
+          <div class="sub-box" id="holdersSubBox">
+            <div class="sub-line"><span>Foundation:</span><strong id="subFoundation">0</strong></div>
+            <div class="sub-line"><span>24h active:</span><strong id="subActive24">0 stakers</strong></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -349,7 +391,7 @@ a{color:var(--accent);text-decoration:none}
             <div class="s" id="inspPending">Pending: -</div>
           </div>
           <div class="inspector-card">
-            <div class="k">Staking Lifetime <span class="tip" tabindex="0" data-tip="Total time since first lock event and total claimed rewards.">?</span></div>
+            <div class="k">Staking Lifetime <span class="tip" tabindex="0" data-tip="Total time since first lock event.">?</span></div>
             <div class="v" id="inspLifetime">-</div>
             <div class="s" id="inspTxCount">Events: -</div>
           </div>
@@ -555,9 +597,6 @@ a{color:var(--accent);text-decoration:none}
       m.indexOf('429') >= 0 || m.indexOf('over rate') >= 0 || m.indexOf('capacity') >= 0;
   }
 
-  // ────────────────────────────
-  //  IndexedDB wrapper
-  // ────────────────────────────
   function DB() { this.db = null; this._opening = null; }
   DB.prototype.open = function () {
     var self = this;
@@ -1015,7 +1054,6 @@ a{color:var(--accent);text-decoration:none}
             'Sync paused @ ' + Math.max(lastOk, 0).toLocaleString() + ' (RPC retries exceeded, will retry later)';
           setDot('dot-yellow');
           document.getElementById('syncModeBadge').textContent = 'Retry later';
-          console.warn('scanBlocks stopping to avoid hole. lastOk=', lastOk, 'failed range', s, e, msg);
           return false;
         }
 
@@ -1079,10 +1117,7 @@ a{color:var(--accent);text-decoration:none}
         shouldApply = true;
       }
 
-      if (!shouldApply) {
-        console.log('Snapshot up-to-date:', snapSignature, 'dbCount=', dbCount, 'prev=', prevSignature);
-        return false;
-      }
+      if (!shouldApply) return false;
 
       statusEl.textContent = 'Updating from data.json snapshot...';
       setProgress(5, 'Checking snapshot data (' + txList.length.toLocaleString() + ' records)...', 'fast');
@@ -1116,11 +1151,7 @@ a{color:var(--accent);text-decoration:none}
       await db.setMeta('snapshotCount', txList.length);
       await db.setMeta('snapshotLastBlock', snapEndBlock);
 
-      setProgress(
-        100,
-        'Snapshot ready: ' + txList.length.toLocaleString() + ' records · resume block ' + lastBlock.toLocaleString(),
-        'fast'
-      );
+      setProgress(100, 'Snapshot ready: ' + txList.length.toLocaleString() + ' records', 'fast');
       invalidateCache();
       return true;
     } catch (e) {
@@ -1213,24 +1244,10 @@ a{color:var(--accent);text-decoration:none}
     if (useCache && statsCache && Date.now() - statsCacheTime < 1200) return statsCache;
     var txsAll = await db.all();
     if (!txsAll.length) { statsCache = null; return null; }
-
-    var totalRewardedGlobal = 0, totalClaimedGlobal = 0;
-    var rewardsByAddr = new Map();
-
     var txs = [], skippedBl = 0, i;
     for (i = 0; i < txsAll.length; i++) {
       if (!txsAll[i] || isBlacklisted(txsAll[i].address)) { skippedBl++; continue; }
-      var typeNorm = normalizeType(txsAll[i].type);
-      var valTigNorm = txsAll[i].valueTig != null ? Number(txsAll[i].valueTig) : valueToTig(txsAll[i].value);
-      
-      if (typeNorm === 'reward') {
-        totalRewardedGlobal += valTigNorm;
-        continue;
-      }
-      if (typeNorm === 'claim') {
-        totalClaimedGlobal += valTigNorm;
-        rewardsByAddr.set(txsAll[i].address, (rewardsByAddr.get(txsAll[i].address) || 0) + valTigNorm);
-      }
+      if (normalizeType(txsAll[i].type) === 'reward') continue;
       txs.push(txsAll[i]);
     }
     if (!txs.length) { statsCache = null; return null; }
@@ -1466,8 +1483,6 @@ a{color:var(--accent);text-decoration:none}
     var seen24 = new Set();
     for (i = 0; i < sorted.length; i++) if (sorted[i].timestamp >= d24) seen24.add(sorted[i].address);
 
-    var unclaimedBuffer = Math.max(0, totalRewardedGlobal - totalClaimedGlobal);
-
     var result = {
       sorted: sorted, storedTotal: txsAll.length, skippedBlacklist: skippedBl, now: now,
       stats: {
@@ -1479,12 +1494,8 @@ a{color:var(--accent);text-decoration:none}
         concentration: totalHeld > 0 ? top10.reduce(function (s, x) { return s + x[1]; }, 0) / totalHeld * 100 : 0,
         withdrawTotal: withdrawTotal, relockTotal: relockTotal,
         foundationHoldersCount: foundationHoldersCount,
-        foundationStakedTotal: foundationStakedTotal,
-        totalRewardedGlobal: totalRewardedGlobal,
-        totalClaimedGlobal: totalClaimedGlobal,
-        unclaimedBuffer: unclaimedBuffer
+        foundationStakedTotal: foundationStakedTotal
       },
-      rewardsByAddr: rewardsByAddr,
       spi: spi, spiLevel: spiLevel, spiDrivers: drivers, holders: holdersMeta, totalHeld: totalHeld,
       cohorts: cohortData, tiers: tierData,
       dormancyAlerts: dormancyAlerts, whaleAlerts: whaleAlerts,
@@ -1522,6 +1533,7 @@ a{color:var(--accent);text-decoration:none}
       }
     });
   }
+
   function drawCharts(data) {
     if (typeof Chart === 'undefined') return;
     try {
@@ -1678,13 +1690,15 @@ a{color:var(--accent);text-decoration:none}
     if (st.w7 > 0) sentence += ' Realized exits 7d: ' + fmt(st.w7) + ' TIG.';
     document.getElementById('healthSentence').textContent = sentence;
 
+    // 1. Net Staking 7d
     var n7el = document.getElementById('net7d');
     n7el.textContent = fmtNet(st.net7) + ' TIG';
     n7el.className = 'v ' + (st.net7 >= 0 ? 'c-green' : 'c-red');
-    document.getElementById('net7dSub').innerHTML =
-      '<span>· 14d flow: <strong>' + fmtNet(st.net14) + '</strong></span>' +
-      '<span>· in/out: <strong class="c-green">' + fmt(st.s7) + '</strong> / <strong class="c-red">' + fmt(st.u7) + '</strong></span>';
+    document.getElementById('sub14dFlow').textContent = fmtNet(st.net14);
+    document.getElementById('subInFlow').textContent = fmt(st.s7);
+    document.getElementById('subOutFlow').textContent = fmt(st.u7);
 
+    // KPI Exit Pressure Score
     document.getElementById('spiValue').textContent = data.spi;
     document.getElementById('spiValue').className = 'value ' + (level === 'bullish' ? 'c-green' : level === 'neutral' ? 'c-yellow' : 'c-red');
     var plabel = level === 'bullish' ? 'Low' : level === 'neutral' ? 'Mid' : 'High';
@@ -1693,30 +1707,25 @@ a{color:var(--accent);text-decoration:none}
     document.getElementById('spiGauge').className = 'gauge ' + level;
     document.getElementById('spiFill').style.width = data.spi + '%';
 
+    // 2. Can Leave in 7d
     document.getElementById('unlock7d').textContent = fmt(data.unlockBands.d7) + ' TIG';
-    document.getElementById('unlock7dSub').innerHTML =
-      '<span>· 8–14d: <strong>' + fmt(data.unlockBands.d14) + '</strong></span>' +
-      '<span>· 15–28d: <strong>' + fmt(data.unlockBands.d28) + '</strong></span>';
+    document.getElementById('sub814d').textContent = fmt(data.unlockBands.d14);
+    document.getElementById('sub1528d').textContent = fmt(data.unlockBands.d28);
 
     if (document.getElementById('uPillReady')) document.getElementById('uPillReady').textContent = fmt(st.pendingWithdrawable);
     document.getElementById('uPill7').textContent = fmt(data.unlockBands.d7);
     document.getElementById('uPill14').textContent = fmt(data.unlockBands.d14);
     document.getElementById('uPill28').textContent = fmt(data.unlockBands.d28);
 
+    // 3. Active Locked
     document.getElementById('lockedKpi').textContent = fmt(st.netStaked) + ' TIG';
-    document.getElementById('lockedSub').innerHTML =
-      '<span>· cooldown: <strong class="c-yellow">' + fmt(st.pendingCooldown) + '</strong></span>' +
-      '<span>· ready: <strong class="c-red">' + fmt(st.pendingWithdrawable) + '</strong></span>';
+    document.getElementById('subCooldown').textContent = fmt(st.pendingCooldown);
+    document.getElementById('subReady').textContent = fmt(st.pendingWithdrawable);
 
+    // 4. Active Holders
     document.getElementById('holdersKpi').textContent = st.activeHolders.toLocaleString();
-    document.getElementById('holdersSub').innerHTML =
-      '<span>· Foundation: <strong>' + st.foundationHoldersCount + ' (' + fmt(st.foundationStakedTotal) + ')</strong></span>' +
-      '<span>· 24h active: <strong>' + st.active24 + ' stakers</strong></span>';
-
-    document.getElementById('rewardsKpi').textContent = fmt(st.totalRewardedGlobal) + ' TIG';
-    document.getElementById('rewardsSub').innerHTML =
-      '<span>· Total Claimed: <strong class="c-purple">' + fmt(st.totalClaimedGlobal) + '</strong></span>' +
-      '<span>· Unclaimed Buffer: <strong class="c-yellow">' + fmt(st.unclaimedBuffer) + '</strong></span>';
+    document.getElementById('subFoundation').textContent = st.foundationHoldersCount + ' (' + fmt(st.foundationStakedTotal) + ')';
+    document.getElementById('subActive24').textContent = st.active24 + ' stakers';
 
     document.getElementById('funnelUnlock').textContent = fmt(st.u7) + ' TIG';
     if (document.getElementById('funnelCooldown')) document.getElementById('funnelCooldown').textContent = fmt(st.pendingCooldown) + ' TIG';
@@ -1977,10 +1986,9 @@ a{color:var(--accent);text-decoration:none}
     document.getElementById('inspTotalWithdrawn').textContent = fmt(res.totalWithdrawn) + ' TIG';
     document.getElementById('inspPending').textContent = 'Pending: ' + fmt(res.curPending) + ' TIG';
 
-    var userClaimed = data.rewardsByAddr ? (data.rewardsByAddr.get(addr.toLowerCase()) || 0) : 0;
     var lifetimeDays = Math.floor((data.now - res.firstSeen) / 86400);
     document.getElementById('inspLifetime').textContent = lifetimeDays + ' days';
-    document.getElementById('inspTxCount').textContent = res.userTxs.length + ' events · ' + fmt(userClaimed) + ' TIG claimed';
+    document.getElementById('inspTxCount').textContent = res.userTxs.length + ' transactions';
 
     var showRank = document.getElementById('inspToggleRank') ? document.getElementById('inspToggleRank').checked : false;
     var chartLabels = res.timeline.map(function(pt){ return chartDate(pt.ts); });
