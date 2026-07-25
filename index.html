@@ -1701,48 +1701,123 @@ a{color:var(--accent);text-decoration:none}
     document.getElementById('holderDrawer').classList.remove('open');
   }
 
-  function renderSupplyStrip(st, supply) {
+    function renderSupplyStrip(st, supply) {
     supply = supply || {};
     var total = supply.total;
     var circ = supply.circulating;
-    var base = (circ != null && circ > 0) ? circ : (total != null && total > 0 ? total : null);
-    var locked = st.netStaked || 0;
-    var cool = st.pendingCooldown || 0;
-    var ready = st.pendingWithdrawable || 0;
-    var pctCirc = (circ != null && circ > 0) ? (locked / circ * 100) : null;
-    var pctTotal = (total != null && total > 0) ? (locked / total * 100) : null;
+    // Base = CIRCULATING only (total mint is reference, not bar %)
+    var base = (circ != null && Number(circ) > 0) ? Number(circ) : null;
+    var locked = Number(st.netStaked) || 0;
+    var cool = Number(st.pendingCooldown) || 0;
+    var ready = Number(st.pendingWithdrawable) || 0;
+
+    function pctOf(n) {
+      if (base == null || !(base > 0)) return null;
+      return (Number(n) / base) * 100;
+    }
+    function fmtAmtPct(n) {
+      var p = pctOf(n);
+      if (p == null) return fmt(n) + ' TIG';
+      return fmt(n) + ' TIG (' + p.toFixed(1) + '%)';
+    }
+
+    var pctStaked = pctOf(locked);
+    var pctCool = pctOf(cool);
+    var pctReady = pctOf(ready);
+    var floatAmt = base != null ? Math.max(0, base - locked - cool - ready) : null;
+    var pctFloat = floatAmt != null ? pctOf(floatAmt) : null;
+    var pctTotal = (total != null && Number(total) > 0) ? (locked / Number(total) * 100) : null;
+
+    // Rebuild legend labels (same IDs) — no other HTML edits needed
+    var legend = document.querySelector('#supplyStrip .supply-legend');
+    if (legend) {
+      legend.innerHTML =
+        '<span>Circulating: <b id="supplyCircVal">-</b></span>' +
+        '<span class="c-green">Staked: <b id="supplyStakedVal">-</b></span>' +
+        '<span class="c-yellow">Cooldown: <b id="supplyCoolVal">-</b></span>' +
+        '<span class="c-red">Ready: <b id="supplyReadyVal">-</b></span>' +
+        '<span>Liquid float: <b id="supplyFloatVal">-</b></span>' +
+        '<span style="opacity:.75">Total mint (ref): <b id="supplyTotalVal">-</b></span>';
+    }
+    var titleEl = document.querySelector('#supplyStrip .title');
+    if (titleEl) {
+      var tip = titleEl.querySelector('.tip');
+      if (tip) {
+        tip.setAttribute(
+          'data-tip',
+          'All bars and % are vs CIRCULATING supply (not total mint).\n' +
+          'Green = actively staked.\nYellow = 28d cooldown.\nRed = ready to withdraw.\n' +
+          'Remainder = liquid float ≈ circ − staked − cooldown − ready.'
+        );
+      }
+    }
+
     var kpi = document.getElementById('stakedPctKpi');
     if (kpi) {
-      if (pctCirc != null) {
-        kpi.textContent = pctCirc.toFixed(1) + '%';
-        kpi.className = 'v ' + (pctCirc >= 40 ? 'c-green' : pctCirc >= 20 ? 'c-yellow' : '');
-      } else if (pctTotal != null) kpi.textContent = pctTotal.toFixed(1) + '%';
-      else kpi.textContent = '-';
+      if (pctStaked != null) {
+        kpi.textContent = pctStaked.toFixed(1) + '%';
+        kpi.className = 'v ' + (pctStaked >= 40 ? 'c-green' : pctStaked >= 20 ? 'c-yellow' : '');
+      } else {
+        kpi.textContent = '-';
+        kpi.className = 'v';
+      }
     }
     var sc = document.getElementById('stakedCircSubVal');
     var stot = document.getElementById('stakedTotalSubVal');
-    if (sc) sc.textContent = pctCirc != null ? (pctCirc.toFixed(2) + '%') : 'n/a';
-    if (stot) stot.textContent = pctTotal != null ? (pctTotal.toFixed(2) + '%') : 'n/a';
+    if (sc) sc.textContent = pctStaked != null ? (pctStaked.toFixed(2) + '% of circ') : 'n/a';
+    if (stot) stot.textContent = pctTotal != null ? (pctTotal.toFixed(2) + '% of total') : 'n/a';
+
     var src = document.getElementById('supplySourceBadge');
-    if (src) src.textContent = 'supply: ' + (supply.source || '-');
-    document.getElementById('supplyTotalVal').textContent = total != null ? (fmt(total) + ' TIG') : '-';
-    document.getElementById('supplyCircVal').textContent = circ != null ? (fmt(circ) + ' TIG') : '-';
-    document.getElementById('supplyStakedVal').textContent = fmt(locked) + ' TIG';
-    document.getElementById('supplyCoolVal').textContent = fmt(cool) + ' TIG';
-    document.getElementById('supplyReadyVal').textContent = fmt(ready) + ' TIG';
-    var floatApprox = base != null ? Math.max(0, base - locked - cool - ready) : null;
-    document.getElementById('supplyFloatVal').textContent = floatApprox != null ? (fmt(floatApprox) + ' TIG') : '-';
-    var denom = base && base > 0 ? base : 1;
-    var wS = Math.min(100, locked / denom * 100);
-    var wC = Math.min(100 - wS, cool / denom * 100);
-    var wR = Math.min(100 - wS - wC, ready / denom * 100);
+    if (src) {
+      var srcTxt = supply.source || '-';
+      src.textContent = base != null ? ('vs circ · ' + srcTxt) : ('no circ · ' + srcTxt);
+    }
+
+    var elCirc = document.getElementById('supplyCircVal');
+    var elStaked = document.getElementById('supplyStakedVal');
+    var elCool = document.getElementById('supplyCoolVal');
+    var elReady = document.getElementById('supplyReadyVal');
+    var elFloat = document.getElementById('supplyFloatVal');
+    var elTotal = document.getElementById('supplyTotalVal');
+
+    if (elCirc) elCirc.textContent = base != null ? (fmt(base) + ' TIG · 100%') : 'n/a';
+    if (elStaked) elStaked.textContent = fmtAmtPct(locked);
+    if (elCool) elCool.textContent = fmtAmtPct(cool);
+    if (elReady) elReady.textContent = fmtAmtPct(ready);
+    if (elFloat) {
+      elFloat.textContent = floatAmt != null
+        ? (fmt(floatAmt) + ' TIG (' + (pctFloat != null ? pctFloat.toFixed(1) : '0.0') + '%)')
+        : '-';
+    }
+    if (elTotal) elTotal.textContent = total != null ? (fmt(total) + ' TIG') : '-';
+
     var elS = document.getElementById('supplyBarStaked');
     var elC = document.getElementById('supplyBarCool');
     var elR = document.getElementById('supplyBarReady');
-    if (elS) elS.style.width = wS.toFixed(2) + '%';
-    if (elC) elC.style.width = wC.toFixed(2) + '%';
-    if (elR) elR.style.width = wR.toFixed(2) + '%';
+    var bar = document.getElementById('supplyBar');
+
+    if (base != null && base > 0) {
+      var wS = Math.min(100, locked / base * 100);
+      var wC = Math.min(100 - wS, cool / base * 100);
+      var wR = Math.min(100 - wS - wC, ready / base * 100);
+      if (elS) elS.style.width = wS.toFixed(2) + '%';
+      if (elC) elC.style.width = wC.toFixed(2) + '%';
+      if (elR) elR.style.width = wR.toFixed(2) + '%';
+      if (bar) {
+        bar.title =
+          'vs circulating: staked ' + wS.toFixed(1) +
+          '% · cooldown ' + wC.toFixed(1) +
+          '% · ready ' + wR.toFixed(1) +
+          '% · float ' + Math.max(0, 100 - wS - wC - wR).toFixed(1) + '%';
+      }
+    } else {
+      if (elS) elS.style.width = '0%';
+      if (elC) elC.style.width = '0%';
+      if (elR) elR.style.width = '0%';
+      if (bar) bar.title = 'Circulating supply unavailable';
+    }
   }
+
 
   function computeWalletHistory(addr, sortedTxs) {
     if (!addr || !sortedTxs) return null;
