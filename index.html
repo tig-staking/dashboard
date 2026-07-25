@@ -2131,7 +2131,7 @@ a{color:var(--accent);text-decoration:none}
       else if (g >= 30) dlab = '<span class="c-yellow">' + Math.floor(g) + 'd idle</span>';
       var fTag = isFoundation(tx.address) ? '<span class="tag tag-foundation">Foundation</span>' : '';
       return '<tr><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a>' + fTag + '</td><td class="c-yellow">' + fmt2(tx.valueTig) + ' TIG</td><td>' + ago(tx.timestamp) + '</td><td>' + fullDate(tx._withdrawableTime) + '</td><td>' + dlab + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
-    }).join('') : '<tr><td colspan="6" class="c-green">No unlocks in 7d — quiet exits</td></tr>';
+    }).join('') : '<tr><td colspan="6" class="c-green">No unlocks in 7d — quiet exits </td></tr>';
 
     document.getElementById('unlockCount').textContent = String(data.unlocks.length);
     document.getElementById('unlocksBody').innerHTML = data.unlocks.length ? data.unlocks.slice(0, 30).map(function (tx) {
