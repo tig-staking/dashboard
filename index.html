@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TIG Staking Dashboard</title>
-<script type="text/javascript" nonce="372f9ead04324058a4f73b5b04e" src="//local.adguard.org?ts=1785322272133&amp;type=content-script&amp;dmn=contribution.usercontent.google.com&amp;url=https%3A%2F%2Fcontribution.usercontent.google.com%2Fdownload%3Fc%3DCgxiYXJkX3N0b3JhZ2USUBINcmVzcG9uc2VfZGF0YRo_CjA5OGI4YjFlZjM5NjEzMjVmMDAwNjU3YmU0YmZlODZhMTA4NTU1Mzk3MTEwNWIwYzkSCxIHELfVm4aZHxgB%26filename%3Dindex.html%26opi%3D103135050&amp;app=chrome.exe&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1"></script><script type="text/javascript" nonce="372f9ead04324058a4f73b5b04e" src="//local.adguard.org?ts=1785322272133&amp;name=AdGuard%20Extra&amp;type=user-script"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script type="text/javascript" nonce="372f9ead04324058a4f73b5b04e" src="//local.adguard.org?ts=1785322272133&amp;type=content-script&amp;dmn=contribution.usercontent.google.com&amp;url=https%3A%2F%2Fcontribution.usercontent.google.com%2Fdownload%3Fc%3DCgxiYXJkX3N0b3JhZ2USUBINcmVzcG9uc2VfZGF0YRo_CjBjOThmYjk1Y2Q5N2E5YmVmMDAwNjU3YmU4NjE1ZmQ3NTA4MTAyNjU3MjMxMDI3ZGUSCxIHELfVm4aZHxgB%26filename%3Dindex.html%26opi%3D103135050&amp;app=chrome.exe&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1"></script><script type="text/javascript" nonce="372f9ead04324058a4f73b5b04e" src="//local.adguard.org?ts=1785322272133&amp;name=AdGuard%20Extra&amp;type=user-script"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js"></script>
 <style>
 :root{--bg:#0b1020;--bg2:#12182b;--card:rgba(18,24,43,.92);--border:rgba(120,140,255,.12);--text:#e8eaf2;--text2:#aab2c8;--accent:#6ea8fe;--green:#22c55e;--red:#ef4444;--yellow:#eab308;--purple:#a855f7;--ok:rgba(34,197,94,.12);--mid:rgba(234,179,8,.12);--bad:rgba(239,68,68,.12)}
@@ -338,7 +338,7 @@ a{color:var(--accent);text-decoration:none}
           </div>
           <div class="near-list" id="nearUnlockList"></div>
           <canvas id="chartUnlock" height="120"></canvas>
-          <div class="hint hidden" id="unlockEmptyHint" style="margin-top:8px;color:var(--green)">No open pending — calm inventory signal.</div>
+          <div class="hint hidden" id="unlockEmptyHint" style="margin-top:8px;color:var(--green)">No upcoming cooldown expirations — calm inventory signal.</div>
         </div>
       </div>
 
@@ -367,16 +367,16 @@ a{color:var(--accent);text-decoration:none}
     <div class="tab-panel" id="tab-exits">
       <div class="grid-2">
         <div class="card">
-          <h3>Unlocks 7d <span class="badge" id="unstakeCount7d">0</span></h3>
-          <div class="hint">Exit demand (intent), not realized sells</div>
+          <h3>Unstaked in last 7 days <span class="badge" id="unstakeCount7d">0</span></h3>
+          <div class="hint">Exit intent / 28d cooldown started</div>
           <div class="table-wrap"><table>
             <thead><tr><th>Address</th><th>Amt</th><th>When</th><th>Withdrawable</th><th>Dorm.</th><th></th></tr></thead>
             <tbody id="unstakes7dBody"><tr><td colspan="6">Sync</td></tr></tbody>
           </table></div>
         </div>
         <div class="card">
-          <h3>Upcoming withdrawable <span class="badge" id="unlockCount">0</span></h3>
-          <div class="hint">Pending inventory schedule</div>
+          <h3>Cooldown Expirations <span class="badge" id="unlockCount">0</span></h3>
+          <div class="hint">Tokens becoming liquid soon</div>
           <div class="table-wrap"><table>
             <thead><tr><th>When</th><th>Address</th><th>Amt</th><th>In</th><th></th></tr></thead>
             <tbody id="unlocksBody"><tr><td colspan="5">Sync</td></tr></tbody>
@@ -1490,6 +1490,7 @@ a{color:var(--accent);text-decoration:none}
       tx._dormancyGap = gap;
       if (gap >= C.DORMANCY_DAYS) dormancyAlerts.push(tx);
     }
+    unstakes7d.sort(function (a, b) { return b.timestamp - a.timestamp; });
 
     var allUnlocks = [];
     openPending.forEach(function (lots) {
@@ -2209,7 +2210,7 @@ a{color:var(--accent);text-decoration:none}
       else if (g >= 30) dlab = '<span class="c-yellow">' + Math.floor(g) + 'd idle</span>';
       var fTag = isFoundation(tx.address) ? '<span class="tag tag-foundation">Foundation</span>' : '';
       return '<tr><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a>' + fTag + debBtn(tx.address) + '</td><td class="c-yellow">' + fmt2(tx.valueTig) + ' TIG</td><td>' + ago(tx.timestamp) + '</td><td>' + fullDate(tx._withdrawableTime) + '</td><td>' + dlab + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
-    }).join('') : '<tr><td colspan="6" class="c-green">No unlocks in 7d — quiet exits </td></tr>';
+    }).join('') : '<tr><td colspan="6" class="c-green">No unstakes in last 7 days </td></tr>';
 
     document.getElementById('unlockCount').textContent = String(data.unlocks.length);
     document.getElementById('unlocksBody').innerHTML = data.unlocks.length ? data.unlocks.slice(0, 30).map(function (tx) {
@@ -2218,7 +2219,7 @@ a{color:var(--accent);text-decoration:none}
       var cls = rem < 7 * 86400 ? 'c-red' : rem < 14 * 86400 ? 'c-yellow' : '';
       var fTag = isFoundation(tx.address) ? '<span class="tag tag-foundation">Foundation</span>' : '';
       return '<tr><td class="' + cls + '">' + fullDate(tx.unlockTime) + '</td><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a>' + fTag + debBtn(tx.address) + '</td><td class="' + cls + '">' + fmt2(tx.valueTig) + ' TIG</td><td class="' + cls + '">in ' + cd + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
-    }).join('') : '<tr><td colspan="5" class="c-green">No open pending</td></tr>';
+    }).join('') : '<tr><td colspan="5" class="c-green">No upcoming cooldown expirations</td></tr>';
 
     document.getElementById('extraMetrics').textContent =
       'In cooldown ' + fmt(st.totalPendingOpen) + ' TIG · active locked ' + fmt(st.netStaked) + ' TIG';
