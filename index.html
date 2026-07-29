@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TIG Staking Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script type="text/javascript" nonce="372f9ead04324058a4f73b5b04e" src="//local.adguard.org?ts=1785322272133&amp;type=content-script&amp;dmn=contribution.usercontent.google.com&amp;url=https%3A%2F%2Fcontribution.usercontent.google.com%2Fdownload%3Fc%3DCgxiYXJkX3N0b3JhZ2USUBINcmVzcG9uc2VfZGF0YRo_CjA5OGI4YjFlZjM5NjEzMjVmMDAwNjU3YmU0YmZlODZhMTA4NTU1Mzk3MTEwNWIwYzkSCxIHELfVm4aZHxgB%26filename%3Dindex.html%26opi%3D103135050&amp;app=chrome.exe&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1"></script><script type="text/javascript" nonce="372f9ead04324058a4f73b5b04e" src="//local.adguard.org?ts=1785322272133&amp;name=AdGuard%20Extra&amp;type=user-script"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js"></script>
 <style>
 :root{--bg:#0b1020;--bg2:#12182b;--card:rgba(18,24,43,.92);--border:rgba(120,140,255,.12);--text:#e8eaf2;--text2:#aab2c8;--accent:#6ea8fe;--green:#22c55e;--red:#ef4444;--yellow:#eab308;--purple:#a855f7;--ok:rgba(34,197,94,.12);--mid:rgba(234,179,8,.12);--bad:rgba(239,68,68,.12)}
@@ -200,6 +200,7 @@ a{color:var(--accent);text-decoration:none}
       <p>Base Network · scanner <span id="syncModeBadge">Ready</span> · <span id="countdown"></span></p>
     </div>
     <div class="header-badges">
+      <button type="button" class="btn btn-ghost btn-xs" id="themeToggleBtn" title="Toggle light/dark mode" style="border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;background:rgba(255,255,255,.04);color:var(--text)">☀️ Light</button>
       <span class="badge-auto">Refresh: Every 5 min</span>
     </div>
   </div>
@@ -609,6 +610,11 @@ a{color:var(--accent);text-decoration:none}
   var FOUNDATION = {};
   C.FOUNDATION_WALLETS.forEach(function (a) { FOUNDATION[String(a).toLowerCase()] = true; });
   function isFoundation(addr) { return !!(addr && FOUNDATION[String(addr).toLowerCase()]); }
+
+  // Debank button helper
+  function debBtn(addr) {
+    return '<a class="btn btn-ghost btn-xs" style="padding:1px 5px;font-size:9px;margin-left:4px;border:1px solid var(--border);border-radius:4px" target="_blank" rel="noopener" href="https://debank.com/profile/' + addr + '" title="View on DeBank">DeBank</a>';
+  }
 
   var TIERS = [
     { key: 'shrimp', label: '<100', min: 0, max: 100 },
@@ -1656,7 +1662,7 @@ a{color:var(--accent);text-decoration:none}
       }
       var fTag = isFoundation(tx.address) ? '<span class="tag tag-foundation">Foundation</span>' : '';
       var amtCls = (Number(tx.valueTig) || 0) >= uiState.largeThreshold ? ' style="font-weight:750"' : '';
-      html += '<tr><td><span class="tag ' + typeTag(t) + '">' + typeLabel(t) + '</span></td><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a>' + fTag + '</td><td' + amtCls + '>' + fmt2(tx.valueTig) + ' TIG</td><td>' + ago(tx.timestamp) + '</td><td>' + wd + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
+      html += '<tr><td><span class="tag ' + typeTag(t) + '">' + typeLabel(t) + '</span></td><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a>' + fTag + debBtn(tx.address) + '</td><td' + amtCls + '>' + fmt2(tx.valueTig) + ' TIG</td><td>' + ago(tx.timestamp) + '</td><td>' + wd + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
     });
     body.innerHTML = html;
   }
@@ -1673,7 +1679,7 @@ a{color:var(--accent);text-decoration:none}
       var pend = h.pending || 0;
       var badge = pend > 1e-9 ? '<span class="tag tag-pending">unlocking</span>' : '';
       var fTag = h.isFoundation ? '<span class="tag tag-foundation">Foundation</span>' : '';
-      return '<tr class="row-btn" data-addr="' + h.address + '"><td>' + (idx + 1) + '</td><td><span class="mono">' + shortAddr(h.address) + '</span> ' + badge + fTag + '</td><td>' + fmt(h.balance) + ' TIG</td><td class="' + (pend > 0 ? 'c-yellow' : '') + '">' + (pend > 0 ? fmt(pend) + ' TIG' : '—') + '</td><td>' + share.toFixed(1) + '%</td><td>' + Math.floor((data.now - h.firstSeen) / 86400) + 'd</td></tr>';
+      return '<tr class="row-btn" data-addr="' + h.address + '"><td>' + (idx + 1) + '</td><td><span class="mono">' + shortAddr(h.address) + '</span> ' + badge + fTag + debBtn(h.address) + '</td><td>' + fmt(h.balance) + ' TIG</td><td class="' + (pend > 0 ? 'c-yellow' : '') + '">' + (pend > 0 ? fmt(pend) + ' TIG' : '—') + '</td><td>' + share.toFixed(1) + '%</td><td>' + Math.floor((data.now - h.firstSeen) / 86400) + 'd</td></tr>';
     }).join('') || '<tr><td colspan="6">None</td></tr>';
   }
 
@@ -1683,7 +1689,7 @@ a{color:var(--accent);text-decoration:none}
     var h = data.holders.find(function (x) { return x.address.toLowerCase() === addr.toLowerCase(); });
     var events = data.sorted.filter(function (tx) { return String(tx.address).toLowerCase() === addr.toLowerCase(); }).slice(-30).reverse();
     var fBadge = isFoundation(addr) ? ' <span class="tag tag-foundation">Foundation</span>' : '';
-    document.getElementById('drawerTitle').innerHTML = shortAddr(addr) + fBadge;
+    document.getElementById('drawerTitle').innerHTML = shortAddr(addr) + ' ' + debBtn(addr) + fBadge;
     var meta = h
       ? ('Locked <strong>' + fmt(h.balance) + ' TIG</strong> · pending <strong>' + fmt(h.pending || 0) + '</strong> · first lock ' + Math.floor((data.now - h.firstSeen) / 86400) + 'd ago · ' + (h.txCount || 0) + ' events')
       : 'No active locked balance';
@@ -1701,11 +1707,10 @@ a{color:var(--accent);text-decoration:none}
     document.getElementById('holderDrawer').classList.remove('open');
   }
 
-    function renderSupplyStrip(st, supply) {
+  function renderSupplyStrip(st, supply) {
     supply = supply || {};
     var total = supply.total;
     var circ = supply.circulating;
-    // Base = CIRCULATING only (total mint is reference, not bar %)
     var base = (circ != null && Number(circ) > 0) ? Number(circ) : null;
     var locked = Number(st.netStaked) || 0;
     var cool = Number(st.pendingCooldown) || 0;
@@ -1728,7 +1733,6 @@ a{color:var(--accent);text-decoration:none}
     var pctFloat = floatAmt != null ? pctOf(floatAmt) : null;
     var pctTotal = (total != null && Number(total) > 0) ? (locked / Number(total) * 100) : null;
 
-    // Rebuild legend labels (same IDs) — no other HTML edits needed
     var legend = document.querySelector('#supplyStrip .supply-legend');
     if (legend) {
       legend.innerHTML =
@@ -1817,7 +1821,6 @@ a{color:var(--accent);text-decoration:none}
       if (bar) bar.title = 'Circulating supply unavailable';
     }
   }
-
 
   function computeWalletHistory(addr, sortedTxs) {
     if (!addr || !sortedTxs) return null;
@@ -1954,7 +1957,7 @@ a{color:var(--accent);text-decoration:none}
     if (!listEl) return;
     listEl.innerHTML = list.map(function (w) {
       var lab = w.label ? w.label + ' · ' : '';
-      return '<span class="mytig-chip"><span class="mono">' + lab + shortAddr(w.address) + '</span><button type="button" title="Remove" data-rm="' + w.address + '">×</button></span>';
+      return '<span class="mytig-chip"><span class="mono">' + lab + shortAddr(w.address) + '</span>' + debBtn(w.address) + '<button type="button" title="Remove" data-rm="' + w.address + '">×</button></span>';
     }).join('') || '<span class="hint" style="margin:0">No saved wallets</span>';
     Array.prototype.forEach.call(listEl.querySelectorAll('button[data-rm]'), function (btn) {
       btn.onclick = function () { removeMyWallet(btn.getAttribute('data-rm')); renderMyTig(); };
@@ -1999,7 +2002,7 @@ a{color:var(--accent);text-decoration:none}
       var title = (w.label ? w.label + ' · ' : '') + shortAddr(w.address);
       var fTag = s.isFoundation ? '<span class="tag tag-foundation">Foundation</span>' : '';
       if (!s.found) {
-        return '<div class="mytig-card"><div class="mytig-card-head"><h4><span class="mono">' + title + '</span>' + fTag + '</h4>' +
+        return '<div class="mytig-card"><div class="mytig-card-head"><h4><span class="mono">' + title + '</span>' + fTag + debBtn(w.address) + '</h4>' +
           '<a class="btn btn-ghost btn-xs" target="_blank" rel="noopener" href="https://basescan.org/address/' + w.address + '">Basescan</a></div>' +
           '<div class="hint">No staking events found for this address in synced history.</div></div>';
       }
@@ -2022,7 +2025,7 @@ a{color:var(--accent);text-decoration:none}
       var soon7 = s.lots.filter(function (l) { return l.unlockTime > data.now && l.unlockTime <= data.now + 7 * 86400; })
         .reduce(function (a, l) { return a + l.valueTig; }, 0);
       return '<div class="mytig-card">' +
-        '<div class="mytig-card-head"><h4><span class="mono">' + title + '</span>' + fTag +
+        '<div class="mytig-card-head"><h4><span class="mono">' + title + '</span>' + fTag + debBtn(w.address) +
         ' <button type="button" class="btn btn-ghost btn-xs" data-insp="' + w.address + '">Inspector</button></h4>' +
         '<a class="btn btn-ghost btn-xs" target="_blank" rel="noopener" href="https://basescan.org/address/' + w.address + '">Basescan</a></div>' +
         '<div class="mytig-stats">' +
@@ -2205,7 +2208,7 @@ a{color:var(--accent);text-decoration:none}
       if (g >= C.DORMANCY_DAYS) dlab = '<span class="c-purple">' + Math.floor(g) + 'd</span>';
       else if (g >= 30) dlab = '<span class="c-yellow">' + Math.floor(g) + 'd idle</span>';
       var fTag = isFoundation(tx.address) ? '<span class="tag tag-foundation">Foundation</span>' : '';
-      return '<tr><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a>' + fTag + '</td><td class="c-yellow">' + fmt2(tx.valueTig) + ' TIG</td><td>' + ago(tx.timestamp) + '</td><td>' + fullDate(tx._withdrawableTime) + '</td><td>' + dlab + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
+      return '<tr><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a>' + fTag + debBtn(tx.address) + '</td><td class="c-yellow">' + fmt2(tx.valueTig) + ' TIG</td><td>' + ago(tx.timestamp) + '</td><td>' + fullDate(tx._withdrawableTime) + '</td><td>' + dlab + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
     }).join('') : '<tr><td colspan="6" class="c-green">No unlocks in 7d — quiet exits </td></tr>';
 
     document.getElementById('unlockCount').textContent = String(data.unlocks.length);
@@ -2214,7 +2217,7 @@ a{color:var(--accent);text-decoration:none}
       var cd = rem < 86400 ? Math.floor(rem / 3600) + 'h' : Math.floor(rem / 86400) + 'd';
       var cls = rem < 7 * 86400 ? 'c-red' : rem < 14 * 86400 ? 'c-yellow' : '';
       var fTag = isFoundation(tx.address) ? '<span class="tag tag-foundation">Foundation</span>' : '';
-      return '<tr><td class="' + cls + '">' + fullDate(tx.unlockTime) + '</td><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a>' + fTag + '</td><td class="' + cls + '">' + fmt2(tx.valueTig) + ' TIG</td><td class="' + cls + '">in ' + cd + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
+      return '<tr><td class="' + cls + '">' + fullDate(tx.unlockTime) + '</td><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a>' + fTag + debBtn(tx.address) + '</td><td class="' + cls + '">' + fmt2(tx.valueTig) + ' TIG</td><td class="' + cls + '">in ' + cd + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
     }).join('') : '<tr><td colspan="5" class="c-green">No open pending</td></tr>';
 
     document.getElementById('extraMetrics').textContent =
@@ -2238,7 +2241,7 @@ a{color:var(--accent);text-decoration:none}
       if (!h) {
         var any = data.sorted.slice().reverse().find(function (tx) { return String(tx.address).toLowerCase().indexOf(q) !== -1; });
         if (any) {
-          box.innerHTML = 'Found activity for <strong class="mono">' + shortAddr(any.address) + '</strong> (no active lock). <a href="#" id="openFound">Open</a>';
+          box.innerHTML = 'Found activity for <strong class="mono">' + shortAddr(any.address) + '</strong> (no active lock). <a href="#" id="openFound">Open</a> ' + debBtn(any.address);
           var of = document.getElementById('openFound');
           if (of) of.onclick = function (ev) { ev.preventDefault(); openHolderDrawer(any.address); };
           return;
@@ -2249,7 +2252,7 @@ a{color:var(--accent);text-decoration:none}
       var rank = data.holders.findIndex(function (x) { return x.address === h.address; }) + 1;
       var share = data.totalHeld > 0 ? h.balance / data.totalHeld * 100 : 0;
       var fTag = h.isFoundation ? ' <span class="tag tag-foundation">Foundation</span>' : '';
-      box.innerHTML = '#' + rank + ' · <strong>' + fmt(h.balance) + ' TIG</strong> locked' + fTag + ' · pending ' + fmt(h.pending || 0) + ' · ' + share.toFixed(2) + '% · <a href="#" id="openFound">Details</a>';
+      box.innerHTML = '#' + rank + ' · <strong>' + fmt(h.balance) + ' TIG</strong> locked' + fTag + ' ' + debBtn(h.address) + ' · pending ' + fmt(h.pending || 0) + ' · ' + share.toFixed(2) + '% · <a href="#" id="openFound">Details</a>';
       var of2 = document.getElementById('openFound');
       if (of2) of2.onclick = function (ev) { ev.preventDefault(); openHolderDrawer(h.address); };
     }, 250);
@@ -2284,7 +2287,7 @@ a{color:var(--accent);text-decoration:none}
       if (main) main.classList.add('hidden');
       if (empty) {
         empty.classList.remove('hidden');
-        empty.innerHTML = '<h2>Wallet not found</h2><p>No staking events found for address <span class="mono">' + shortAddr(addr) + '</span>.</p>';
+        empty.innerHTML = '<h2>Wallet not found</h2><p>No staking events found for address <span class="mono">' + shortAddr(addr) + '</span> ' + debBtn(addr) + '</p>';
       }
       return;
     }
@@ -2372,6 +2375,21 @@ a{color:var(--accent);text-decoration:none}
   }
 
   function bindUI() {
+    // Theme toggle initialization & handling
+    var themeBtn = document.getElementById('themeToggleBtn');
+    if (themeBtn) {
+      var savedTheme = localStorage.getItem('tig-theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      themeBtn.textContent = savedTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
+      themeBtn.onclick = function () {
+        var current = document.documentElement.getAttribute('data-theme') || 'dark';
+        var next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem('tig-theme', next); } catch (e) {}
+        themeBtn.textContent = next === 'dark' ? '☀️ Light' : '🌙 Dark';
+      };
+    }
+
     document.getElementById('searchBtn').onclick = function () { searchHolder(); };
     document.getElementById('searchInput').oninput = function () { searchHolder(); };
 
