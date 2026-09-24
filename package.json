@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "scripts": {
+    "sync": "node sync.js && node holders.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "ethers": "6.17.0"
+  }
+}

@@ -198,9 +198,9 @@ async function getLogsChunk(provider, address, topics, fromBlock, toBlock) {
   const out = [];
 
   while (start <= toBlock) {
-    const end = Math.min(start + size - 1, toBlock);
     let attempt = 0;
     for (;;) {
+      const end = Math.min(start + size - 1, toBlock);
       try {
         const logs = await provider.getLogs({
           address,
@@ -338,9 +338,7 @@ async function run() {
           tx.withdrawableTime = real + pendingPeriodSec;
         }
       }
-    } else {
-      console.warn(`Brak timestampu bloku ${tx.blockNumber} — zostawiam estimate`);
-    }
+    } else throw new Error(`Missing real timestamp for block ${tx.blockNumber}; snapshot not advanced`);
   }
 
   const allTxs = dedupeById([...(existingData.transactions || []), ...newTxs]);
@@ -386,7 +384,8 @@ async function run() {
   console.log('Dashboard przy starcie porówna snapshotCount/snapshotLastBlock i zmerguje.');
 }
 
-run().catch((e) => {
+if (require.main === module) run().catch((e) => {
   console.error(e);
   process.exit(1);
 });
+module.exports = { getLogsChunk };
