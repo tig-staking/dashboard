@@ -75,10 +75,15 @@ header{position:sticky;top:0;z-index:50;background:rgba(11,16,32,.92);backdrop-f
 .funnel .k{font-size:11px;color:var(--text2);text-transform:uppercase}
 .funnel .v{font-size:22px;font-weight:760;margin-top:4px}
 .funnel .s{font-size:12px;font-weight:600;color:var(--text2);margin-top:6px}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 10px;padding:4px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;padding:4px;background:var(--bg2);border:1px solid var(--border);border-radius:12px}
 .tab-btn{border:0;background:transparent;color:var(--text2);padding:8px 12px;border-radius:99px;font-size:12px;font-weight:700;cursor:pointer}
-.tab-btn.active{background:rgba(110,168,254,.14);color:var(--text)}
+.tab-btn.active{background:rgba(110,168,254,.2);color:var(--text)}
+.tab-btn:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .tab-panel{display:none}.tab-panel.active{display:block}
+.advanced{margin:12px 0;border:1px solid var(--border);border-radius:12px;background:var(--card);padding:10px 14px}
+.advanced>summary{cursor:pointer;color:var(--text);font-size:12px;font-weight:700}
+.advanced[open]>summary{margin-bottom:12px}
+.advanced>.health{margin-bottom:0}
 .charts{display:grid;grid-template-columns:1.4fr 1fr;gap:12px;margin:12px 0}
 @media(max-width:960px){.charts{grid-template-columns:1fr}}
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px}
@@ -93,6 +98,7 @@ header{position:sticky;top:0;z-index:50;background:rgba(11,16,32,.92);backdrop-f
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
 @media(max-width:960px){.grid-2{grid-template-columns:1fr}}
 .table-wrap{max-height:340px;overflow:auto}
+#tab-top500 .table-wrap{max-height:none;overflow-x:auto;overflow-y:visible}
 table{width:100%;border-collapse:collapse;font-size:12px}
 th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,.04);text-align:left;vertical-align:top}
 th{position:sticky;top:0;background:var(--card);color:var(--text2);font-size:10px;text-transform:uppercase;letter-spacing:.3px;z-index:1}
@@ -101,6 +107,7 @@ a{color:var(--accent);text-decoration:none}
 .search{display:flex;gap:6px;margin:8px 0}
 .search input,.sel{flex:1;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:8px;padding:8px 10px;font-size:12px}
 .search input{font-family:ui-monospace,monospace}
+#top500Search,#searchInput,#inspectorSection{scroll-margin-top:100px}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
 .chip{border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--text2);border-radius:999px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer}
 .chip.active{background:rgba(110,168,254,.14);color:var(--text);border-color:rgba(110,168,254,.35)}
@@ -140,14 +147,27 @@ a{color:var(--accent);text-decoration:none}
 @media(max-width:700px){
   .header-inner{padding:10px 12px}
   .brand h1{font-size:15px}
+  .brand p,.badge-auto{display:none}
+  .header-badges{flex:0 0 auto}
   .status span:nth-child(n+4){display:none}
+  .tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}
+  .tab-btn{flex:0 0 auto;white-space:nowrap}
+  .table-wrap{overflow:auto}
+  .health-metrics{grid-template-columns:1fr 1fr}
+  #tab-top500 table{width:600px;table-layout:fixed}
+  #tab-top500 th:nth-child(1){width:30px}
+  #tab-top500 th:nth-child(2){width:135px}
+  #tab-top500 th:nth-child(3){width:100px}
+  #tab-top500 th:nth-child(4){width:100px}
+  #tab-top500 th:nth-child(5){width:120px}
+  #tab-top500 th:nth-child(6){width:115px}
+  #tab-top500 td:nth-child(2){overflow-wrap:anywhere}
+  #tab-top500 td:nth-child(2) .btn{display:none}
+  #tab-top500 .search:has(#top500Search){flex-direction:column}
+  #top500Filter{flex:auto!important;width:100%}
+  #tab-holders .table-wrap{max-height:none;overflow-x:auto}
+  #tab-holders table{min-width:620px}
 }
-.tab-btn.tab-inspector{background:rgba(168,85,247,.12);color:#c084fc;border:1px solid rgba(168,85,247,.3)}
-.tab-btn.tab-inspector:hover{background:rgba(168,85,247,.22)}
-.tab-btn.tab-inspector.active{background:linear-gradient(135deg,#a855f7,#7e22ce);color:#fff;border-color:transparent}
-.tab-btn.tab-mytig{background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.28)}
-.tab-btn.tab-mytig:hover{background:rgba(34,197,94,.18)}
-.tab-btn.tab-mytig.active{background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border-color:transparent}
 .inspector-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
 @media(max-width:900px){.inspector-stats{grid-template-columns:repeat(2,1fr)}}
 .inspector-card{background:rgba(168,85,247,.05);border:1px solid rgba(168,85,247,.2);border-radius:12px;padding:12px}
@@ -223,9 +243,19 @@ a{color:var(--accent);text-decoration:none}
   </div>
 
   <div id="appMain" class="hidden">
+    <div class="tabs" role="tablist" aria-label="Dashboard sections">
+      <button type="button" class="tab-btn active" data-tab="overview">Overview</button>
+      <button type="button" class="tab-btn" data-tab="top500">Top 500 TIG</button>
+      <button type="button" class="tab-btn" data-tab="holders">Staking</button>
+      <button type="button" class="tab-btn" data-tab="exits">Unlocks</button>
+      <button type="button" class="tab-btn" data-tab="mytig">My address</button>
+    </div>
+
+    <div class="tab-panel active" id="tab-overview">
     <div class="alerts" id="eduSection"></div>
     <div class="alerts" id="alertsSection"></div>
 
+    <details class="advanced"><summary>More staking metrics and indicative exit signals</summary>
     <div class="health neutral" id="healthStrip">
       <div class="health-top">
         <div>
@@ -233,7 +263,7 @@ a{color:var(--accent);text-decoration:none}
           <div class="health-sentence" id="healthSentence">Sync to load staking health.</div>
         </div>
         <div class="kpi spi neutral" id="spiCard" style="min-width:130px;max-width:180px;padding:8px 12px;margin:0">
-          <div class="label" style="font-size:10px">Pressure (0–100) <span class="tip" id="spiTip" tabindex="0" data-tip="Exit Pressure Score (0–100). Higher = stronger unbonding intent.">?</span></div>
+          <div class="label" style="font-size:10px">Indicative exit signal (0–100) <span class="tip" id="spiTip" tabindex="0" data-tip="Weighted score of staking activity and pending unlocks. It is not a probability or price forecast.">?</span></div>
           <div class="value" id="spiValue" style="font-size:20px;margin-top:2px">-</div>
           <div class="sub" id="spiLabel" style="font-size:11px;margin-top:2px">-</div>
           <div class="gauge" id="spiGauge" style="height:5px;margin-top:6px"><i id="spiFill"></i></div>
@@ -241,15 +271,15 @@ a{color:var(--accent);text-decoration:none}
       </div>
       <div class="health-metrics">
         <div class="hmet">
-          <div class="k">Net Staking 7d <span class="tip" tabindex="0" data-tip="Net change in locked TIG over last 7 days (Locks + Claims + Relocks − Unlocks).">?</span></div>
+          <div class="k">Change in active stake · 7d <span class="tip" tabindex="0" data-tip="Locks + Claims + Relocks − Unlocks. This measures active stake, not buying or selling.">?</span></div>
           <div class="v" id="net7d">-</div>
           <div class="sub-group">
             <div class="sub-line"><span class="lbl">14d net flow:</span><span class="val" id="net14dSubVal">-</span></div>
-            <div class="sub-line"><span class="lbl">In / Out (7d):</span><span class="val" id="inOutSubVal">-</span></div>
+            <div class="sub-line"><span class="lbl">Added / unlocked (7d):</span><span class="val" id="inOutSubVal">-</span></div>
           </div>
         </div>
         <div class="hmet">
-          <div class="k">Can Leave in 7d <span class="tip" tabindex="0" data-tip="TIG ending their 28-day cooldown within the next 7 days that will become withdrawable.">?</span></div>
+          <div class="k">Ready within next 7d <span class="tip" tabindex="0" data-tip="TIG whose cooldown ends in the next 7 days. TIG already ready now is shown separately.">?</span></div>
           <div class="v c-yellow" id="unlock7d">-</div>
           <div class="sub-group">
             <div class="sub-line"><span class="lbl">8–14d:</span><span class="val" id="unlock814SubVal">-</span></div>
@@ -265,7 +295,7 @@ a{color:var(--accent);text-decoration:none}
           </div>
         </div>
         <div class="hmet">
-          <div class="k">Active Holders <span class="tip" tabindex="0" data-tip="Number of unique wallet addresses currently holding active locked TIG.">?</span></div>
+          <div class="k">Active staker addresses <span class="tip" tabindex="0" data-tip="Number of distinct addresses currently holding active locked TIG. One address is not necessarily one person.">?</span></div>
           <div class="v" id="holdersKpi">-</div>
           <div class="sub-group">
             <div class="sub-line"><span class="lbl">Foundation wallets:</span><span class="val" id="foundationSubVal">-</span></div>
@@ -273,7 +303,7 @@ a{color:var(--accent);text-decoration:none}
           </div>
         </div>
         <div class="hmet">
-          <div class="k">Staked of Supply <span class="tip" tabindex="0" data-tip="Active locked TIG as % of circulating supply (preferred) and total supply. Circulating: CoinGecko if available, else on-chain totalSupply minus burned addresses.">?</span></div>
+          <div class="k">Stake / estimated supply <span class="tip" tabindex="0" data-tip="Active locked TIG divided by estimated circulating supply. Supply and staking may be measured at different times; treat the percentage as approximate.">?</span></div>
           <div class="v" id="stakedPctKpi">-</div>
           <div class="sub-group">
             <div class="sub-line"><span class="lbl">of circulating:</span><span class="val" id="stakedCircSubVal">-</span></div>
@@ -283,7 +313,7 @@ a{color:var(--accent);text-decoration:none}
       </div>
       <div class="supply-strip" id="supplyStrip">
         <div class="supply-strip-top">
-          <div class="title">Supply structure <span class="tip" tabindex="0" data-tip="Green = actively staked. Yellow = in 28d cooldown. Red = ready to withdraw. Remainder ≈ unstaked liquid float vs circulating/total base.">?</span></div>
+          <div class="title">Estimated supply structure <span class="tip" tabindex="0" data-tip="Green = active stake. Yellow = cooldown. Red = ready to withdraw. Remainder is outside TokenLocker, not necessarily tradable.">?</span></div>
           <div><span id="supplySourceBadge" class="badge">supply: -</span></div>
         </div>
         <div class="supply-bar" id="supplyBar">
@@ -297,22 +327,12 @@ a{color:var(--accent);text-decoration:none}
           <span class="c-green">Staked: <b id="supplyStakedVal">-</b></span>
           <span class="c-yellow">Cooldown: <b id="supplyCoolVal">-</b></span>
           <span class="c-red">Ready: <b id="supplyReadyVal">-</b></span>
-          <span>Liquid float ≈ <b id="supplyFloatVal">-</b></span>
+          <span>Outside TokenLocker ≈ <b id="supplyFloatVal">-</b></span>
         </div>
       </div>
     </div>
+    </details>
 
-    <div class="tabs" role="tablist">
-      <button type="button" class="tab-btn active" data-tab="overview">Overview</button>
-      <button type="button" class="tab-btn" data-tab="exits">Exits</button>
-      <button type="button" class="tab-btn" data-tab="holders">Stakers</button>
-      <button type="button" class="tab-btn" data-tab="top500">Top 500 TIG</button>
-      <button type="button" class="tab-btn" data-tab="loyalty">Loyalty</button>
-      <button type="button" class="tab-btn tab-mytig" data-tab="mytig">My TIG</button>
-      <button type="button" class="tab-btn tab-inspector" data-tab="inspector">🔎 Wallet Inspector</button>
-    </div>
-
-    <div class="tab-panel active" id="tab-overview">
       <div class="funnel">
         <div class="card"><div class="k">7d Unlock Requests <span class="tip" tabindex="0" data-tip="Total TIG requested to unlock in the last 7 days. Initiates mandatory 28d cooldown.">?</span></div><div class="v c-yellow" id="funnelUnlock">-</div><div class="s">Requested intent</div></div>
         <div class="card"><div class="k">Active Cooldown <span class="tip" tabindex="0" data-tip="Tokens currently waiting in the 28-day cooldown period.">?</span></div><div class="v c-yellow" id="funnelCooldown">-</div><div class="s">Locked in cooldown</div></div>
@@ -323,7 +343,7 @@ a{color:var(--accent);text-decoration:none}
       <div class="charts">
         <div class="card">
           <h3>Flow (30d) <span class="tip" tabindex="0" data-tip="Daily volume of new locks/claims/relocks (green) vs unlock requests (red) and net flow (blue line).">?</span></h3>
-          <div class="hint">Green = Locks (+ above axis) · Red = Unlock Requests (- below axis) · Blue = Net Flow</div>
+          <div class="hint">Green = added to active stake · Red = unlock requests · Blue = change in active stake. These are staking events, not trades.</div>
           <canvas id="chartFlow" height="130"></canvas>
           <div class="hint" id="flowSummary" style="margin-top:10px;padding:8px 10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;font-weight:600;color:var(--text)"></div>
         </div>
@@ -367,8 +387,8 @@ a{color:var(--accent);text-decoration:none}
     <div class="tab-panel" id="tab-exits">
       <div class="grid-2">
         <div class="card">
-          <h3>Unstaked in last 7 days <span class="badge" id="unstakeCount7d">0</span></h3>
-          <div class="hint">Exit intent / 28d cooldown started</div>
+          <h3>Unlock requests in last 7 days <span class="badge" id="unstakeCount7d">0</span></h3>
+          <div class="hint">Cooldown started; a request does not mean TIG was sold or withdrawn.</div>
           <div class="table-wrap"><table>
             <thead><tr><th>Address</th><th>Amt</th><th>When</th><th>Withdrawable</th><th>Dorm.</th><th></th></tr></thead>
             <tbody id="unstakes7dBody"><tr><td colspan="6">Sync</td></tr></tbody>
@@ -376,7 +396,7 @@ a{color:var(--accent);text-decoration:none}
         </div>
         <div class="card">
           <h3>Cooldown Expirations <span class="badge" id="unlockCount">0</span></h3>
-          <div class="hint">Tokens becoming liquid soon</div>
+          <div class="hint">TIG becoming withdrawable soon; this does not imply a market sale.</div>
           <div class="table-wrap"><table>
             <thead><tr><th>When</th><th>Address</th><th>Amt</th><th>In</th><th></th></tr></thead>
             <tbody id="unlocksBody"><tr><td colspan="5">Sync</td></tr></tbody>
@@ -398,11 +418,34 @@ a{color:var(--accent);text-decoration:none}
           </select>
         </div>
         <div id="searchResult" class="hint"></div>
+        <div class="hint" id="stakerTableStatus">Loading active staker addresses. Search also checks past stakers.</div>
         <div class="table-wrap"><table>
           <thead><tr><th>#</th><th>Address</th><th>Locked</th><th>Pending</th><th>%</th><th>Since</th></tr></thead>
           <tbody id="holdersBody"><tr><td colspan="6">Sync to load</td></tr></tbody>
         </table></div>
+        <div class="search" style="align-items:center;justify-content:space-between"><button type="button" class="btn" id="stakerPrev">Previous</button><span class="hint" id="stakerPageStatus" style="margin:0">—</span><button type="button" class="btn" id="stakerNext">Next</button></div>
       </div>
+      <details class="advanced"><summary>Staking analysis · first-lock age and current size</summary>
+      <div class="hint">Age is measured from an address's first recorded lock, even if it later exited and returned. The 7-day change includes activity from addresses that are no longer active.</div>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Cohorts <span class="badge" id="cohortCount">0</span></h3>
+          <div class="hint">By first-lock age</div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Cohort</th><th>Holders</th><th>Locked</th><th>%</th><th>Net 7d</th><th>Signal</th></tr></thead>
+            <tbody id="cohortBody"><tr><td colspan="6">Sync</td></tr></tbody>
+          </table></div>
+        </div>
+        <div class="card">
+          <h3>Tiers <span class="badge" id="tierCount">0</span></h3>
+          <div class="hint">By locked size</div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Tier</th><th>Holders</th><th>Locked</th><th>%</th><th>Net 7d</th></tr></thead>
+            <tbody id="tierBody"><tr><td colspan="5">Sync</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+      </details>
     </div>
 
     <div class="tab-panel" id="tab-top500">
@@ -410,18 +453,22 @@ a{color:var(--accent);text-decoration:none}
         <h3>Top 500 TIG addresses <span class="badge" id="top500Count">-</span></h3>
         <div class="hint">Wallet balance + active staking + TIG pending withdrawal. Each row is one address; exchange, vesting, and contract addresses may represent many people. The staking contract and burn addresses are excluded.</div>
         <div class="hint" id="top500Status">Loading verified snapshot…</div>
-        <div class="search"><input id="top500Search" class="mono" placeholder="Filter top 500 by address"></div>
-        <div class="table-wrap" style="max-height:620px"><table>
+        <div class="hint">Known contracts are labeled; unlabeled addresses may also belong to exchanges or other contracts.</div>
+        <div class="search"><input id="top500Search" class="mono" placeholder="Filter top 500 by address"><select id="top500Filter" class="sel" style="flex:0 0 160px" aria-label="Address category"><option value="all">All addresses</option><option value="unlabeled">Unlabeled only</option><option value="contract">Known contracts</option></select></div>
+        <div class="hint" id="top500Concentration">Concentration: loading…</div>
+        <div class="hint">On narrow screens, swipe across the table to see the balance breakdown.</div>
+        <div class="table-wrap"><table>
           <thead><tr><th>#</th><th>Address</th><th>Total TIG</th><th>Wallet</th><th>Active stake</th><th>Pending</th></tr></thead>
           <tbody id="top500Body"><tr><td colspan="6">Loading…</td></tr></tbody>
         </table></div>
+        <div class="search" style="align-items:center;justify-content:space-between"><button type="button" class="btn" id="top500Prev">Previous</button><span class="hint" id="top500PageStatus" style="margin:0">—</span><button type="button" class="btn" id="top500Next">Next</button></div>
       </div>
     </div>
 
     <div class="tab-panel" id="tab-mytig">
       <div class="card" style="margin-bottom:12px;border-color:rgba(34,197,94,.28)">
-        <h3>My TIG — portfolio tracker <span class="tip" tabindex="0" data-tip="Track one or more wallets. Saved in this browser (localStorage). Shows locked, pending unlocks, rank, share of stake, net 7d, and personal unlock schedule.">?</span></h3>
-        <div class="hint">Add staking wallets for personal unlock pressure, rank, and portfolio totals. Max 8 wallets.</div>
+        <h3>My address <span class="tip" tabindex="0" data-tip="Track wallet TIG, active stake, pending withdrawals and staking history for up to eight addresses. Addresses are saved only in this browser.">?</span></h3>
+        <div class="hint">Add up to eight addresses. Wallet TIG is read on-chain; staking and ranking use the displayed data blocks.</div>
         <div class="mytig-add">
           <input id="mytigAddr" class="mono" placeholder="Wallet address 0x…">
           <input id="mytigLabel" placeholder="Label (optional)" style="flex:0.45">
@@ -432,10 +479,11 @@ a{color:var(--accent);text-decoration:none}
       </div>
       <div id="mytigEmpty" class="empty" style="margin:12px 0">
         <h2>No wallets yet</h2>
-        <p>Paste a wallet that stakes TIG to unlock personal stats: locked balance, cooldown lots, rank, and when your TIG becomes withdrawable.</p>
+        <p>Add an address to see its wallet TIG, staking position, pending unlocks, and combined TIG.</p>
       </div>
       <div id="mytigMain" class="hidden">
         <div class="portfolio-grid" id="mytigPortfolio">
+          <div class="mytig-stat"><div class="k">Combined TIG</div><div class="v" id="pfTotal">-</div><div class="s" id="pfWalletBalance">Wallet balances: loading…</div></div>
           <div class="mytig-stat"><div class="k">Portfolio Locked</div><div class="v" id="pfLocked">-</div><div class="s" id="pfShare">Share of stake: -</div></div>
           <div class="mytig-stat"><div class="k">In Cooldown</div><div class="v c-yellow" id="pfCooldown">-</div><div class="s" id="pfReady">Ready: -</div></div>
           <div class="mytig-stat"><div class="k">Net Flow 7d</div><div class="v" id="pfNet7">-</div><div class="s" id="pfWallets">Wallets: 0</div></div>
@@ -443,9 +491,7 @@ a{color:var(--accent);text-decoration:none}
         </div>
         <div id="mytigWalletCards"></div>
       </div>
-    </div>
-
-    <div class="tab-panel" id="tab-inspector">
+    <details class="advanced" id="inspectorSection"><summary>Inspect full staking history for any address</summary>
       <div class="card" style="margin-bottom:12px;border-color:rgba(168,85,247,.3)">
         <h3>🔎 Wallet Inspector & History Audit <span class="tip" tabindex="0" data-tip="Audit any active or past staker wallet, including historical peak balances, peak rank, and full timeline.">?</span></h3>
         <div class="hint">Search any address to analyze staking history, peak rank, and exit events</div>
@@ -486,27 +532,8 @@ a{color:var(--accent);text-decoration:none}
         <h2>Enter a wallet address above</h2>
         <p>Analyze any present or past staker wallet, inspect peak position, and trace historical events.</p>
       </div>
-    </div>
+    </details>
 
-    <div class="tab-panel" id="tab-loyalty">
-      <div class="grid-2">
-        <div class="card">
-          <h3>Cohorts <span class="badge" id="cohortCount">0</span></h3>
-          <div class="hint">By first-lock age</div>
-          <div class="table-wrap"><table>
-            <thead><tr><th>Cohort</th><th>Holders</th><th>Locked</th><th>%</th><th>Net 7d</th><th>Signal</th></tr></thead>
-            <tbody id="cohortBody"><tr><td colspan="6">Sync</td></tr></tbody>
-          </table></div>
-        </div>
-        <div class="card">
-          <h3>Tiers <span class="badge" id="tierCount">0</span></h3>
-          <div class="hint">By locked size</div>
-          <div class="table-wrap"><table>
-            <thead><tr><th>Tier</th><th>Holders</th><th>Locked</th><th>%</th><th>Net 7d</th></tr></thead>
-            <tbody id="tierBody"><tr><td colspan="5">Sync</td></tr></tbody>
-          </table></div>
-        </div>
-      </div>
     </div>
 
     <footer style="margin-top:24px;padding:16px 0 8px;border-top:1px solid var(--border);text-align:center;font-size:12px;color:var(--text2);">
@@ -601,8 +628,13 @@ a{color:var(--accent);text-decoration:none}
   ];
   var BURN_ADDRESSES = [
     '0x000000000000000000000000000000000000dEaD',
-    '0x0000000000000000000000000000000000000000'
+    '0x0000000000000000000000000000000000000000',
+    '0x0000000000000000000000000000000000000001'
   ];
+  var EXCLUDED_HOLDER_ADDRESSES = new Set(BURN_ADDRESSES.map(function (a) { return a.toLowerCase(); }).concat([C.STAKE.toLowerCase()]));
+  var KNOWN_HOLDER_CONTRACTS = {
+    '0x4cb16d4153123a74bc724d161050959754f378d8': 'Sablier vesting contract'
+  };
   var MYTIG_KEY = 'tig-my-wallets-v1';
   var MYTIG_MAX = 8;
   var supplyCache = { ts: 0, total: null, circulating: null, source: '-', priceUsd: null, burned: 0 };
@@ -1688,6 +1720,7 @@ a{color:var(--accent);text-decoration:none}
     body.innerHTML = html;
   }
 
+  var stakerPage = 0;
   function renderHoldersTable(data) {
     var list = (data.holders || []).slice();
     var sort = uiState.holderSort;
@@ -1695,16 +1728,24 @@ a{color:var(--accent);text-decoration:none}
     else if (sort === 'recent') list.sort(function (a, b) { return (b.firstSeen || 0) - (a.firstSeen || 0); });
     else list.sort(function (a, b) { return (b.balance || 0) - (a.balance || 0); });
     document.getElementById('holderCount').textContent = String(data.holders.length);
-    document.getElementById('holdersBody').innerHTML = list.slice(0, 40).map(function (h, idx) {
+    var pages = Math.max(1, Math.ceil(list.length / 50));
+    stakerPage = Math.min(stakerPage, pages - 1);
+    document.getElementById('stakerPageStatus').textContent = list.length
+      ? 'Showing ' + (stakerPage * 50 + 1) + '–' + Math.min((stakerPage + 1) * 50, list.length) + ' of ' + list.length
+      : 'No active stakers';
+    document.getElementById('stakerTableStatus').textContent = 'All active staker addresses are available below. Search also checks past stakers.';
+    document.getElementById('stakerPrev').disabled = stakerPage === 0;
+    document.getElementById('stakerNext').disabled = stakerPage >= pages - 1;
+    document.getElementById('holdersBody').innerHTML = list.slice(stakerPage * 50, (stakerPage + 1) * 50).map(function (h, idx) {
       var share = data.totalHeld > 0 ? h.balance / data.totalHeld * 100 : 0;
       var pend = h.pending || 0;
       var badge = pend > 1e-9 ? '<span class="tag tag-pending">unlocking</span>' : '';
       var fTag = h.isFoundation ? '<span class="tag tag-foundation">Foundation</span>' : '';
-      return '<tr class="row-btn" data-addr="' + h.address + '"><td>' + (idx + 1) + '</td><td><span class="mono">' + shortAddr(h.address) + '</span> ' + badge + fTag + debBtn(h.address) + '</td><td>' + fmt(h.balance) + ' TIG</td><td class="' + (pend > 0 ? 'c-yellow' : '') + '">' + (pend > 0 ? fmt(pend) + ' TIG' : '—') + '</td><td>' + share.toFixed(1) + '%</td><td>' + Math.floor((data.now - h.firstSeen) / 86400) + 'd</td></tr>';
+      return '<tr class="row-btn" data-addr="' + h.address + '"><td>' + (stakerPage * 50 + idx + 1) + '</td><td><span class="mono">' + shortAddr(h.address) + '</span> ' + badge + fTag + debBtn(h.address) + '</td><td>' + fmt(h.balance) + ' TIG</td><td class="' + (pend > 0 ? 'c-yellow' : '') + '">' + (pend > 0 ? fmt(pend) + ' TIG' : '—') + '</td><td>' + share.toFixed(1) + '%</td><td>' + Math.floor((data.now - h.firstSeen) / 86400) + 'd</td></tr>';
     }).join('') || '<tr><td colspan="6">None</td></tr>';
   }
 
-  var holderSnapshot = null, holderRanking = [], holderRefreshBusy = false;
+  var holderSnapshot = null, holderRanking = [], holderRefreshBusy = false, top500Page = 0;
   function holderWei(value) {
     if (!/^\d+$/.test(String(value))) throw new Error('Invalid holder balance');
     return BigInt(value);
@@ -1714,18 +1755,39 @@ a{color:var(--accent);text-decoration:none}
   }
   function renderTop500() {
     var query = document.getElementById('top500Search').value.trim().toLowerCase();
-    var list = holderRanking.slice(0, 500).filter(function (row) { return !query || row.address.includes(query); });
+    var category = document.getElementById('top500Filter').value;
+    var filtered = holderRanking.slice(0, 500).filter(function (row) {
+      return (!query || row.address.includes(query)) &&
+        (category === 'all' || (category === 'contract' ? !!KNOWN_HOLDER_CONTRACTS[row.address] : !KNOWN_HOLDER_CONTRACTS[row.address]));
+    });
+    var pages = Math.max(1, Math.ceil(filtered.length / 50));
+    top500Page = Math.min(top500Page, pages - 1);
+    var list = filtered.slice(top500Page * 50, (top500Page + 1) * 50);
+    document.getElementById('top500PageStatus').textContent = filtered.length
+      ? 'Showing ' + (top500Page * 50 + 1) + '–' + (top500Page * 50 + list.length) + ' of ' + filtered.length + ' matching addresses'
+      : 'No matching addresses';
+    document.getElementById('top500Prev').disabled = top500Page === 0;
+    document.getElementById('top500Next').disabled = top500Page >= pages - 1;
     document.getElementById('top500Count').textContent = holderRanking.length ? String(Math.min(500, holderRanking.length)) : '-';
     document.getElementById('top500Body').innerHTML = list.map(function (row) {
+      var kind = KNOWN_HOLDER_CONTRACTS[row.address] ? '<span class="tag tag-relock">' + KNOWN_HOLDER_CONTRACTS[row.address] + '</span>' : '';
+      var foundation = isFoundation(row.address) ? '<span class="tag tag-foundation">Foundation</span>' : '';
       return '<tr><td>' + row.rank + '</td><td><a class="mono" target="_blank" rel="noopener" href="https://basescan.org/address/' + row.address + '">' +
-        shortAddr(row.address) + '</a>' + debBtn(row.address) + '</td><td><strong>' + holderAmount(row.total) +
+        shortAddr(row.address) + '</a> ' + kind + foundation + debBtn(row.address) + '</td><td><strong>' + holderAmount(row.total) +
         '</strong></td><td>' + holderAmount(row.wallet) + '</td><td>' + holderAmount(row.locked) +
         '</td><td>' + holderAmount(row.pending) + '</td></tr>';
     }).join('') || '<tr><td colspan="6">No matching address in the top 500</td></tr>';
+    var top = holderRanking.slice(0, 500);
+    var total = top.reduce(function (sum, row) { return sum + row.total; }, 0n);
+    var top10 = top.slice(0, 10).reduce(function (sum, row) { return sum + row.total; }, 0n);
+    var top50 = top.slice(0, 50).reduce(function (sum, row) { return sum + row.total; }, 0n);
+    document.getElementById('top500Concentration').textContent = total > 0n
+      ? 'Within top 500 addresses: top 10 hold ' + (Number(top10 * 1000n / total) / 10).toFixed(1) + '%; top 50 hold ' + (Number(top50 * 1000n / total) / 10).toFixed(1) + '%. Includes known contract custody.'
+      : 'Concentration: waiting for data';
   }
   function rankHolderRows(rows) {
     rows.forEach(function (row) { row.total = row.wallet + row.locked + row.pending; });
-    return rows.filter(function (row) { return row.total > 0n && row.address !== C.STAKE.toLowerCase(); })
+    return rows.filter(function (row) { return row.total > 0n && !EXCLUDED_HOLDER_ADDRESSES.has(row.address); })
       .sort(function (a, b) { return a.total === b.total ? a.address.localeCompare(b.address) : a.total > b.total ? -1 : 1; })
       .map(function (row, index) { row.rank = index + 1; return row; });
   }
@@ -1802,7 +1864,7 @@ a{color:var(--accent);text-decoration:none}
           if (rows.get(from).wallet < 0n) checkWallet.add(from);
         }
         if (rows.has(to)) rows.get(to).wallet += value;
-        else if (to !== C.STAKE.toLowerCase() && to !== '0x0000000000000000000000000000000000000000') checkWallet.add(to);
+        else if (!EXCLUDED_HOLDER_ADDRESSES.has(to)) checkWallet.add(to);
       });
       var newStakeEvents = (await db.all()).filter(function (tx) {
         return Number(tx.blockNumber) > holderSnapshot.block && Number(tx.blockNumber) <= target;
@@ -1910,7 +1972,7 @@ a{color:var(--accent);text-decoration:none}
         '<span class="c-green">Staked: <b id="supplyStakedVal">-</b></span>' +
         '<span class="c-yellow">Cooldown: <b id="supplyCoolVal">-</b></span>' +
         '<span class="c-red">Ready: <b id="supplyReadyVal">-</b></span>' +
-        '<span>Liquid float: <b id="supplyFloatVal">-</b></span>' +
+        '<span>Outside TokenLocker ≈ <b id="supplyFloatVal">-</b></span>' +
         '<span style="opacity:.75">Total mint (ref): <b id="supplyTotalVal">-</b></span>';
     }
     var titleEl = document.querySelector('#supplyStrip .title');
@@ -1921,7 +1983,7 @@ a{color:var(--accent);text-decoration:none}
           'data-tip',
           'All bars and % are vs CIRCULATING supply (not total mint).\n' +
           'Green = actively staked.\nYellow = 28d cooldown.\nRed = ready to withdraw.\n' +
-          'Remainder = liquid float ≈ circ − staked − cooldown − ready.'
+          'Remainder = estimated circulating TIG outside TokenLocker. This is not necessarily tradable supply.'
         );
       }
     }
@@ -2117,6 +2179,54 @@ a{color:var(--accent);text-decoration:none}
     };
   }
 
+  function activateTab(tab, updateUrl) {
+    var btn = document.querySelector('.tab-btn[data-tab="' + tab + '"]');
+    if (!btn) return;
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-btn'), function (b) {
+      var selected = b === btn;
+      b.classList.toggle('active', selected);
+      b.setAttribute('aria-selected', selected ? 'true' : 'false');
+      b.tabIndex = selected ? 0 : -1;
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.tab-panel'), function (p) {
+      p.classList.toggle('active', p.id === 'tab-' + tab);
+    });
+    if (updateUrl && location.hash !== '#' + tab) history.replaceState(null, '', '#' + tab);
+    if (tab === 'mytig') renderMyTig();
+  }
+
+  var myWalletBalanceCache = new Map(), myWalletBalanceBusy = false;
+  async function refreshMyWalletBalances(list) {
+    if (myWalletBalanceBusy || !list.length) return;
+    var missing = list.filter(function (w) {
+      var item = myWalletBalanceCache.get(w.address.toLowerCase());
+      return !item || Date.now() - item.time > 2 * 60 * 1000;
+    });
+    if (!missing.length) return;
+    myWalletBalanceBusy = true;
+    try {
+      if (!provider) await connectRPC(false);
+      var block = Number(await db.meta('lastBlock')) || await provider.getBlockNumber();
+      var token = new ethers.Contract(C.TIG, ERC20_ABI, provider);
+      await Promise.all(missing.map(async function (w) {
+        var key = w.address.toLowerCase();
+        try {
+          var value = await token.balanceOf(w.address, { blockTag: block });
+          myWalletBalanceCache.set(key, { value: valueToTig(value), block: block, time: Date.now() });
+        } catch (error) {
+          myWalletBalanceCache.set(key, { error: errText(error), block: block, time: Date.now() });
+        }
+      }));
+    } catch (error) {
+      missing.forEach(function (w) {
+        myWalletBalanceCache.set(w.address.toLowerCase(), { error: errText(error), time: Date.now() });
+      });
+    } finally {
+      myWalletBalanceBusy = false;
+      renderMyTig();
+    }
+  }
+
   function renderMyTig() {
     var data = uiState.lastUiData;
     var list = loadMyWallets();
@@ -2140,6 +2250,10 @@ a{color:var(--accent);text-decoration:none}
     if (empty) empty.classList.add('hidden');
     if (main) main.classList.remove('hidden');
     var rows = list.map(function (w) { return { meta: w, stats: computePersonalWallet(w.address, data) }; });
+    refreshMyWalletBalances(list).catch(function (error) { console.warn('wallet balances', error); });
+    var walletEntries = list.map(function (w) { return myWalletBalanceCache.get(w.address.toLowerCase()); });
+    var walletComplete = walletEntries.every(function (entry) { return entry && entry.value != null; });
+    var walletTotal = walletEntries.reduce(function (sum, entry) { return sum + (entry && entry.value != null ? entry.value : 0); }, 0);
     var totLocked = 0, totCool = 0, totReady = 0, totNet = 0, next = null, tenureSum = 0, tenureN = 0;
     rows.forEach(function (r) {
       var s = r.stats;
@@ -2152,6 +2266,10 @@ a{color:var(--accent);text-decoration:none}
       if (s.found && s.lifetimeDays != null) { tenureSum += s.lifetimeDays; tenureN++; }
     });
     var pfShare = data.totalHeld > 0 ? (totLocked / data.totalHeld) * 100 : 0;
+    document.getElementById('pfTotal').textContent = walletComplete ? fmt(walletTotal + totLocked + totCool + totReady) + ' TIG' : '—';
+    document.getElementById('pfWalletBalance').textContent = walletComplete
+      ? 'Wallets: ' + fmt(walletTotal) + ' TIG · block ' + walletEntries[0].block.toLocaleString()
+      : 'Wallet balance loading or unavailable';
     document.getElementById('pfLocked').textContent = fmt(totLocked) + ' TIG';
     document.getElementById('pfShare').textContent = 'Share of stake: ' + pfShare.toFixed(2) + '%';
     document.getElementById('pfCooldown').textContent = fmt(totCool) + ' TIG';
@@ -2171,10 +2289,19 @@ a{color:var(--accent);text-decoration:none}
       var w = r.meta, s = r.stats;
       var title = (w.label ? escapeHtml(w.label) + ' · ' : '') + shortAddr(w.address);
       var fTag = s.isFoundation ? '<span class="tag tag-foundation">Foundation</span>' : '';
+      var walletEntry = myWalletBalanceCache.get(w.address.toLowerCase());
+      var walletValue = walletEntry && walletEntry.value != null ? walletEntry.value : null;
+      var walletText = walletValue != null ? fmt(walletValue) + ' TIG' : 'Loading or unavailable';
+      var combined = walletValue != null ? fmt(walletValue + s.curStaked + s.curPending) + ' TIG' : '—';
+      var globalRow = holderRanking.slice(0, 500).find(function (row) { return row.address === w.address.toLowerCase(); });
+      var globalRank = globalRow ? '#' + globalRow.rank + ' in Top 500' : (holderRanking.length ? 'Outside Top 500' : 'Ranking unavailable');
+      var walletSummary = '<div class="mytig-stats">' +
+        '<div class="mytig-stat"><div class="k">Wallet TIG</div><div class="v">' + walletText + '</div><div class="s">' + (walletEntry && walletEntry.block ? 'Base block ' + walletEntry.block.toLocaleString() : 'On-chain lookup') + '</div></div>' +
+        '<div class="mytig-stat"><div class="k">Combined TIG</div><div class="v">' + combined + '</div><div class="s">Wallet + active stake + pending · ' + globalRank + '</div></div></div>';
       if (!s.found) {
         return '<div class="mytig-card"><div class="mytig-card-head"><h4><span class="mono">' + title + '</span>' + fTag + debBtn(w.address) + '</h4>' +
           '<a class="btn btn-ghost btn-xs" target="_blank" rel="noopener" href="https://basescan.org/address/' + w.address + '">Basescan</a></div>' +
-          '<div class="hint">No staking events found for this address in synced history.</div></div>';
+          walletSummary + '<div class="hint">No staking events found for this address in synced history.</div></div>';
       }
       var rankTxt = s.rank ? ('#' + s.rank + ' of ' + data.stats.activeHolders) : 'Ex-holder / 0 locked';
       var nextTxt = '-';
@@ -2198,7 +2325,7 @@ a{color:var(--accent);text-decoration:none}
         '<div class="mytig-card-head"><h4><span class="mono">' + title + '</span>' + fTag + debBtn(w.address) +
         ' <button type="button" class="btn btn-ghost btn-xs" data-insp="' + w.address + '">Inspector</button></h4>' +
         '<a class="btn btn-ghost btn-xs" target="_blank" rel="noopener" href="https://basescan.org/address/' + w.address + '">Basescan</a></div>' +
-        '<div class="mytig-stats">' +
+        walletSummary + '<div class="mytig-stats">' +
           '<div class="mytig-stat"><div class="k">Locked</div><div class="v">' + fmt(s.curStaked) + ' TIG</div><div class="s">' + s.share.toFixed(2) + '% of stake</div></div>' +
           '<div class="mytig-stat"><div class="k">Cooldown / Ready</div><div class="v c-yellow">' + fmt(s.pendingCooldown) + ' / <span class="c-red">' + fmt(s.pendingReady) + '</span></div><div class="s">Pending total ' + fmt(s.curPending) + '</div></div>' +
           '<div class="mytig-stat"><div class="k">Rank</div><div class="v">' + rankTxt + '</div><div class="s">Peak ' + fmt(s.peakBal) + (s.peakRank ? ' · ' + s.peakRank : '') + '</div></div>' +
@@ -2213,15 +2340,11 @@ a{color:var(--accent);text-decoration:none}
     Array.prototype.forEach.call(cards.querySelectorAll('button[data-insp]'), function (btn) {
       btn.onclick = function () {
         var a = btn.getAttribute('data-insp');
-        Array.prototype.forEach.call(document.querySelectorAll('.tab-btn'), function (b) {
-          b.classList.toggle('active', b.getAttribute('data-tab') === 'inspector');
-        });
-        Array.prototype.forEach.call(document.querySelectorAll('.tab-panel'), function (p) {
-          p.classList.toggle('active', p.id === 'tab-inspector');
-        });
+        document.getElementById('inspectorSection').open = true;
         var inp = document.getElementById('inspInput');
         if (inp) inp.value = a;
         renderInspector(a);
+        document.getElementById('inspectorSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
       };
     });
   }
@@ -2255,14 +2378,14 @@ a{color:var(--accent);text-decoration:none}
     var health = document.getElementById('healthStrip');
     health.className = 'health ' + level;
     document.getElementById('healthEmoji').textContent = level === 'bullish' ? '🟢' : level === 'neutral' ? '🟡' : '🔴';
-    var title = level === 'bullish' ? 'Healthy staking pressure' : level === 'neutral' ? 'Elevated exit pressure' : 'High exit pressure';
+    var title = level === 'bullish' ? 'Staking activity: low exit signal' : level === 'neutral' ? 'Staking activity: mixed signals' : 'Staking activity: higher exit signal';
     document.getElementById('healthTitle').textContent = title;
     var hp = document.getElementById('healthPartial');
     if (partial) hp.classList.remove('hidden'); else hp.classList.add('hidden');
     var sentence;
-    if (st.net7 < 0) sentence = 'More unlocks than locks (7d). ~' + fmt(data.unlockBands.d7) + ' TIG can leave in 7d.';
-    else if (st.net7 > 0) sentence = 'More locks than unlocks (7d). ~' + fmt(data.unlockBands.d7) + ' TIG freeable in 7d.';
-    else sentence = 'Balanced net flow (7d). ~' + fmt(data.unlockBands.d7) + ' TIG freeable in 7d.';
+    if (st.net7 < 0) sentence = 'Active stake fell over 7d. ~' + fmt(data.unlockBands.d7) + ' TIG completes cooldown in the next 7d.';
+    else if (st.net7 > 0) sentence = 'Active stake rose over 7d. ~' + fmt(data.unlockBands.d7) + ' TIG completes cooldown in the next 7d.';
+    else sentence = 'Active stake was broadly flat over 7d. ~' + fmt(data.unlockBands.d7) + ' TIG completes cooldown in the next 7d.';
     if (st.w7 > 0) sentence += ' Realized exits 7d: ' + fmt(st.w7) + ' TIG.';
     document.getElementById('healthSentence').textContent = sentence;
 
@@ -2298,14 +2421,14 @@ a{color:var(--accent);text-decoration:none}
     document.getElementById('spiFill').style.width = data.spi + '%';
 
     var sb = data.spiBreakdown || {};
-    var detailedTip = "EXIT PRESSURE SCORE (0–100)\n" +
-      "Quantifies current unbonding/exit intensity:\n\n" +
+    var detailedTip = "INDICATIVE STAKING SIGNAL (0–100)\n" +
+      "A hand-weighted summary of staking and unlock events. It is not a forecast of sales or price.\n\n" +
       "• 7d Unlock Ratio: " + (sb.ratio || 0) + "/25 pts (Unlocks vs Locks: " + fmt(st.u7) + " / " + fmt(st.s7) + " TIG)\n" +
       "• Flow Acceleration: " + (sb.trend || 0) + "/25 pts (Net 7d " + fmtNet(st.net7) + " vs Net 14d avg " + fmtNet(st.net14 / 2) + ")\n" +
       "• Dormant Wallet Activity: " + (sb.dormancy || 0) + "/20 pts (" + data.dormancyAlerts.length + " idle wallets unbonding)\n" +
       "• Pending Cooldown Load: " + (sb.pending || 0) + "/20 pts (" + fmt(data.unlockBands.d7) + " TIG completing 28d cooldown in 7d)\n" +
-      "• Whale Unbond Activity: " + (sb.whales || 0) + "/10 pts (" + data.whaleAlerts.length + " top-10 whales unbonding >5%)\n\n" +
-      "Current Total Score: " + data.spi + "/100 (" + plabel.toUpperCase() + " PRESSURE)";
+      "• Large active staker unlocks: " + (sb.whales || 0) + "/10 pts (" + data.whaleAlerts.length + " of top 10 active staker addresses unlocked >5%)\n\n" +
+      "Current heuristic score: " + data.spi + "/100 (" + plabel.toUpperCase() + ")";
     var spiTipEl = document.getElementById('spiTip');
     if (spiTipEl) spiTipEl.setAttribute('data-tip', detailedTip);
 
@@ -2363,7 +2486,7 @@ a{color:var(--accent);text-decoration:none}
     document.getElementById('cohortCount').textContent = String(data.cohorts.reduce(function (s, c) { return s + c.holderCount; }, 0));
     document.getElementById('cohortBody').innerHTML = data.cohorts.map(function (c) {
       var cls = c.netFlow7d >= 0 ? 'c-green' : 'c-red';
-      var sig = c.netFlow7d < 0 ? (c.key === 'diamond' ? 'Long unlock' : 'Outflow') : (c.netFlow7d > 0 ? 'Inflow' : '—');
+      var sig = c.netFlow7d < 0 ? 'Stake decreased' : (c.netFlow7d > 0 ? 'Stake increased' : '—');
       return '<tr><td><span class="tag tag-' + (c.key === 'diamond' ? 'diamond' : c.key) + '">' + c.label + '</span></td><td>' + c.holderCount + '</td><td>' + fmt(c.staked) + ' TIG</td><td>' + c.share.toFixed(1) + '%</td><td class="' + cls + '">' + fmtNet(c.netFlow7d) + '</td><td>' + sig + '</td></tr>';
     }).join('') || '<tr><td colspan="6">None</td></tr>';
 
@@ -2562,16 +2685,32 @@ a{color:var(--accent);text-decoration:none}
 
     document.getElementById('searchBtn').onclick = function () { searchHolder(); };
     document.getElementById('searchInput').oninput = function () { searchHolder(); };
-    document.getElementById('top500Search').oninput = renderTop500;
+    document.getElementById('top500Search').oninput = function () { top500Page = 0; renderTop500(); };
+    document.getElementById('top500Filter').onchange = function () { top500Page = 0; renderTop500(); };
+    document.getElementById('top500Prev').onclick = function () { top500Page = Math.max(0, top500Page - 1); renderTop500(); document.getElementById('top500Search').scrollIntoView({ block: 'start' }); };
+    document.getElementById('top500Next').onclick = function () { top500Page++; renderTop500(); document.getElementById('top500Search').scrollIntoView({ block: 'start' }); };
 
     Array.prototype.forEach.call(document.querySelectorAll('.tab-btn'), function (btn) {
+      var tab = btn.getAttribute('data-tab');
+      btn.setAttribute('role', 'tab');
+      btn.setAttribute('id', 'tab-btn-' + tab);
+      btn.setAttribute('aria-controls', 'tab-' + tab);
+      document.getElementById('tab-' + tab).setAttribute('role', 'tabpanel');
+      document.getElementById('tab-' + tab).setAttribute('aria-labelledby', 'tab-btn-' + tab);
       btn.onclick = function () {
-        var tab = btn.getAttribute('data-tab');
-        Array.prototype.forEach.call(document.querySelectorAll('.tab-btn'), function (b) { b.classList.toggle('active', b === btn); });
-        Array.prototype.forEach.call(document.querySelectorAll('.tab-panel'), function (p) { p.classList.toggle('active', p.id === 'tab-' + tab); });
-        if (tab === 'mytig') renderMyTig();
+        activateTab(tab, true);
+      };
+      btn.onkeydown = function (e) {
+        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+        e.preventDefault();
+        var all = Array.prototype.slice.call(document.querySelectorAll('.tab-btn'));
+        var next = all[(all.indexOf(btn) + (e.key === 'ArrowRight' ? 1 : all.length - 1)) % all.length];
+        activateTab(next.getAttribute('data-tab'), true);
+        next.focus();
       };
     });
+    activateTab(location.hash.slice(1) || 'overview', false);
+    window.addEventListener('hashchange', function () { activateTab(location.hash.slice(1) || 'overview', false); });
     Array.prototype.forEach.call(document.querySelectorAll('#txChips .chip'), function (chip) {
       chip.onclick = function () {
         uiState.txFilter = chip.getAttribute('data-filter');
@@ -2581,8 +2720,11 @@ a{color:var(--accent);text-decoration:none}
     });
     document.getElementById('holderSort').onchange = function () {
       uiState.holderSort = document.getElementById('holderSort').value;
+      stakerPage = 0;
       if (uiState.lastUiData) renderHoldersTable(uiState.lastUiData);
     };
+    document.getElementById('stakerPrev').onclick = function () { stakerPage = Math.max(0, stakerPage - 1); renderHoldersTable(uiState.lastUiData); document.getElementById('searchInput').scrollIntoView({ block: 'start' }); };
+    document.getElementById('stakerNext').onclick = function () { stakerPage++; renderHoldersTable(uiState.lastUiData); document.getElementById('searchInput').scrollIntoView({ block: 'start' }); };
     document.getElementById('holdersBody').onclick = function (e) {
       var tr = e.target.closest('tr[data-addr]');
       if (tr) openHolderDrawer(tr.getAttribute('data-addr'));
@@ -2683,4 +2825,3 @@ a{color:var(--accent);text-decoration:none}
 </script>
 </body>
 </html>
-
