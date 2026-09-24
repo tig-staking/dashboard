@@ -1739,6 +1739,7 @@ a{color:var(--accent);text-decoration:none}
           !Number.isSafeInteger(snap.block) || !Array.isArray(snap.candidates) || snap.candidates.length < 500) {
         throw new Error('Invalid holders snapshot');
       }
+      if (holderSnapshot && snap.block <= holderSnapshot.block) return;
       var seen = new Set();
       var rows = snap.candidates.map(function (item) {
         var key = String(item.address).toLowerCase();
@@ -1771,7 +1772,7 @@ a{color:var(--accent);text-decoration:none}
       var transfers = [];
       var topic = ethers.id('Transfer(address,address,uint256)');
       for (var start = holderSnapshot.block + 1; start <= target;) {
-        var step = 1500, logs, end, attempts = 0;
+        var step = 500, logs, end, attempts = 0;
         for (;;) {
           end = Math.min(start + step - 1, target);
           try {
@@ -1779,9 +1780,9 @@ a{color:var(--accent);text-decoration:none}
             break;
           } catch (error) {
             attempts++;
-            if (!isRateLimit(error)) step = Math.max(200, Math.floor(step / 2));
+            step = Math.max(100, Math.floor(step / 2));
             if (attempts >= C.MAX_BATCH_RETRIES) throw error;
-            if (attempts % 3 === 0) {
+            if (isRateLimit(error) || attempts % 3 === 0) {
               try { await connectRPC(true); } catch (e) {}
             }
             await sleep(Math.min(12000, 800 * Math.pow(1.7, attempts)));
@@ -1823,13 +1824,22 @@ a{color:var(--accent);text-decoration:none}
         if (row.locked < 0n || row.pending < 0n) throw new Error('Incomplete staking history');
       });
       var unknown = [...checkWallet];
-      for (var i = 0; i < unknown.length; i += 8) {
-        await Promise.all(unknown.slice(i, i + 8).map(async function (key) {
-          var result = await new ethers.Contract(C.TIG, ERC20_ABI, provider).balanceOf(key, { blockTag: target });
-          var row = rows.get(key);
-          if (!row) { row = { address: key, wallet: 0n, locked: 0n, pending: 0n }; rows.set(key, row); }
-          row.wallet = BigInt(result);
-        }));
+      for (var i = 0; i < unknown.length; i++) {
+        var key = unknown[i], result, lastError;
+        for (var attempt = 0; attempt < 5; attempt++) {
+          try {
+            result = await new ethers.Contract(C.TIG, ERC20_ABI, provider).balanceOf(key, { blockTag: target });
+            break;
+          } catch (error) {
+            lastError = error;
+            try { await connectRPC(true); } catch (e) {}
+            await sleep(500 * (attempt + 1));
+          }
+        }
+        if (result === undefined) throw lastError;
+        var row = rows.get(key);
+        if (!row) { row = { address: key, wallet: 0n, locked: 0n, pending: 0n }; rows.set(key, row); }
+        row.wallet = BigInt(result);
       }
       holderRanking = rankHolderRows([...rows.values()]);
       document.getElementById('top500Status').textContent =
@@ -2662,6 +2672,7 @@ a{color:var(--accent);text-decoration:none}
         if (!ls || Date.now() - Number(ls) >= C.INTERVAL) fastSync();
       } catch (e) {}
     }, 10000);
+    setInterval(loadHolderSnapshot, C.INTERVAL);
     updateCountdown();
   }
   window.fastSync = fastSync;
@@ -2672,3 +2683,4 @@ a{color:var(--accent);text-decoration:none}
 </script>
 </body>
 </html>
+
