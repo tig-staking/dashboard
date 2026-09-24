@@ -1292,7 +1292,7 @@ a{color:var(--accent);text-decoration:none}
         document.getElementById('coverageLabel').textContent = '100%';
         await db.setMeta('lastSync', Date.now());
         await refreshAll({ skipCharts: false });
-        await refreshHolderLive();
+        refreshHolderLive();
         return;
       }
       var ok = await scanBlocks(from, cur, mode);
@@ -1306,7 +1306,7 @@ a{color:var(--accent);text-decoration:none}
         document.getElementById('coverageLabel').textContent = '100%';
         setProgress(100, 'Done', mode);
         await refreshAll({ skipCharts: false });
-        await refreshHolderLive();
+        refreshHolderLive();
       } else if (stopReq) {
         invalidateCache();
         await refreshAll({ skipCharts: false });
