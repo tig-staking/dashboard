@@ -51,3 +51,12 @@ test('dashboard scripts parse and the chart library is loaded', () => {
   for (const [, script] of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) new vm.Script(script);
   assert.match(html, /<script[^>]+src="https:\/\/cdn\.jsdelivr\.net\/npm\/chart\.js@4\.4\.9\/dist\/chart\.umd\.min\.js"/);
 });
+
+test('small positive TIG balances never display as zero', () => {
+  const start = html.indexOf('  function fmt(n)');
+  const end = html.indexOf('  function fmt2(', start);
+  vm.runInContext(html.slice(start, end), context);
+  assert.equal(context.fmt(1e-18), '<0.01');
+  assert.equal(context.fmt(0.3), '0.3');
+  assert.equal(context.fmt(0), '0');
+});
