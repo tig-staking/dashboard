@@ -351,6 +351,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
 .overview-charts{display:block}.overview-charts>.card{margin-bottom:24px!important}
 @media(min-width:768px){.overview-charts>.card:has(#chartUnlock){display:grid;grid-template-columns:1fr 1.4fr;column-gap:32px}.overview-charts>.card:has(#chartUnlock)>:not(.chart-frame){grid-column:1}.overview-charts>.card:has(#chartUnlock)>.chart-frame{grid-column:2;grid-row:1/6;height:280px;margin:0}.overview-charts>.card:has(#chartUnlock)>.chart-fallback{grid-column:1/-1}}
 .mytig-chip{flex-wrap:wrap}.mytig-chip .btn{white-space:nowrap;flex-shrink:0}.mytig-chip button{flex-shrink:0}.card:has(#chartFlow){margin-bottom:24px}.btn-xs{white-space:nowrap}
+.copy-notes{font-size:13px;color:var(--text2);margin:12px 0}.copy-notes summary{cursor:pointer;color:var(--text);padding:8px 0;min-height:44px;display:list-item}.copy-notes p{margin:6px 0 10px;max-width:75ch;line-height:1.6}
 </style>
 </head>
 <body>
@@ -382,11 +383,11 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
 
 
     <div class="tab-panel active" id="tab-overview">
-      <div class="page-heading"><h2>Overview</h2><p>Staking activity, upcoming unlocks, and the addresses holding TIG.</p></div>
+      <div class="page-heading"><h2>Overview</h2></div>
       <section class="overview-summary" aria-label="TIG staking overview">
         <div class="summary-main"><div class="k">Active stake</div><div class="v"><span id="overviewStake">-</span> <small>TIG</small></div><div class="s"><strong id="overviewChange">-</strong> in the last 7 days</div></div>
-        <div class="summary-stat"><div class="k">Active staker addresses</div><div class="v" id="overviewStakers">-</div><div class="s">Distinct addresses with active stake</div></div>
-        <div class="summary-stat"><div class="k">Ready to withdraw</div><div class="v" id="overviewReady">-</div><div class="s">TIG with completed cooldown</div></div>
+        <div class="summary-stat"><div class="k">Active staker addresses</div><div class="v" id="overviewStakers">-</div></div>
+        <div class="summary-stat"><div class="k">Ready to withdraw</div><div class="v" id="overviewReady">-</div><div class="s">TIG available after cooldown</div></div>
       </section>
     <div class="alerts" id="eduSection"></div>
     <div class="alerts" id="alertsSection"></div>
@@ -397,15 +398,15 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
 
       <div class="overview-charts">
       <div class="card" style="margin:12px 0">
-        <h3>Staked TIG over time <span class="tip" tabindex="0" data-tip="Historical growth curve of total active staked TIG.">?</span></h3>
-        <div class="hint">Daily closing active stake on a calendar time axis. Pending withdrawals are excluded.</div>
+        <h3>Staked TIG over time</h3>
+        <div class="hint">End-of-day active stake. Excludes TIG pending withdrawal.</div>
         <div class="chart-frame"><canvas id="chartTotalStaked" role="img" aria-label="Active staked TIG over time"></canvas></div><p class="chart-fallback" hidden>Chart unavailable. Please reload to retry loading the chart library.</p>
         <div class="hint" style="margin-top:8px" id="extraMetrics"></div>
       </div>
 
         <div class="card">
-          <h3>Unlock calendar <span class="tip" tabindex="0" data-tip="Daily schedule of when pending unlock lots complete cooldown and become withdrawable.">?</span></h3>
-          <div class="hint">When pending lots become withdrawable</div>
+          <h3>Unlock calendar</h3>
+          <div class="hint">TIG available to withdraw when cooldown ends.</div>
           <div class="unlock-pills" style="grid-template-columns: repeat(4, 1fr);">
             <div class="pill"><div class="k">Ready Now</div><div class="v c-red" id="uPillReady">-</div></div>
             <div class="pill"><div class="k">Next 7d</div><div class="v" id="uPill7">-</div></div>
@@ -420,7 +421,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
 
 
 
-    <details class="advanced"><summary>More staking metrics and indicative exit signals</summary>
+    <details class="advanced"><summary>More staking data</summary>
     <div class="health neutral" id="healthStrip">
       <div class="health-top">
         <div>
@@ -452,7 +453,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
           </div>
         </div>
         <div class="hmet">
-          <div class="k">Active Locked <span class="tip" tabindex="0" data-tip="Total TIG actively staked and locked in the contract (earning rewards, not in unlock process).">?</span></div>
+          <div class="k">Active stake <span class="tip" tabindex="0" data-tip="Total TIG actively staked and locked in the contract (earning rewards, not in unlock process).">?</span></div>
           <div class="v" id="lockedKpi">-</div>
           <div class="sub-group">
             <div class="sub-line"><span class="lbl">In cooldown:</span><span class="val" id="cooldownSubVal">-</span></div>
@@ -500,27 +501,27 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     </div>
 
     <div class="tab-panel" id="tab-exits">
-<div class="page-heading"><h2>Unlocks</h2><p>Track cooldowns and withdrawals. An unlock request is not a market sale.</p></div>
+<div class="page-heading"><h2>Unlocks</h2><p>Unlocking starts a 28-day cooldown. Withdrawals are not proof of a sale.</p></div>
       <div class="funnel">
-        <div class="card"><div class="k">7d Unlock Requests <span class="tip" tabindex="0" data-tip="Total TIG requested to unlock in the last 7 days. Initiates mandatory 28d cooldown.">?</span></div><div class="v c-yellow" id="funnelUnlock">-</div><div class="s">Cooldown initiated</div></div>
-        <div class="card"><div class="k">Active Cooldown <span class="tip" tabindex="0" data-tip="Tokens currently waiting in the 28-day cooldown period.">?</span></div><div class="v c-yellow" id="funnelCooldown">-</div><div class="s">Locked in cooldown</div></div>
-        <div class="card"><div class="k">Ready to Withdraw <span class="tip" tabindex="0" data-tip="Tokens whose cooldown has completed but haven't been withdrawn or relocked yet.">?</span></div><div class="v c-red" id="funnelWithdrawable">-</div><div class="s">Withdrawable now</div></div>
-        <div class="card"><div class="k">7d Realized Withdraws <span class="tip" tabindex="0" data-tip="Total TIG physically withdrawn from the contract in the last 7 days.">?</span></div><div class="v c-red" id="funnelWithdraw">-</div><div class="s">Withdrawn from TokenLocker</div></div>
+        <div class="card"><div class="k">Requested · 7 days <span class="tip" tabindex="0" data-tip="Total TIG requested to unlock in the last 7 days. Initiates mandatory 28d cooldown.">?</span></div><div class="v c-yellow" id="funnelUnlock">-</div></div>
+        <div class="card"><div class="k">In cooldown <span class="tip" tabindex="0" data-tip="Tokens currently waiting in the 28-day cooldown period.">?</span></div><div class="v c-yellow" id="funnelCooldown">-</div></div>
+        <div class="card"><div class="k">Ready to Withdraw <span class="tip" tabindex="0" data-tip="Tokens whose cooldown has completed but haven't been withdrawn or relocked yet.">?</span></div><div class="v c-red" id="funnelWithdrawable">-</div></div>
+        <div class="card"><div class="k">Withdrawn · 7 days <span class="tip" tabindex="0" data-tip="Total TIG physically withdrawn from the contract in the last 7 days.">?</span></div><div class="v c-red" id="funnelWithdraw">-</div></div>
       </div>
       <div class="grid-2">
         <div class="card">
           <h3>Unlock requests in last 7 days <span class="badge" id="unstakeCount7d">0</span></h3>
-          <div class="hint">Cooldown started; a request does not mean TIG was sold or withdrawn.</div>
+          
           <div class="table-wrap"><table>
-            <thead><tr><th>Address</th><th>Amt</th><th>When</th><th>Withdrawable</th><th>Dorm.</th><th></th></tr></thead>
+            <thead><tr><th>Address</th><th>TIG</th><th>When</th><th>Withdrawable</th><th><span class="th-tip" tabindex="0" data-tip="Time without staking activity before this request.">Inactive</span></th><th></th></tr></thead>
             <tbody id="unstakes7dBody"><tr><td colspan="6">Sync</td></tr></tbody>
           </table></div>
         </div>
         <div class="card">
-          <h3>Cooldown Expirations <span class="badge" id="unlockCount">0</span></h3>
-          <div class="hint">TIG becoming withdrawable soon; this does not imply a market sale.</div>
+          <h3>Cooldown ending <span class="badge" id="unlockCount">0</span></h3>
+          <div class="hint">Dates when cooldown ends. Withdrawal is optional.</div>
           <div class="table-wrap"><table>
-            <thead><tr><th>When</th><th>Address</th><th>Amt</th><th>In</th><th></th></tr></thead>
+            <thead><tr><th>When</th><th>Address</th><th>TIG</th><th>In</th><th></th></tr></thead>
             <tbody id="unlocksBody"><tr><td colspan="5">Sync</td></tr></tbody>
           </table></div>
         </div>
@@ -528,10 +529,10 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     </div>
 
     <div class="tab-panel" id="tab-holders">
-<div class="page-heading"><h2>Staking</h2><p>Explore active stakers and how TIG moves into and out of active stake.</p></div>
+<div class="page-heading"><h2>Staking</h2></div>
         <div class="card">
           <h3>Staking flows · 30 days <span class="tip" tabindex="0" data-tip="Daily locks, claims, and relocks versus unlock requests, with net change and a 7-day average.">?</span></h3>
-          <div class="hint">Added to stake, unlock requests, and the net change in active stake. These events are not trades.</div>
+          <div class="hint">TIG added to stake and requested for withdrawal each day.</div>
           <div class="chart-frame"><canvas id="chartFlow" role="img" aria-label="Daily staking additions, unlock requests, and net change"></canvas></div><p class="chart-fallback" hidden>Chart unavailable. Please reload to retry loading the chart library.</p>
           <div class="hint" id="flowSummary" style="margin-top:10px;padding:8px 10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;font-weight:600;color:var(--text)"></div>
         </div>
@@ -547,29 +548,29 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
           </select></div>
         </div>
         <div id="searchResult" class="hint"></div>
-        <div class="hint" id="stakerTableStatus">Loading active staker addresses. Search also checks past stakers.</div>
+        <div class="hint" id="stakerTableStatus">Loading stakers…</div>
         <div class="table-wrap"><table>
           <thead><tr><th>#</th><th>Address</th><th>Locked</th><th>Pending</th><th>%</th><th>Since</th></tr></thead>
           <tbody id="holdersBody"><tr><td colspan="6">Sync to load</td></tr></tbody>
         </table></div>
         <div class="search pagination"><button type="button" class="btn" id="stakerPrev">Previous</button><span class="hint" id="stakerPageStatus" style="margin:0">–</span><button type="button" class="btn" id="stakerNext">Next</button></div>
       </div>
-      <details class="advanced"><summary>Staking analysis · first-lock age and current size</summary>
-      <div class="hint">Age is measured from an address's first recorded lock, even if it later exited and returned. The 7-day change includes activity from addresses that are no longer active.</div>
+      <details class="advanced"><summary>Stakers by age and stake size</summary>
+      <div class="hint">Age starts at the first stake, including time away. The 7-day change includes past stakers.</div>
       <div class="grid-2">
         <div class="card">
-          <h3>Cohorts <span class="badge" id="cohortCount">0</span></h3>
-          <div class="hint">By first-lock age</div>
+          <h3>Time since first stake <span class="badge" id="cohortCount">0</span></h3>
+          
           <div class="table-wrap"><table>
-            <thead><tr><th>Cohort</th><th>Holders</th><th>Locked</th><th>%</th><th>Net 7d</th><th>Signal</th></tr></thead>
+            <thead><tr><th>Age</th><th>Holders</th><th>Locked</th><th>%</th><th>Net 7d</th><th>Signal</th></tr></thead>
             <tbody id="cohortBody"><tr><td colspan="6">Sync</td></tr></tbody>
           </table></div>
         </div>
         <div class="card">
-          <h3>Tiers <span class="badge" id="tierCount">0</span></h3>
-          <div class="hint">By locked size</div>
+          <h3>Stake size <span class="badge" id="tierCount">0</span></h3>
+          
           <div class="table-wrap"><table>
-            <thead><tr><th>Tier</th><th>Holders</th><th>Locked</th><th>%</th><th>Net 7d</th></tr></thead>
+            <thead><tr><th>Amount</th><th>Holders</th><th>Locked</th><th>%</th><th>Net 7d</th></tr></thead>
             <tbody id="tierBody"><tr><td colspan="5">Sync</td></tr></tbody>
           </table></div>
         </div>
@@ -592,13 +593,12 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
 
 
     <div class="tab-panel" id="tab-top500">
-<div class="page-heading"><h2>Top 500 TIG</h2><p>One ranking for wallet balances, active stake, and pending withdrawals.</p></div>
+<div class="page-heading"><h2>Top 500 TIG</h2><p>Total TIG = wallet balance + active stake + pending withdrawals.</p></div>
       <div class="card">
-        <h3>Top 500 TIG addresses <span class="badge" id="top500Count">-</span></h3>
-        <div class="hint">Wallet balance + active staking + TIG pending withdrawal. Each row is one address; exchange, vesting, and contract addresses may represent many people. The staking contract and burn addresses are excluded.</div>
-        <div class="hint" id="top500Status">Loading verified snapshot…</div>
-        <div class="hint">Known contracts are labeled; unlabeled addresses may also belong to exchanges or other contracts.</div>
-        <div class="search"><div class="field"><label for="top500Search">Filter by address</label><input id="top500Search" class="mono" placeholder="Filter top 500 by address"></div><div class="field filter-field"><label for="top500Filter">Address type</label><select id="top500Filter" class="sel" aria-label="Address category"><option value="all">All addresses</option><option value="unlabeled">Unlabeled only</option><option value="contract">Known contracts</option></select></div></div>
+        <h3>Largest addresses <span class="badge" id="top500Count">-</span></h3>
+        <details class="copy-notes"><summary>About this ranking</summary><p>Each row is an address, not a person. Exchange and contract balances may belong to many holders.</p><p>Pending includes TIG in cooldown and ready to withdraw. The staking contract and burn addresses are excluded to avoid double counting.</p><p>Known contracts are labeled. An unlabeled address may also be a contract. Balances come from on-chain checks of addresses found through Blockscout and staking records.</p></details>
+        <div class="hint" id="top500Status">Loading balances…</div>
+        <div class="search"><div class="field"><label for="top500Search">Filter by address</label><input id="top500Search" class="mono" placeholder="0x…"></div><div class="field filter-field"><label for="top500Filter">Address type</label><select id="top500Filter" class="sel" aria-label="Address category"><option value="all">All addresses</option><option value="unlabeled">Unlabeled only</option><option value="contract">Known contracts</option></select></div></div>
         <div class="hint" id="top500Concentration">Concentration: loading…</div>
         <div id="mobileHolders" class="mobile-holders" aria-label="TIG address ranking"></div>
         <div class="table-wrap"><table class="balance-table">
@@ -610,39 +610,38 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     </div>
 
     <div class="tab-panel" id="tab-mytig">
-<div class="page-heading"><h2>My address</h2><p>Track your TIG and inspect the staking history of any address.</p></div>
+<div class="page-heading"><h2>My address</h2></div>
       <div class="card" style="margin-bottom:12px;border-color:rgba(34,197,94,.28)">
-        <h3>Saved addresses <span class="tip" tabindex="0" data-tip="Track wallet TIG, active stake, pending withdrawals and staking history for up to eight addresses. Addresses are saved only in this browser.">?</span></h3>
-        <div class="hint">Add up to eight addresses. Wallet TIG is read on-chain; staking and ranking use the displayed data blocks.</div>
+        <h3>Saved addresses <span class="tip" tabindex="0" data-tip="Total TIG includes wallet balance, active stake and pending withdrawals. Wallet balances and staking data may be from different blocks, shown below.">?</span></h3>
+        <div class="hint">Save up to 8 addresses in this browser. No wallet connection needed.</div>
         <div class="mytig-add">
-          <div class="field"><label for="mytigAddr">Wallet address</label><input id="mytigAddr" class="mono" placeholder="Wallet address 0x…"></div>
-          <div class="field"><label for="mytigLabel">Label (optional)</label><input id="mytigLabel" placeholder="Label (optional)"></div>
+          <div class="field"><label for="mytigAddr">Wallet address</label><input id="mytigAddr" class="mono" placeholder="0x…"></div>
+          <div class="field"><label for="mytigLabel">Label (optional)</label><input id="mytigLabel" placeholder="e.g. Main wallet"></div>
           <button type="button" class="btn btn-primary" id="mytigAddBtn">Add wallet</button>
         </div>
         <div class="mytig-err" id="mytigErr"></div>
         <div class="mytig-wallet-list" id="mytigWalletList"></div>
       </div>
       <div id="mytigEmpty" class="empty" style="margin:12px 0">
-        <h2>No wallets yet</h2>
-        <p>Add an address to see its wallet TIG, staking position, pending unlocks, and combined TIG.</p>
+        <p>Add an address above to see its balances.</p>
       </div>
       <div id="mytigMain" class="hidden">
         <div class="portfolio-grid" id="mytigPortfolio">
-          <div class="mytig-stat"><div class="k">Combined TIG</div><div class="v" id="pfTotal">-</div><div class="s" id="pfWalletBalance">Wallet balances: loading…</div></div>
-          <div class="mytig-stat"><div class="k">Portfolio Locked</div><div class="v" id="pfLocked">-</div><div class="s" id="pfShare">Share of stake: -</div></div>
+          <div class="mytig-stat"><div class="k">Total TIG</div><div class="v" id="pfTotal">-</div><div class="s" id="pfWalletBalance">Wallet balances: loading…</div></div>
+          <div class="mytig-stat"><div class="k">Active stake</div><div class="v" id="pfLocked">-</div><div class="s" id="pfShare">Share of stake: -</div></div>
           <div class="mytig-stat"><div class="k">In Cooldown</div><div class="v c-yellow" id="pfCooldown">-</div><div class="s" id="pfReady">Ready: -</div></div>
-          <div class="mytig-stat"><div class="k">Net Flow 7d</div><div class="v" id="pfNet7">-</div><div class="s" id="pfWallets">Wallets: 0</div></div>
-          <div class="mytig-stat"><div class="k">Next Unlock</div><div class="v" id="pfNextUnlock">-</div><div class="s" id="pfTenure">Avg tenure: -</div></div>
+          <div class="mytig-stat"><div class="k">Stake change · 7 days</div><div class="v" id="pfNet7">-</div><div class="s" id="pfWallets">Wallets: 0</div></div>
+          <div class="mytig-stat"><div class="k">Next cooldown end</div><div class="v" id="pfNextUnlock">-</div><div class="s" id="pfTenure">Avg. time since first stake: -</div></div>
         </div>
         <div id="mytigWalletCards"></div>
       </div>
     <details class="advanced" id="inspectorSection" open><summary>Wallet inspector</summary>
       <div class="card" style="margin-bottom:12px;border-color:rgba(168,85,247,.3)">
-        <h3>Staking history <span class="tip" tabindex="0" data-tip="Audit any active or past staker wallet, including historical peak balances, rank at peak balance, and full timeline.">?</span></h3>
-        <div class="hint">Search any address to analyze staking history, rank at peak balance, and exit events</div>
+        <h3>Staking history</h3>
+        <div class="hint">Look up any current or past staker.</div>
         <div class="search" style="margin-top:10px">
-          <div class="field"><label for="inspInput">Wallet address</label><input id="inspInput" placeholder="Enter wallet address 0x…"></div>
-          <button type="button" class="btn btn-primary" id="inspBtn" style="background:linear-gradient(135deg,#a855f7,#7e22ce)">Inspect Wallet</button>
+          <div class="field"><label for="inspInput">Wallet address</label><input id="inspInput" placeholder="0x…"></div>
+          <button type="button" class="btn btn-primary" id="inspBtn" style="background:linear-gradient(135deg,#a855f7,#7e22ce)">Look up</button>
         </div>
         <div id="inspError" class="mytig-err" role="alert"></div>
         <div class="chips" id="inspQuickChips" style="margin-top:8px">
@@ -651,23 +650,23 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       </div>
       <div id="inspMain" class="hidden">
         <div class="inspector-stats">
-          <div class="inspector-card"><div class="k">Active Locked</div><div class="v" id="inspActive">-</div><div class="s" id="inspCurrentRank">Rank: -</div></div>
-          <div class="inspector-card"><div class="k">Historical Peak</div><div class="v c-purple" id="inspPeakBal">-</div><div class="s" id="inspPeakRank">Rank at peak balance: -</div></div>
-          <div class="inspector-card"><div class="k">Total Withdrawn</div><div class="v c-red" id="inspTotalWithdrawn">-</div><div class="s" id="inspPending">Pending: -</div></div>
-          <div class="inspector-card"><div class="k">Staking Lifetime</div><div class="v" id="inspLifetime">-</div><div class="s" id="inspTxCount">Events: -</div></div>
+          <div class="inspector-card"><div class="k">Active stake</div><div class="v" id="inspActive">-</div><div class="s" id="inspCurrentRank">Rank: -</div></div>
+          <div class="inspector-card"><div class="k">Highest stake</div><div class="v c-purple" id="inspPeakBal">-</div><div class="s" id="inspPeakRank">Rank at peak balance: -</div></div>
+          <div class="inspector-card"><div class="k">Withdrawn · all time</div><div class="v c-red" id="inspTotalWithdrawn">-</div><div class="s" id="inspPending">Pending: -</div></div>
+          <div class="inspector-card"><div class="k">Since first stake</div><div class="v" id="inspLifetime">-</div><div class="s" id="inspTxCount">Events: -</div></div>
         </div>
         <div class="card" style="margin-bottom:12px">
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
-            <h3 style="margin:0">Historical Balance & Rank Timeline</h3>
+            <h3 style="margin:0">Stake over time</h3>
             <label style="font-size:11px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.04);padding:4px 10px;border-radius:8px;border:1px solid var(--border)">
               <input type="checkbox" id="inspToggleRank" style="accent-color:#eab308">
               <span>Show staking rank</span>
             </label>
           </div>
-          <p class="hint">Balances change at recorded events. Rank is sampled at this address’s events.</p><div class="chart-frame"><canvas id="chartInspector" role="img" aria-label="Wallet staked TIG and optional historical staking rank"></canvas></div><p class="chart-fallback" hidden>Chart unavailable. Please reload to retry loading the chart library.</p>
+          <p class="hint">Rank is recorded only when this address has staking activity.</p><div class="chart-frame"><canvas id="chartInspector" role="img" aria-label="Wallet staked TIG and optional historical staking rank"></canvas></div><p class="chart-fallback" hidden>Chart unavailable. Please reload to retry loading the chart library.</p>
         </div>
         <div class="card">
-          <h3>Full Transaction Ledger <span class="badge" id="inspBadge">0</span></h3>
+          <h3>Staking events <span class="badge" id="inspBadge">0</span></h3>
           <div class="table-wrap"><table>
             <thead><tr><th>Type</th><th>Amount</th><th>Timestamp</th><th>Block</th><th>Withdrawable</th><th>Tx</th></tr></thead>
             <tbody id="inspTableBody"><tr><td colspan="6">Enter address to load</td></tr></tbody>
@@ -675,8 +674,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
         </div>
       </div>
       <div id="inspEmpty" class="empty" style="margin:12px 0">
-        <h2>Enter a wallet address above</h2>
-        <p>Analyze any present or past staker wallet, inspect peak position, and trace historical events.</p>
+        <p>Enter an address or choose a former staker above.</p>
       </div>
     </details>
 
@@ -691,7 +689,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     <span>RPC <strong id="rpcLabel">-</strong></span>
     <span>Coverage <strong id="coverageLabel">-</strong></span>
   </div></details>
-    <footer class="site-footer"><p>Community analytics · Base network<br>Addresses are not necessarily individual holders.</p><details class="support-details"><summary>Support this dashboard</summary><p>Optional contribution: 1 TIG</p><div class="support-address"><code class="mono">0x19c00b03bf1f2638fd45a3d48f0097863eb20bcf</code><button class="btn btn-xs" id="copySupport">Copy address</button></div></details></footer>
+    <footer class="site-footer"><p>TIG on Base<br>Addresses are not necessarily individual holders.</p><section class="support-details" aria-label="Contribute"><h3 style="font-size:13px;font-weight:600;color:var(--text);margin:0 0 4px">Contribute</h3><p>Support this dashboard · 1 TIG on Base, optional</p><div class="support-address"><code class="mono">0x19c00b03bf1f2638fd45a3d48f0097863eb20bcf</code><button type="button" class="btn btn-xs" id="copySupport">Copy address</button></div></section></footer>
   </div>
 </div>
 
@@ -703,7 +701,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
   <div class="hint" id="drawerMeta"></div>
   <div class="table-wrap" style="max-height:none;margin-top:12px">
     <table>
-      <thead><tr><th>Type</th><th>Amt</th><th>When</th></tr></thead>
+      <thead><tr><th>Type</th><th>TIG</th><th>When</th></tr></thead>
       <tbody id="drawerBody"></tbody>
     </table>
   </div>
@@ -1916,7 +1914,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     document.getElementById('stakerPageStatus').textContent = list.length
       ? 'Showing ' + (stakerPage * 50 + 1) + '–' + Math.min((stakerPage + 1) * 50, list.length) + ' of ' + list.length
       : 'No active stakers';
-    document.getElementById('stakerTableStatus').textContent = 'All active staker addresses are available below. Search also checks past stakers.';
+    document.getElementById('stakerTableStatus').textContent = 'Search includes past stakers.';
     document.getElementById('stakerPrev').disabled = stakerPage === 0;
     document.getElementById('stakerNext').disabled = stakerPage >= pages - 1;
     document.getElementById('holdersBody').innerHTML = list.slice(stakerPage * 50, (stakerPage + 1) * 50).map(function (h, idx) {
@@ -1971,7 +1969,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     var top10 = top.slice(0, 10).reduce(function (sum, row) { return sum + row.total; }, 0n);
     var top50 = top.slice(0, 50).reduce(function (sum, row) { return sum + row.total; }, 0n);
     document.getElementById('top500Concentration').textContent = total > 0n
-      ? 'Within top 500 addresses: top 10 hold ' + (Number(top10 * 1000n / total) / 10).toFixed(1) + '%; top 50 hold ' + (Number(top50 * 1000n / total) / 10).toFixed(1) + '%. Includes known contract custody.'
+      ? 'Share of top 500 balances: top 10 ' + (Number(top10 * 1000n / total) / 10).toFixed(1) + '% · top 50 ' + (Number(top50 * 1000n / total) / 10).toFixed(1) + '%'
       : 'Concentration: waiting for data';
   }
   function rankHolderRows(rows) {
@@ -2001,8 +1999,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       holderSnapshot = snap;
       holderRanking = rankHolderRows(rows);
       document.getElementById('top500Status').textContent =
-        'On-chain balances at block ' + snap.block.toLocaleString('en-US') + ' · ' + new Date(snap.timestamp * 1000).toLocaleString('en-US') +
-        ' · ' + snap.candidateCount.toLocaleString('en-US') + ' candidates from Blockscout and staking';
+        'Balances at block ' + snap.block.toLocaleString('en-US') + ' · ' + new Date(snap.timestamp * 1000).toLocaleString('en-US');
       renderTop500();
     } catch (error) {
       document.getElementById('top500Status').textContent = 'Top 500 snapshot unavailable: ' + errText(error);
@@ -2094,8 +2091,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       }
       holderRanking = rankHolderRows([...rows.values()]);
       document.getElementById('top500Status').textContent =
-        'Live through block ' + target.toLocaleString('en-US') + ' · based on verified snapshot at ' +
-        holderSnapshot.block.toLocaleString('en-US') + ' · ranking by address';
+        'Updated through block ' + target.toLocaleString('en-US');
       renderTop500();
     } catch (error) {
       console.warn('Top 500 live update', error);
@@ -2475,7 +2471,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       var cd = rem < 86400 ? Math.max(0, Math.floor(rem / 3600)) + 'h' : Math.floor(rem / 86400) + 'd';
       document.getElementById('pfNextUnlock').textContent = 'in ' + cd;
     } else document.getElementById('pfNextUnlock').textContent = totReady > 0 ? 'Ready now' : 'None';
-    document.getElementById('pfTenure').textContent = tenureN ? ('Avg tenure: ' + Math.round(tenureSum / tenureN) + 'd') : 'Avg tenure: -';
+    document.getElementById('pfTenure').textContent = tenureN ? ('Avg. time since first stake: ' + Math.round(tenureSum / tenureN) + 'd') : 'Avg. time since first stake: -';
 
     cards.innerHTML = rows.map(function (r) {
       var w = r.meta, s = r.stats;
@@ -2489,13 +2485,13 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       var globalRank = globalRow ? '#' + globalRow.rank + ' in Top 500' : (holderRanking.length ? 'Outside Top 500' : 'Ranking unavailable');
       var walletSummary = '<div class="mytig-stats">' +
         '<div class="mytig-stat"><div class="k">Wallet TIG</div><div class="v">' + walletText + '</div><div class="s">' + (walletEntry && walletEntry.block ? 'Base block ' + walletEntry.block.toLocaleString('en-US') : 'On-chain lookup') + '</div></div>' +
-        '<div class="mytig-stat"><div class="k">Combined TIG</div><div class="v">' + combined + '</div><div class="s">Wallet + active stake + pending · ' + globalRank + '</div></div></div>';
+        '<div class="mytig-stat"><div class="k">Total TIG</div><div class="v">' + combined + '</div><div class="s">Wallet + active stake + pending · ' + globalRank + '</div></div></div>';
       if (!s.found) {
         return '<div class="mytig-card"><div class="mytig-card-head"><h4><span class="mono">' + title + '</span>' + fTag + debBtn(w.address) + '</h4>' +
           '<a class="btn btn-ghost btn-xs" target="_blank" rel="noopener" href="https://basescan.org/address/' + w.address + '">Basescan</a></div>' +
-          walletSummary + '<div class="hint">No staking events found for this address in synced history.</div></div>';
+          walletSummary + '<div class="hint">No staking history found.</div></div>';
       }
-      var rankTxt = s.rank ? ('#' + s.rank + ' of ' + data.stats.activeHolders) : 'Ex-holder / 0 locked';
+      var rankTxt = s.rank ? ('#' + s.rank + ' of ' + data.stats.activeHolders) : 'No active stake';
       var nextTxt = '-';
       if (s.pendingReady > 0) nextTxt = 'Ready now (' + fmt(s.pendingReady) + ')';
       else if (s.nextUnlock) {
@@ -2509,8 +2505,8 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
         else if (rem2 < 7 * 86400) { state = 'in ' + (rem2 < 86400 ? Math.floor(rem2 / 3600) + 'h' : Math.floor(rem2 / 86400) + 'd'); cls = 'c-yellow'; }
         else { state = 'in ' + Math.floor(rem2 / 86400) + 'd'; cls = ''; }
         return '<div class="near-item"><span class="' + cls + '">' + fullDate(lot.unlockTime) + ' · ' + state + '</span><strong>' + fmt2(lot.valueTig) + ' TIG</strong></div>';
-      }).join('') : '<div class="hint" style="margin:0">No open unlock lots</div>';
-      var cohort = s.lifetimeDays >= 180 ? 'Diamond' : s.lifetimeDays >= 90 ? 'Long' : s.lifetimeDays >= 30 ? 'Medium' : 'Short';
+      }).join('') : '<div class="hint" style="margin:0">No pending withdrawals</div>';
+      var cohort = s.lifetimeDays >= 180 ? '180+ days' : s.lifetimeDays >= 90 ? '90–179 days' : s.lifetimeDays >= 30 ? '30–89 days' : 'Under 30 days';
       var soon7 = s.lots.filter(function (l) { return l.unlockTime > data.now && l.unlockTime <= data.now + 7 * 86400; })
         .reduce(function (a, l) { return a + l.valueTig; }, 0);
       return '<div class="mytig-card">' +
@@ -2518,15 +2514,16 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
         ' <button type="button" class="btn btn-ghost btn-xs" data-insp="' + w.address + '">Inspector</button></h4>' +
         '<a class="btn btn-ghost btn-xs" target="_blank" rel="noopener" href="https://basescan.org/address/' + w.address + '">Basescan</a></div>' +
         walletSummary + '<div class="mytig-stats">' +
-          '<div class="mytig-stat"><div class="k">Locked</div><div class="v">' + fmt(s.curStaked) + ' TIG</div><div class="s">' + s.share.toFixed(2) + '% of stake</div></div>' +
+          '<div class="mytig-stat"><div class="k">Active stake</div><div class="v">' + fmt(s.curStaked) + ' TIG</div><div class="s">' + s.share.toFixed(2) + '% of stake</div></div>' +
           '<div class="mytig-stat"><div class="k">Cooldown / Ready</div><div class="v c-yellow">' + fmt(s.pendingCooldown) + ' / <span class="c-red">' + fmt(s.pendingReady) + '</span></div><div class="s">Pending total ' + fmt(s.curPending) + '</div></div>' +
-          '<div class="mytig-stat"><div class="k">Rank</div><div class="v">' + rankTxt + '</div><div class="s">Peak ' + fmt(s.peakBal) + (s.peakRank ? ' · ' + s.peakRank : '') + '</div></div>' +
-          '<div class="mytig-stat"><div class="k">Net 7d</div><div class="v ' + (s.net7 >= 0 ? 'c-green' : 'c-red') + '">' + fmtNet(s.net7) + '</div><div class="s">In ' + fmt(s.in7) + ' / Out ' + fmt(s.out7) + '</div></div>' +
-          '<div class="mytig-stat"><div class="k">Tenure</div><div class="v">' + s.lifetimeDays + 'd</div><div class="s">' + s.txCount + ' events</div></div>' +
+          '<div class="mytig-stat"><div class="k">Staking rank</div><div class="v">' + rankTxt + '</div><div class="s">Highest stake: ' + fmt(s.peakBal) + ' TIG' + (s.peakRank ? ' · rank ' + s.peakRank : '') + '</div></div>' +
+          '<div class="mytig-stat"><div class="k">Stake change · 7 days</div><div class="v ' + (s.net7 >= 0 ? 'c-green' : 'c-red') + '">' + fmtNet(s.net7) + ' TIG</div><div class="s">Added ' + fmt(s.in7) + ' / unlocked ' + fmt(s.out7) + '</div></div>' +
+        '</div><details class="copy-notes"><summary>More staking details</summary><div class="mytig-stats">' +
+          '<div class="mytig-stat"><div class="k">Since first stake</div><div class="v">' + s.lifetimeDays + 'd</div><div class="s">' + s.txCount + ' events</div></div>' +
           '<div class="mytig-stat"><div class="k">Withdrawn (all time)</div><div class="v c-red">' + fmt(s.totalWithdrawn) + ' TIG</div><div class="s">Next: ' + nextTxt + '</div></div>' +
-          '<div class="mytig-stat"><div class="k">Cohort</div><div class="v">' + cohort + '</div><div class="s">First-lock age band</div></div>' +
-          '<div class="mytig-stat"><div class="k">Liquid soon (7d)</div><div class="v c-yellow">' + fmt(soon7) + ' TIG</div><div class="s">Completing cooldown</div></div>' +
-        '</div><div class="mytig-schedule"><h5>Your unlock schedule</h5>' + lotsHtml + '</div></div>';
+          '<div class="mytig-stat"><div class="k">Staking age group</div><div class="v">' + cohort + '</div><div class="s">Time since first stake</div></div>' +
+          '<div class="mytig-stat"><div class="k">Ready within 7 days</div><div class="v c-yellow">' + fmt(soon7) + ' TIG</div><div class="s">Excludes TIG ready now</div></div>' +
+        '</div><div class="mytig-schedule"><h5>Withdrawal schedule</h5>' + lotsHtml + '</div></details></div>';
     }).join('');
 
     Array.prototype.forEach.call(cards.querySelectorAll('button[data-insp]'), function (btn) {
@@ -2657,7 +2654,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     try { dismissed = localStorage.getItem('tig-edu-dismissed') === '1'; } catch (e) {}
     var edu = '';
     if (!dismissed) {
-      edu = '<div class="alert soft"><div><strong>How to read:</strong> lock → unlock (cooldown, still in contract) → withdraw (left). Unlock ≠ sell.</div><button type="button" class="dismiss" id="eduDismiss">Got it</button></div>';
+      edu = '<div class="alert soft"><div><strong>Withdrawing stake:</strong> request an unlock → wait 28 days → withdraw to your wallet.</div><button type="button" class="dismiss" id="eduDismiss">Got it</button></div>';
     }
     document.getElementById('eduSection').innerHTML = edu;
     var eduBtn = document.getElementById('eduDismiss');
@@ -2673,7 +2670,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       html += '<div class="alert warn">Large holder ' + shortAddr(w.address) + fTag + ' unlocked ' + fmt(w.unstaked) + ' TIG (' + w.percentage.toFixed(1) + '% of their locked)</div>';
     });
     document.getElementById('alertsSection').innerHTML = html;
-    document.getElementById('flowSummary').textContent = '30d net ' + fmtNet(st.net30) + ' TIG · in ' + fmt(st.s30) + ' · unlock ' + fmt(st.u30) + ' · withdraw 7d ' + fmt(st.w7) + ' TIG';
+    document.getElementById('flowSummary').textContent = '30-day stake change: ' + fmtNet(st.net30) + ' TIG';
 
     uiState.activityRows = data.sorted.slice(-80).reverse();
     document.getElementById('txBadge').textContent = String(Math.min(80, data.sorted.length));
@@ -2711,7 +2708,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     }).join('') : '<tr><td colspan="5" class="c-green">No upcoming cooldown expirations</td></tr>';
 
     document.getElementById('extraMetrics').textContent =
-      'Pending withdrawal ' + fmt(st.totalPendingOpen) + ' TIG · active locked ' + fmt(st.netStaked) + ' TIG';
+      'Pending withdrawal: ' + fmt(st.totalPendingOpen) + ' TIG';
 
     if (!opts.skipCharts) drawCharts(data);
     populateExHoldersChips();
