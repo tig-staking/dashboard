@@ -263,7 +263,7 @@ a{color:var(--accent);text-decoration:none}
   #tab-top500 td:nth-child(2){overflow-wrap:anywhere}
   #tab-top500 td:nth-child(2) .btn{display:none}
   #tab-top500 .search:has(#top500Search){flex-direction:column}
-  #top500Filter{flex:auto!important;width:100%}
+
   #tab-holders .table-wrap{max-height:none;overflow-x:auto}
   #tab-holders table{min-width:620px}
 }
@@ -596,9 +596,9 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
 <div class="page-heading"><h2>Top 500 TIG</h2><p>Total TIG = wallet balance + active stake + pending withdrawals.</p></div>
       <div class="card">
         <h3>Largest addresses <span class="badge" id="top500Count">-</span></h3>
-        <details class="copy-notes"><summary>About this ranking</summary><p>Each row is an address, not a person. Exchange and contract balances may belong to many holders.</p><p>Pending includes TIG in cooldown and ready to withdraw. The staking contract and burn addresses are excluded to avoid double counting.</p><p>Known contracts are labeled. An unlabeled address may also be a contract. Balances come from on-chain checks of addresses found through Blockscout and staking records.</p></details>
+        <details class="copy-notes"><summary>About this ranking</summary><p>Each row is an address, not a person. Exchange and contract balances may belong to many holders.</p><p>Pending includes TIG in cooldown and ready to withdraw. The staking contract and burn addresses are excluded to avoid double counting.</p><p>Holder labels use the first positive TIG receipt on Base: Fresh under 30 days; Established 30–179 days; Long-term 180–364 days; Diamond 365+ days. They do not prove continuous holding. History unavailable means the first receipt could not be verified.</p><p>Known contracts keep their names. Other addresses may also be contracts. Balances come from on-chain checks of addresses found through Blockscout and staking records.</p></details>
         <div class="hint" id="top500Status">Loading balances…</div>
-        <div class="search"><div class="field"><label for="top500Search">Filter by address</label><input id="top500Search" class="mono" placeholder="0x…"></div><div class="field filter-field"><label for="top500Filter">Address type</label><select id="top500Filter" class="sel" aria-label="Address category"><option value="all">All addresses</option><option value="unlabeled">Unlabeled only</option><option value="contract">Known contracts</option></select></div></div>
+        <div class="search"><div class="field"><label for="top500Search">Filter by address</label><input id="top500Search" class="mono" placeholder="0x…"></div></div>
         <div class="hint" id="top500Concentration">Concentration: loading…</div>
         <div id="mobileHolders" class="mobile-holders" aria-label="TIG address ranking"></div>
         <div class="table-wrap"><table class="balance-table">
@@ -711,6 +711,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
 <button type="button" id="toggleDetails" class="hidden" tabindex="-1" aria-hidden="true"></button>
 <div id="detailsPanel" class="hidden"></div>
 
+<script src="./holder-age.js"></script>
 <script>
 (function () {
   'use strict';
@@ -1934,12 +1935,19 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
   function holderAmount(value) {
     return fmt2(Number(ethers.formatUnits(value, 18)));
   }
+  function holderAgeInfo(address) {
+    var first = holderSnapshot && holderSnapshot.firstReceived && holderSnapshot.firstReceived[address];
+    var bound = holderSnapshot && holderSnapshot.receivedBy && holderSnapshot.receivedBy[address];
+    var dated = first || bound;
+    var info = typeof TigHolderAge === 'undefined' ? {label: 'History unavailable', days: null} : TigHolderAge.classify(dated, Math.floor(Date.now() / 1000));
+    var note = info.days === null ? 'Holder age could not be verified.' : (first ? 'First TIG received ' : 'Received TIG at least ') + info.days + ' days ago. Does not imply continuous holding.';
+    return { label: info.label, note: note };
+  }
   function renderTop500() {
     var query = document.getElementById('top500Search').value.trim().toLowerCase();
-    var category = document.getElementById('top500Filter').value;
+
     var filtered = holderRanking.slice(0, 500).filter(function (row) {
-      return (!query || row.address.includes(query)) &&
-        (category === 'all' || (category === 'contract' ? !!KNOWN_HOLDER_CONTRACTS[row.address] : !KNOWN_HOLDER_CONTRACTS[row.address]));
+      return !query || row.address.includes(query);
     });
     var pages = Math.max(1, Math.ceil(filtered.length / 50));
     top500Page = Math.min(top500Page, pages - 1);
@@ -1951,7 +1959,8 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     document.getElementById('top500Next').disabled = top500Page >= pages - 1;
     document.getElementById('top500Count').textContent = holderRanking.length ? String(Math.min(500, holderRanking.length)) : '-';
     document.getElementById('top500Body').innerHTML = list.map(function (row) {
-      var kind = KNOWN_HOLDER_CONTRACTS[row.address] ? '<span class="tag tag-relock">' + KNOWN_HOLDER_CONTRACTS[row.address] + '</span>' : '';
+      var age = holderAgeInfo(row.address);
+      var kind = KNOWN_HOLDER_CONTRACTS[row.address] ? '<span class="tag tag-relock">' + KNOWN_HOLDER_CONTRACTS[row.address] + '</span>' : '<span class="tag tag-reward th-tip" tabindex="0" data-tip="' + age.note + '">' + age.label + '</span>';
       var foundation = isFoundation(row.address) ? '<span class="tag tag-foundation">Foundation</span>' : '';
       return '<tr><td>' + row.rank + '</td><td><a class="mono" target="_blank" rel="noopener" href="https://basescan.org/address/' + row.address + '">' +
         shortAddr(row.address) + '</a> ' + kind + foundation + debBtn(row.address) + '</td><td><strong>' + holderAmount(row.total) +
@@ -1961,8 +1970,9 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     var mobile = document.getElementById('mobileHolders');
     var expanded = new Set(Array.from(mobile.querySelectorAll('details[open]')).map(function (el) { return el.dataset.address; }));
     mobile.innerHTML = list.map(function (row) {
-      var kind = KNOWN_HOLDER_CONTRACTS[row.address] || (isFoundation(row.address) ? 'Foundation' : 'Unlabeled address');
-      return '<details class="holder-detail" data-address="' + row.address + '"' + (expanded.has(row.address) ? ' open' : '') + '><summary class="rank-summary"><span class="rank-number">' + row.rank + '</span><span><span class="mono">' + shortAddr(row.address) + '</span><span class="holder-kind">' + kind + '</span></span><span class="holder-total">' + holderAmount(row.total) + '<small>TIG total · details</small></span></summary><div class="holder-breakdown"><span class="full-address">' + row.address + '</span><dl><div><dt>Wallet</dt><dd>' + holderAmount(row.wallet) + ' TIG</dd></div><div><dt>Active stake</dt><dd>' + holderAmount(row.locked) + ' TIG</dd></div><div><dt>Pending</dt><dd>' + holderAmount(row.pending) + ' TIG</dd></div></dl><div class="holder-links"><a href="https://basescan.org/address/' + row.address + '" target="_blank" rel="noopener">Basescan ↗</a><button class="btn-link inspect-address" data-address="' + row.address + '">Inspect staking</button></div></div></details>';
+      var age = holderAgeInfo(row.address);
+      var kind = KNOWN_HOLDER_CONTRACTS[row.address] || (isFoundation(row.address) ? 'Foundation · ' + age.label : age.label);
+      return '<details class="holder-detail" data-address="' + row.address + '"' + (expanded.has(row.address) ? ' open' : '') + '><summary class="rank-summary"><span class="rank-number">' + row.rank + '</span><span><span class="mono">' + shortAddr(row.address) + '</span><span class="holder-kind">' + kind + '</span></span><span class="holder-total">' + holderAmount(row.total) + '<small>TIG total · details</small></span></summary><div class="holder-breakdown"><span class="full-address">' + row.address + '</span>' + (KNOWN_HOLDER_CONTRACTS[row.address] ? '' : '<p class="hint">' + age.note + '</p>') + '<dl><div><dt>Wallet</dt><dd>' + holderAmount(row.wallet) + ' TIG</dd></div><div><dt>Active stake</dt><dd>' + holderAmount(row.locked) + ' TIG</dd></div><div><dt>Pending</dt><dd>' + holderAmount(row.pending) + ' TIG</dd></div></dl><div class="holder-links"><a href="https://basescan.org/address/' + row.address + '" target="_blank" rel="noopener">Basescan ↗</a><button class="btn-link inspect-address" data-address="' + row.address + '">Inspect staking</button></div></div></details>';
     }).join('') || '<p class="hint">No matching address in the top 500.</p>';
     var top = holderRanking.slice(0, 500);
     var total = top.reduce(function (sum, row) { return sum + row.total; }, 0n);
@@ -1988,7 +1998,8 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
           !Number.isSafeInteger(snap.block) || !Array.isArray(snap.candidates) || snap.candidates.length < 500) {
         throw new Error('Invalid holders snapshot');
       }
-      if (holderSnapshot && snap.block <= holderSnapshot.block) return;
+      if (holderSnapshot && snap.block < holderSnapshot.block) return;
+      if (holderSnapshot && snap.block === holderSnapshot.block) { holderSnapshot.firstReceived = snap.firstReceived || holderSnapshot.firstReceived; holderSnapshot.receivedBy = snap.receivedBy || holderSnapshot.receivedBy; renderTop500(); return; }
       var seen = new Set();
       var rows = snap.candidates.map(function (item) {
         var key = String(item.address).toLowerCase();
@@ -2930,7 +2941,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     document.getElementById('searchBtn').onclick = function () { searchHolder(); };
     document.getElementById('searchInput').oninput = function () { searchHolder(); };
     document.getElementById('top500Search').oninput = function () { top500Page = 0; renderTop500(); };
-    document.getElementById('top500Filter').onchange = function () { top500Page = 0; renderTop500(); };
+
     document.getElementById('top500Prev').onclick = function () { top500Page = Math.max(0, top500Page - 1); renderTop500(); document.getElementById('top500Search').scrollIntoView({ block: 'start' }); };
     document.getElementById('top500Next').onclick = function () { top500Page++; renderTop500(); document.getElementById('top500Search').scrollIntoView({ block: 'start' }); };
 
