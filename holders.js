@@ -1,5 +1,6 @@
 /** Build a block-pinned Top 500 candidate snapshot from free Blockscout and Base RPC data. */
 const fs = require('node:fs');
+const { enrichHolderHistory } = require('./holder-history');
 const { ethers } = require('ethers');
 const { TOKEN, STAKING, ZERO, address, stakingBalances, csvCandidates, rankRows } = require('./holders-core');
 
@@ -179,6 +180,9 @@ async function run() {
       total: row.total.toString()
     }))
   };
+  let previous = {};
+  try { previous = JSON.parse(fs.readFileSync('holders.json', 'utf8')); } catch (_) {}
+  await enrichHolderHistory(payload, previous);
   const temp = 'holders.json.tmp';
   fs.writeFileSync(temp, JSON.stringify(payload));
   fs.renameSync(temp, 'holders.json');
