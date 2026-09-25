@@ -14,6 +14,12 @@ It ranks **addresses**, not people. Exchange, vesting, custody, and contract add
 
 The browser replays TIG transfers and staking events after the snapshot block. It queries on-chain balances for newly seen addresses. A live rank is shown only after catch-up completes.
 
+### Holder age labels
+
+Top 500 addresses have four age labels: Fresh (under 30 days), Established (30–179 days), Long-term (180–364 days), and Diamond (365+ days). Age means time since the first positive TIG transfer received on Base, **not uninterrupted holding or the age of the current balance**. Selling and buying again does not reset this date. Known contracts retain their descriptive names.
+
+`holder-history.js` traverses incoming TIG transfers in Blockscout's REST API for new top 500 addresses. A fully traversed history establishes the earliest receipt, cached in `holders.json.firstReceived`. A positive receipt at least 365 days old already proves the Diamond tier: it is cached separately in `receivedBy` and shown as “at least” that age, without claiming an exact first date. Later refreshes reuse verified dates. Zero-value and outgoing transfers do not count. Missing, incomplete, invalid, or unavailable histories display “History unavailable”; staking age is never substituted. Scheduled history refreshes have a two-minute work budget plus in-flight request completion, so an API outage does not hold up balance updates. The browser reads the cache without making per-address history requests. For the initial backfill, run `node holder-history.js`; it saves progress every 10 addresses.
+
 ## Local development
 
 ```sh
