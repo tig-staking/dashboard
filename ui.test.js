@@ -62,7 +62,7 @@ test('small positive TIG balances never display as zero', () => {
 });
 
 async function dashboardStats(events) {
-  const statsContext = vm.createContext({ ethers, db: { all: async () => events },
+  const statsContext = vm.createContext({ ethers, db: { all: async () => events, meta: async () => Math.max(0, ...events.map(tx => tx.blockNumber)) },
     statsCache: null, statsCacheTime: 0, pendingPeriodSec: 28 * 86400,
     C: { COHORT_DIAMOND: 180, COHORT_LONG: 90, COHORT_MEDIUM: 30, DORMANCY_DAYS: 90 },
     isBlacklisted: () => false, isFoundation: () => false,

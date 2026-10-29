@@ -1006,6 +1006,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
   var currentBatchSize = C.BATCH;
   var statsCache = null, statsCacheTime = 0, countdownTimer = null;
   var anchor = null, searchTimer = null, uiRefreshing = false, chainHead = null;
+  var syncHealth = { verifiedBlock: 0, checkedAt: 0, error: '' };
   var pendingPeriodSec = C.PENDING_PERIOD_FALLBACK_DAYS * 86400;
   var eventTopics = [];
   var uiState = {
@@ -1085,10 +1086,15 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     if (!ls) { el.textContent = '· No data yet'; return; }
     var mins = Math.max(0, Math.round((Date.now() - Number(ls)) / 60000));
     var agoTxt = mins < 1 ? 'just now' : (mins + 'm ago');
-    var cov = document.getElementById('coverageLabel').textContent || '';
-    var isPartial = partial || (cov && cov !== '-' && parseFloat(cov) < 99.5);
-    if (isPartial) el.innerHTML = '· <strong>Partial</strong> · synced ' + agoTxt;
-    else el.innerHTML = '· Data fresh · synced <strong>' + agoTxt + '</strong>';
+    var block = uiState.lastUiData && uiState.lastUiData.block;
+    var recent = Date.now() - Number(ls) <= 2 * C.INTERVAL;
+    var verified = Number.isSafeInteger(block) && block > 0 && syncHealth.verifiedBlock === block;
+    var checked = syncHealth.checkedAt > 0 && Date.now() - syncHealth.checkedAt <= 2 * C.INTERVAL;
+    var lag = Number.isSafeInteger(chainHead) && block ? chainHead - block : null;
+    var state = !recent ? 'Out of date' : syncHealth.error ? 'Live update unavailable' :
+      partial || (lag !== null && lag > 30) ? 'Catching up' :
+      verified && checked && lag !== null && lag >= 0 ? 'Up to date' : 'Snapshot';
+    el.textContent = '· ' + state + ' · checked ' + agoTxt + (block ? ' · block ' + block.toLocaleString('en-US') : '');
   }
 
   function buildIface() {
@@ -1428,7 +1434,9 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       var cur = await connectRPC(false);
       chainHead = cur;
       var from = await getResumeFrom();
+      if (from > cur + 1) throw new Error('RPC head is behind the stored data; retrying later');
       if (from > cur) {
+        syncHealth = { verifiedBlock: cur, checkedAt: Date.now(), error: '' };
         document.getElementById('syncStatus').textContent = 'Up to date';
         setDot('dot-green');
         document.getElementById('syncModeBadge').textContent = 'Live';
@@ -1440,6 +1448,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       }
       var ok = await scanBlocks(from, cur, mode);
       if (ok && !stopReq) {
+        syncHealth = { verifiedBlock: cur, checkedAt: Date.now(), error: '' };
         await db.setMeta('lastBlock', cur);
         await db.setMeta('lastSync', Date.now());
         var c = await db.count();
@@ -1451,13 +1460,16 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
         await refreshAll({ skipCharts: false });
         refreshHolderLive();
       } else if (stopReq) {
+        syncHealth.error = 'Sync stopped';
         invalidateCache();
         await refreshAll({ skipCharts: false });
       } else {
+        syncHealth.error = 'Catch-up incomplete';
         invalidateCache();
         await refreshAll({ skipCharts: false });
       }
     } catch (err) {
+      syncHealth.error = errText(err);
       console.error(err);
       document.getElementById('syncStatus').textContent = 'Live sync info: ' + errText(err);
       setDot('dot-yellow');
@@ -1490,11 +1502,13 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
 
   async function getStats(useCache) {
     if (useCache && statsCache && Date.now() - statsCacheTime < 1200) return statsCache;
+    var dataBlock = Number(await db.meta('lastBlock'));
     var txsAll = await db.all();
     if (!txsAll.length) { statsCache = null; return null; }
     var txs = [], skippedBl = 0, i;
     for (i = 0; i < txsAll.length; i++) {
       if (!txsAll[i] || isBlacklisted(txsAll[i].address)) { skippedBl++; continue; }
+      if (Number.isSafeInteger(dataBlock) && Number(txsAll[i].blockNumber) > dataBlock) continue;
       if (normalizeType(txsAll[i].type) === 'reward') continue;
       // Use one address key across balances, age cohorts, pending lots and alerts.
       txs.push(Object.assign({}, txsAll[i], { address: String(txsAll[i].address).toLowerCase() }));
@@ -1730,7 +1744,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     for (i = 0; i < sorted.length; i++) if (sorted[i].timestamp >= d24) seen24.add(sorted[i].address);
 
     var result = {
-      sorted: sorted, storedTotal: txsAll.length, skippedBlacklist: skippedBl, now: now,
+      sorted: sorted, block: dataBlock, storedTotal: txsAll.length, skippedBlacklist: skippedBl, now: now,
       stats: {
         netStaked: netStaked, totalPendingOpen: totalPendingOpen,
         pendingCooldown: pendingCooldown, pendingWithdrawable: pendingWithdrawable,
@@ -1890,7 +1904,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     }).join('') || '<tr><td colspan="6">None</td></tr>';
   }
 
-  var holderSnapshot = null, holderRanking = [], holderRefreshBusy = false, top500Page = 0;
+  var holderSnapshot = null, holderRanking = [], holderRankingBlock = 0, holderRefreshBusy = false, top500Page = 0;
   function holderWei(value) {
     if (!/^\d+$/.test(String(value))) throw new Error('Invalid holder balance');
     return BigInt(value);
@@ -1970,30 +1984,34 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
         seen.add(key);
         return { address: key, wallet: holderWei(item.wallet), locked: holderWei(item.locked), pending: holderWei(item.pending) };
       });
+      var ranked = rankHolderRows(rows);
+      if (ranked.length < 500 || ranked[499].total <= holderWei(snap.candidateCutoff)) throw new Error('Candidate coverage is insufficient');
       holderSnapshot = snap;
-      holderRanking = rankHolderRows(rows);
+      holderRanking = ranked;
+      holderRankingBlock = snap.block;
       document.getElementById('top500Status').textContent =
         'Balances at block ' + snap.block.toLocaleString('en-US') + ' · ' + new Date(snap.timestamp * 1000).toLocaleString('en-US');
       renderTop500();
     } catch (error) {
-      document.getElementById('top500Status').textContent = 'Top 500 snapshot unavailable: ' + errText(error);
-      document.getElementById('top500Body').innerHTML = '<tr><td colspan="6">Waiting for a verified snapshot</td></tr>';
+      document.getElementById('top500Status').textContent = (holderRankingBlock ? 'Verified balances at block ' + holderRankingBlock.toLocaleString('en-US') + ' · snapshot update unavailable: ' : 'Top 500 snapshot unavailable: ') + errText(error);
+      if (!holderRanking.length) document.getElementById('top500Body').innerHTML = '<tr><td colspan="6">Waiting for a verified snapshot</td></tr>';
     }
   }
   async function refreshHolderLive() {
     if (!holderSnapshot || !provider || holderRefreshBusy) return;
     holderRefreshBusy = true;
+    var baseSnapshot = holderSnapshot;
     try {
       var target = Number(await db.meta('lastBlock'));
-      if (!Number.isSafeInteger(target) || target <= holderSnapshot.block) return;
-      if (target - holderSnapshot.block > 15000) throw new Error('Snapshot is too old for browser catch-up');
-      var rows = new Map(holderSnapshot.candidates.map(function (item) {
+      if (!Number.isSafeInteger(target) || target <= baseSnapshot.block) return;
+      if (target - baseSnapshot.block > 15000) throw new Error('Snapshot is too old for browser catch-up');
+      var rows = new Map(baseSnapshot.candidates.map(function (item) {
         var key = item.address.toLowerCase();
         return [key, { address: key, wallet: holderWei(item.wallet), locked: holderWei(item.locked), pending: holderWei(item.pending) }];
       }));
       var transfers = [];
       var topic = ethers.id('Transfer(address,address,uint256)');
-      for (var start = holderSnapshot.block + 1; start <= target;) {
+      for (var start = baseSnapshot.block + 1; start <= target;) {
         var step = 500, logs, end, attempts = 0;
         for (;;) {
           end = Math.min(start + step - 1, target);
@@ -2002,7 +2020,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
             break;
           } catch (error) {
             attempts++;
-            step = Math.max(100, Math.floor(step / 2));
+            step = Math.max(1, Math.floor(step / 2));
             if (attempts >= C.MAX_BATCH_RETRIES) throw error;
             if (isRateLimit(error) || attempts % 3 === 0) {
               try { await connectRPC(true); } catch (e) {}
@@ -2027,7 +2045,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
         else if (!EXCLUDED_HOLDER_ADDRESSES.has(to)) checkWallet.add(to);
       });
       var newStakeEvents = (await db.all()).filter(function (tx) {
-        return Number(tx.blockNumber) > holderSnapshot.block && Number(tx.blockNumber) <= target;
+        return Number(tx.blockNumber) > baseSnapshot.block && Number(tx.blockNumber) <= target;
       }).sort(function (a, b) { return Number(a.blockNumber) - Number(b.blockNumber) || Number(a.logIndex) - Number(b.logIndex); });
       newStakeEvents.forEach(function (tx) {
         var key = String(tx.address).toLowerCase();
@@ -2047,7 +2065,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       });
       var unknown = [...checkWallet];
       for (var i = 0; i < unknown.length; i++) {
-        var key = unknown[i], result, lastError;
+        var key = unknown[i], result = undefined, lastError = undefined;
         for (var attempt = 0; attempt < 5; attempt++) {
           try {
             result = await new ethers.Contract(C.TIG, ERC20_ABI, provider).balanceOf(key, { blockTag: target });
@@ -2063,14 +2081,19 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
         if (!row) { row = { address: key, wallet: 0n, locked: 0n, pending: 0n }; rows.set(key, row); }
         row.wallet = BigInt(result);
       }
-      holderRanking = rankHolderRows([...rows.values()]);
+      var ranked = rankHolderRows([...rows.values()]);
+      if (ranked.length < 500 || ranked[499].total <= holderWei(baseSnapshot.candidateCutoff)) throw new Error('Candidate coverage is insufficient; keeping the verified ranking');
+      if (holderSnapshot !== baseSnapshot || target < holderRankingBlock) return;
+      holderRanking = ranked;
+      holderRankingBlock = target;
       document.getElementById('top500Status').textContent =
         'Updated through block ' + target.toLocaleString('en-US');
       renderTop500();
     } catch (error) {
       console.warn('Top 500 live update', error);
+      if (holderSnapshot !== baseSnapshot) return;
       document.getElementById('top500Status').textContent =
-        'Snapshot at block ' + holderSnapshot.block.toLocaleString('en-US') + ' · live update unavailable: ' + errText(error);
+        'Verified balances at block ' + holderRankingBlock.toLocaleString('en-US') + ' · live update unavailable: ' + errText(error);
     } finally { holderRefreshBusy = false; }
   }
 
@@ -2358,17 +2381,20 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
   }
 
   var myWalletBalanceCache = new Map(), myWalletBalanceBusy = false;
-  async function refreshMyWalletBalances(list) {
-    if (myWalletBalanceBusy || !list.length) return;
+  function walletBalanceAtBlock(address, block) {
+    var item = myWalletBalanceCache.get(address.toLowerCase());
+    return item && item.block === block ? item : null;
+  }
+  async function refreshMyWalletBalances(list, block) {
+    if (myWalletBalanceBusy || !list.length || !Number.isSafeInteger(block) || block <= 0) return;
     var missing = list.filter(function (w) {
       var item = myWalletBalanceCache.get(w.address.toLowerCase());
-      return !item || Date.now() - item.time > 2 * 60 * 1000;
+      return !item || item.block !== block || Date.now() - item.time > 2 * 60 * 1000;
     });
     if (!missing.length) return;
     myWalletBalanceBusy = true;
     try {
       if (!provider) await connectRPC(false);
-      var block = Number(await db.meta('lastBlock')) || await provider.getBlockNumber();
       var token = new ethers.Contract(C.TIG, ERC20_ABI, provider);
       await Promise.all(missing.map(async function (w) {
         var key = w.address.toLowerCase();
@@ -2381,7 +2407,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       }));
     } catch (error) {
       missing.forEach(function (w) {
-        myWalletBalanceCache.set(w.address.toLowerCase(), { error: errText(error), time: Date.now() });
+        myWalletBalanceCache.set(w.address.toLowerCase(), { error: errText(error), block: block, time: Date.now() });
       });
     } finally {
       myWalletBalanceBusy = false;
@@ -2412,8 +2438,8 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     if (empty) empty.classList.add('hidden');
     if (main) main.classList.remove('hidden');
     var rows = list.map(function (w) { return { meta: w, stats: computePersonalWallet(w.address, data) }; });
-    refreshMyWalletBalances(list).catch(function (error) { console.warn('wallet balances', error); });
-    var walletEntries = list.map(function (w) { return myWalletBalanceCache.get(w.address.toLowerCase()); });
+    refreshMyWalletBalances(list, data.block).catch(function (error) { console.warn('wallet balances', error); });
+    var walletEntries = list.map(function (w) { return walletBalanceAtBlock(w.address, data.block); });
     var walletComplete = walletEntries.every(function (entry) { return entry && entry.value != null; });
     var walletTotal = walletEntries.reduce(function (sum, entry) { return sum + (entry && entry.value != null ? entry.value : 0); }, 0);
     var totLocked = 0, totCool = 0, totReady = 0, totNet = 0, next = null, tenureSum = 0, tenureN = 0;
@@ -2451,7 +2477,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       var w = r.meta, s = r.stats;
       var title = (w.label ? escapeHtml(w.label) + ' · ' : '') + shortAddr(w.address);
       var fTag = s.isFoundation ? '<span class="tag tag-foundation">Foundation</span>' : '';
-      var walletEntry = myWalletBalanceCache.get(w.address.toLowerCase());
+      var walletEntry = walletBalanceAtBlock(w.address, data.block);
       var walletValue = walletEntry && walletEntry.value != null ? walletEntry.value : null;
       var walletText = walletValue != null ? fmt(walletValue) + ' TIG' : 'Loading or unavailable';
       var combined = walletValue != null ? fmt(walletValue + s.curStaked + s.curPending) + ' TIG' : '–';
