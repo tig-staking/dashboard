@@ -61,9 +61,9 @@ test('small positive TIG balances never display as zero', () => {
   assert.equal(context.fmt(0), '0');
 });
 
-async function dashboardStats(events) {
+async function dashboardStats(events, chartRangeDays = 30) {
   const statsContext = vm.createContext({ ethers, db: { all: async () => events, meta: async () => Math.max(0, ...events.map(tx => tx.blockNumber)) },
-    statsCache: null, statsCacheTime: 0, pendingPeriodSec: 28 * 86400,
+    statsCache: null, statsCacheTime: 0, pendingPeriodSec: 28 * 86400, uiState: { chartRangeDays },
     C: { COHORT_DIAMOND: 180, COHORT_LONG: 90, COHORT_MEDIUM: 30, DORMANCY_DAYS: 90 },
     isBlacklisted: () => false, isFoundation: () => false,
     normalizeType: context.normalizeType,
@@ -144,4 +144,54 @@ test('ranking formatting distinguishes token dust from an exact zero', () => {
   assert.equal(context.fmt2(1e-18), '<0.01');
   assert.equal(context.fmt2(0), '0.00');
   assert.equal(context.fmt2(1.234), '1.23');
+});
+
+test('chart ranges include historical flows and never invent days after the data timestamp', async () => {
+  const now = Math.floor(Date.now() / 1000);
+  const events = [
+    { ...event(alice, 'lock', '100', 0, 1), timestamp: now - 60 * 86400 },
+    { ...event(alice, 'unlock', '10', 0, 2), timestamp: now - 86400 }
+  ];
+  const recent = await dashboardStats(events, 30);
+  const longer = await dashboardStats(events, 90);
+  assert.equal(recent.flowSeries.reduce((sum, row) => sum + row.net, 0), -10);
+  assert.equal(longer.flowSeries.reduce((sum, row) => sum + row.net, 0), 90);
+  assert.ok(longer.flowSeries.every(row => row.day <= new Date(longer.asOf * 1000).toISOString().slice(0, 10)));
+});
+
+test('stake charts retain the opening balance and stop at the data timestamp', () => {
+  const ctx = vm.createContext({});
+  vm.runInContext(html.slice(html.indexOf('  function stakeChartPoints('), html.indexOf('  function csvText(')), ctx);
+  const result = ctx.stakeChartPoints({ chartFrom: 100000, asOf: 200000, stats: { netStaked: 80 }, totalStakedSeries: [
+    { ts: 90000, val: 50 }, { ts: 120000, val: 70 }
+  ] });
+  assert.equal(result[0].ts, 100000);
+  assert.equal(result[0].val, 50);
+  assert.equal(result.at(-1).ts, 200000);
+  assert.equal(result.at(-1).val, 80);
+});
+
+test('CSV exports quote delimiters and preserve missing values', () => {
+  const ctx = vm.createContext({});
+  vm.runInContext(html.slice(html.indexOf('  function csvText('), html.indexOf('  function downloadData(')), ctx);
+  assert.equal(ctx.csvText(['address', 'value'], [['a,b', 'say "hi"'], ['0x123', null]]),
+    '"address","value"\r\n"a,b","say ""hi"""\r\n"0x123",""\r\n');
+});
+
+test('ranking downloads respect the filter and preserve exact token units', async () => {
+  let blob, filename;
+  const rows = [alice, bob].map((address, i) => ({ address, rank: i + 1, total: 1000000000000000001n, wallet: 1n, locked: 1000000000000000000n, pending: 0n }));
+  const ctx = vm.createContext({ ethers, Blob, Date, holderRanking: rows, holderRankingBlock: 100,
+    holderSnapshot: { block: 100, timestamp: 1700000000 },
+    uiState: { lastUiData: { block: 100, asOf: 1700000000 }, chartRangeDays: 30 },
+    URL: { createObjectURL(value) { blob = value; return 'blob:test'; }, revokeObjectURL() {} },
+    setTimeout() {}, document: { getElementById: () => ({ value: alice }),
+      createElement: () => ({ click() { filename = this.download; } }) } });
+  vm.runInContext(html.slice(html.indexOf('  function csvText('), html.indexOf('  function renderChartTables(')), ctx);
+  ctx.downloadData('ranking');
+  const text = await blob.text();
+  assert.match(text, new RegExp(alice));
+  assert.doesNotMatch(text, new RegExp(bob));
+  assert.match(text, /1\.000000000000000001/);
+  assert.equal(filename, 'tig-ranking-block-100.csv');
 });
