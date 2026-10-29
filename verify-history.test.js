@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs'), os = require('node:os'), path = require('node:path');
 const { ethers } = require('ethers');
-const { readRange, verifyHistory, limitedFetch } = require('./verify-history');
+const { readRange, verifyHistory, limitedFetch, createHistoryProvider } = require('./verify-history');
 const { LOCKER_ABI } = require('./sync');
 const hash = n => '0x' + n.toString(16).padStart(64, '0');
 const config = { token: '0x' + '1'.repeat(40), staking: '0x' + '2'.repeat(40), firstBlock: 1, blacklist: [] };
@@ -59,4 +59,26 @@ test('archive throttling serializes one host but permits independent providers t
   assert.ok(!calls.includes('https://one.test/next'));
   release(); await Promise.all([first, second]);
   assert.deepEqual(calls, ['https://one.test/held', 'https://two.test/independent', 'https://one.test/next']);
+});
+
+test('historical headers start before the remaining log windows finish', async () => {
+  let release;
+  const waiting = new Promise(resolve => release = resolve);
+  const result = await readRange({
+    getBlock: async n => { if (n === 2) release(); return header(n); },
+    getLogs: async ({ fromBlock }) => { if (fromBlock === 2001) await waiting; return fromBlock === 1 ? [log(2)] : []; }
+  }, config, 1, 2501);
+  assert.equal(result.rows.length, 1);
+});
+
+test('a throttled header provider is bypassed for both boundaries and subsequent reads', async () => {
+  let blockedCalls = 0;
+  const provider = createHistoryProvider(Date.now() + 10000, null, urls => ({
+    getBlock: async n => { if (urls[0].includes('drpc')) { blockedCalls++; throw Error('HTTP 429'); } return header(n); },
+    destroy() {}
+  }));
+  assert.equal((await provider.getBlock(2)).hash, hash(2));
+  assert.equal((await provider.getBlock(3)).hash, hash(3));
+  assert.equal(blockedCalls, 1);
+  provider.destroy();
 });

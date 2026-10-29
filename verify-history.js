@@ -9,10 +9,14 @@ const iface = new ethers.Interface(LOCKER_ABI);
 const topics = [Object.keys(EVENT_TYPE).map(name => iface.getEvent(name).topicHash)];
 
 async function parallel(items, concurrency, work) {
-  const results = new Array(items.length); let next = 0;
+  const results = new Array(items.length); let next = 0, failure;
   await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, async () => {
-    while (next < items.length) { const i = next++; results[i] = await work(items[i]); }
+    while (next < items.length && !failure) {
+      const i = next++;
+      try { results[i] = await work(items[i]); } catch (error) { failure = error; }
+    }
   }));
+  if (failure) throw failure;
   return results;
 }
 function writeJson(file, data) {
@@ -23,8 +27,36 @@ async function readRange(provider, config, fromBlock, toBlock, deadline) {
   const boundary = await Chain.anchor(provider, toBlock), windows = [];
   const window = provider.logWindow || 1000;
   for (let n = fromBlock; n <= toBlock; n += window) windows.push([n, Math.min(n + window - 1, toBlock)]);
-  const logs = (await parallel(windows, 3, ([from, to]) => getLogsChunk(provider, config.staking, topics, from, to, { deadline, delayMs: 0 }))).flat();
-  const headers = new Map(await parallel([...new Set(logs.map(log => Number(log.blockNumber)))], 8, async n => [n, await retryHeader(provider, n, deadline)]));
+  // Fetch headers as log windows arrive, while respecting a separate cap of
+  // eight concurrent header reads. Both stages retain their per-host limits.
+  const jobs = new Map(), pending = []; let active = 0;
+  function pump() {
+    while (active < 8 && pending.length) {
+      const job = pending.shift(); active++;
+      (async () => {
+        try { job.resolve([job.number, await retryHeader(provider, job.number, deadline)]); }
+        catch (error) { job.reject(error); }
+        finally { active--; pump(); }
+      })();
+    }
+  }
+  function schedule(number) {
+    if (jobs.has(number)) return;
+    const result = new Promise((resolve, reject) => pending.push({ number, resolve, reject }));
+    result.catch(() => {}); jobs.set(number, result); pump();
+  }
+  let groups, logError;
+  try {
+    groups = await parallel(windows, 3, async ([from, to]) => {
+      const rows = await getLogsChunk(provider, config.staking, topics, from, to, { deadline, delayMs: 0 });
+      rows.forEach(log => schedule(Number(log.blockNumber))); return rows;
+    });
+  } catch (error) { logError = error; }
+  const results = await Promise.allSettled([...jobs.values()]);
+  if (logError) throw logError;
+  const failed = results.find(result => result.status === 'rejected');
+  if (failed) throw failed.reason;
+  const logs = groups.flat(), headers = new Map(results.map(result => result.value));
   const blacklist = new Set(config.blacklist.map(a => a.toLowerCase()));
   const rows = logs.map(log => {
     if (log.blockNumber < fromBlock || log.blockNumber > toBlock) throw new Error('Event outside verified range');
@@ -121,14 +153,33 @@ function limitedFetch(request = fetch, intervalMs = 400) {
     return operation;
   };
 }
-function createHistoryProvider(deadline, privateUrl = process.env.HISTORY_RPC_URL) {
+function createHistoryProvider(deadline, privateUrl = process.env.HISTORY_RPC_URL, factory = createProvider) {
   const request = limitedFetch();
-  const logs = createProvider([privateUrl || 'https://rpc-base.blockmachine.io'], { deadline, fetch: request });
+  const logs = factory(privateUrl ? [privateUrl] : ['https://rpc-base.blockmachine.io', 'https://base.gateway.tenderly.co', 'https://8453.rpc.thirdweb.com'], { deadline, fetch: request });
   const headers = (privateUrl ? [privateUrl] : ['https://base.drpc.org', 'https://8453.rpc.thirdweb.com', 'https://base.gateway.tenderly.co'])
-    .map(url => createProvider([url], { deadline, fetch: request }));
+    .map(url => ({ provider: factory([url], { deadline, fetch: request }), availableAt: 0 }));
   let next = 0;
-  return { logWindow: 10000, getLogs: filter => logs.getLogs(filter), getBlock: number => headers[next++ % headers.length].getBlock(number),
-    destroy() { logs.destroy(); headers.forEach(provider => provider.destroy()); } };
+  return { logWindow: 10000, getLogs: filter => logs.getLogs(filter), async getBlock(number) {
+      let lastError;
+      for (let attempt = 0; attempt < headers.length * 3; attempt++) {
+        const ready = headers.filter(item => item.availableAt <= Date.now());
+        if (!ready.length) {
+          if (Date.now() >= deadline) throw lastError || new Error('Archive work budget reached');
+          await new Promise(resolve => setTimeout(resolve, Math.min(5000, Math.max(1, Math.min(...headers.map(item => item.availableAt)) - Date.now()))));
+          attempt--; continue;
+        }
+        const selected = ready[next++ % ready.length];
+        try { return await selected.provider.getBlock(number); }
+        catch (error) {
+          lastError = error;
+          selected.availableAt = Date.now() + 20000;
+          if (Date.now() >= deadline) throw error;
+          if ((attempt + 1) % headers.length === 0) await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+      throw lastError;
+    },
+    destroy() { logs.destroy(); headers.forEach(item => item.provider.destroy()); } };
 }
 async function run() {
   const deadline = Date.now() + 45 * 60 * 1000, provider = createHistoryProvider(deadline);
