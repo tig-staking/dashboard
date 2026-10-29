@@ -517,6 +517,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
             <thead><tr><th>Address</th><th>TIG</th><th>When</th><th>Withdrawable</th><th><span class="th-tip" tabindex="0" data-tip="Time without staking activity before this request.">Inactive</span></th><th></th></tr></thead>
             <tbody id="unstakes7dBody"><tr><td colspan="6">Sync</td></tr></tbody>
           </table></div>
+          <div class="search pagination"><button type="button" class="btn" id="requestPrev">Previous</button><span class="hint" id="requestPageStatus" aria-live="polite">–</span><button type="button" class="btn" id="requestNext">Next</button></div>
         </div>
         <div class="card">
           <h3>Cooldown ending <span class="badge" id="unlockCount">0</span></h3>
@@ -525,6 +526,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
             <thead><tr><th>When</th><th>Address</th><th>TIG</th><th>In</th><th></th></tr></thead>
             <tbody id="unlocksBody"><tr><td colspan="5">Sync</td></tr></tbody>
           </table></div>
+          <div class="search pagination"><button type="button" class="btn" id="unlockPrev">Previous</button><span class="hint" id="unlockPageStatus" aria-live="polite">–</span><button type="button" class="btn" id="unlockNext">Next</button></div>
         </div>
       </div>
     </div>
@@ -1030,6 +1032,8 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
   }
   function fmt2(n) {
     if (typeof n !== 'number' || !isFinite(n)) return '0.00';
+    if (n > 0 && n < 0.01) return '<0.01';
+    if (n < 0 && n > -0.01) return '-<0.01';
     return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
   function fmtNet(n) { if (typeof n !== 'number' || !isFinite(n)) return '0'; return (n > 0 ? '+' : '') + fmt(n); }
@@ -1638,7 +1642,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     var cohortData = ['diamond', 'long', 'medium', 'short'].map(function (k) {
       var c = cohorts[k];
       return { key: k, label: c.label, holderCount: c.holders, staked: c.staked, share: totalHeld > 0 ? c.staked / totalHeld * 100 : 0, netFlow7d: c.s7 - c.u7 };
-    }).filter(function (c) { return c.holderCount || c.staked; });
+    }).filter(function (c) { return c.holderCount || c.staked || c.netFlow7d; });
 
     var tierMap = {};
     TIERS.forEach(function (tr) { tierMap[tr.key] = { key: tr.key, label: tr.label, holders: 0, staked: 0, s7: 0, u7: 0 }; });
@@ -1759,8 +1763,8 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       spi: spi, spiLevel: spiLevel, spiDrivers: drivers, spiBreakdown: spiBreakdown, holders: holdersMeta, totalHeld: totalHeld,
       cohorts: cohortData, tiers: tierData,
       dormancyAlerts: dormancyAlerts, whaleAlerts: whaleAlerts,
-      unlocks: allUnlocks.slice(0, 40), unlockBars: unlockBars, unlockBands: uBands,
-      unstakes7d: unstakes7d.slice(0, 40), flowSeries: flowSeries, totalStakedSeries: totalStakedSeries, pendingPeriodSec: pendingPeriodSec
+      unlocks: allUnlocks, unlockBars: unlockBars, unlockBands: uBands,
+      unstakes7d: unstakes7d, flowSeries: flowSeries, totalStakedSeries: totalStakedSeries, pendingPeriodSec: pendingPeriodSec
     };
     statsCache = result; statsCacheTime = Date.now();
     return result;
@@ -2346,7 +2350,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       pendingCooldown: pendingCooldown, pendingReady: pendingReady, totalWithdrawn: hist.totalWithdrawn,
       peakBal: hist.peakBal, peakRank: hist.peakRank, rank: rank, share: share, net7: in7 - out7,
       in7: in7, out7: out7, lifetimeDays: Math.floor((now - hist.firstSeen) / 86400),
-      firstSeen: hist.firstSeen, lastSeen: hist.lastSeen, lots: lots.slice(0, 12),
+      firstSeen: hist.firstSeen, lastSeen: hist.lastSeen, lots: lots,
       nextUnlock: nextUnlock, txCount: hist.userTxs.length, isFoundation: hist.isFoundation
     };
   }
@@ -2538,6 +2542,40 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     });
   }
 
+  function renderUnlockTables(data) {
+    if (!data) return;
+    function page(rows, key, prefix) {
+      var index = Math.max(0, Math.min(uiState[key] || 0, Math.max(0, Math.ceil(rows.length / 30) - 1)));
+      uiState[key] = index;
+      document.getElementById(prefix + 'Prev').disabled = index === 0;
+      document.getElementById(prefix + 'Next').disabled = (index + 1) * 30 >= rows.length;
+      document.getElementById(prefix + 'PageStatus').textContent = rows.length
+        ? 'Showing ' + (index * 30 + 1) + '–' + Math.min((index + 1) * 30, rows.length) + ' of ' + rows.length
+        : 'No items';
+      return rows.slice(index * 30, (index + 1) * 30);
+    }
+    var requests = page(data.unstakes7d, 'requestPage', 'request');
+    var upcoming = page(data.unlocks, 'unlockPage', 'unlock');
+    document.getElementById('unstakeCount7d').textContent = String(data.unstakes7d.length);
+    document.getElementById('unstakes7dBody').innerHTML = data.unstakes7d.length ? requests.map(function (tx) {
+      var g = tx._dormancyGap, dlab = 'Active';
+      if (g >= C.DORMANCY_DAYS) dlab = '<span class="c-purple">' + Math.floor(g) + 'd</span>';
+      else if (g >= 30) dlab = '<span class="c-yellow">' + Math.floor(g) + 'd idle</span>';
+      var fTag = isFoundation(tx.address) ? '<span class="tag tag-foundation">Foundation</span>' : '';
+      return '<tr><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a>' + fTag + debBtn(tx.address) + '</td><td class="c-yellow">' + fmt2(tx.valueTig) + ' TIG</td><td>' + ago(tx.timestamp) + '</td><td>' + fullDate(tx._withdrawableTime) + '</td><td>' + dlab + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
+    }).join('') : '<tr><td colspan="6" class="c-green">No unstakes in last 7 days </td></tr>';
+
+    document.getElementById('unlockCount').textContent = String(data.unlocks.length);
+    document.getElementById('unlocksBody').innerHTML = data.unlocks.length ? upcoming.map(function (tx) {
+      var rem = tx.unlockTime - data.now;
+      var cd = rem < 86400 ? Math.floor(rem / 3600) + 'h' : Math.floor(rem / 86400) + 'd';
+      var cls = rem < 7 * 86400 ? 'c-red' : rem < 14 * 86400 ? 'c-yellow' : '';
+      var fTag = isFoundation(tx.address) ? '<span class="tag tag-foundation">Foundation</span>' : '';
+      return '<tr><td class="' + cls + '">' + fullDate(tx.unlockTime) + '</td><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a>' + fTag + debBtn(tx.address) + '</td><td class="' + cls + '">' + fmt2(tx.valueTig) + ' TIG</td><td class="' + cls + '">in ' + cd + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
+    }).join('') : '<tr><td colspan="5" class="c-green">No upcoming cooldown expirations</td></tr>';
+
+  }
+
   async function refreshAll(opts) {
     opts = opts || {};
     invalidateCache();
@@ -2641,7 +2679,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     var nearHtml = '';
     for (var nd = 0; nd < 3; nd++) {
       var val = byDay[nd] || 0;
-      var labelN = nd === 0 ? 'Today' : nd === 1 ? 'Tomorrow' : 'In ' + nd + ' days';
+      var labelN = nd === 0 ? 'Next 24h' : (nd * 24) + '–' + ((nd + 1) * 24) + 'h';
       nearHtml += '<div class="near-item"><span>' + labelN + '</span><strong class="' + (val > 0 ? 'c-yellow' : '') + '">' + fmt(val) + ' TIG</strong></div>';
     }
     near.innerHTML = nearHtml;
@@ -2689,23 +2727,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       return '<tr><td>' + t.label + '</td><td>' + t.holders + '</td><td>' + fmt(t.staked) + ' TIG</td><td>' + t.share.toFixed(1) + '%</td><td class="' + (t.netFlow7d >= 0 ? 'c-green' : 'c-red') + '">' + fmtNet(t.netFlow7d) + '</td></tr>';
     }).join('') || '<tr><td colspan="5">None</td></tr>';
 
-    document.getElementById('unstakeCount7d').textContent = String(data.unstakes7d.length);
-    document.getElementById('unstakes7dBody').innerHTML = data.unstakes7d.length ? data.unstakes7d.map(function (tx) {
-      var g = tx._dormancyGap, dlab = 'Active';
-      if (g >= C.DORMANCY_DAYS) dlab = '<span class="c-purple">' + Math.floor(g) + 'd</span>';
-      else if (g >= 30) dlab = '<span class="c-yellow">' + Math.floor(g) + 'd idle</span>';
-      var fTag = isFoundation(tx.address) ? '<span class="tag tag-foundation">Foundation</span>' : '';
-      return '<tr><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a>' + fTag + debBtn(tx.address) + '</td><td class="c-yellow">' + fmt2(tx.valueTig) + ' TIG</td><td>' + ago(tx.timestamp) + '</td><td>' + fullDate(tx._withdrawableTime) + '</td><td>' + dlab + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
-    }).join('') : '<tr><td colspan="6" class="c-green">No unstakes in last 7 days </td></tr>';
-
-    document.getElementById('unlockCount').textContent = String(data.unlocks.length);
-    document.getElementById('unlocksBody').innerHTML = data.unlocks.length ? data.unlocks.slice(0, 30).map(function (tx) {
-      var rem = tx.unlockTime - data.now;
-      var cd = rem < 86400 ? Math.floor(rem / 3600) + 'h' : Math.floor(rem / 86400) + 'd';
-      var cls = rem < 7 * 86400 ? 'c-red' : rem < 14 * 86400 ? 'c-yellow' : '';
-      var fTag = isFoundation(tx.address) ? '<span class="tag tag-foundation">Foundation</span>' : '';
-      return '<tr><td class="' + cls + '">' + fullDate(tx.unlockTime) + '</td><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a>' + fTag + debBtn(tx.address) + '</td><td class="' + cls + '">' + fmt2(tx.valueTig) + ' TIG</td><td class="' + cls + '">in ' + cd + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
-    }).join('') : '<tr><td colspan="5" class="c-green">No upcoming cooldown expirations</td></tr>';
+    renderUnlockTables(data);
 
     document.getElementById('extraMetrics').textContent =
       'Pending withdrawal: ' + fmt(st.totalPendingOpen) + ' TIG';
@@ -2933,6 +2955,16 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
 
     document.getElementById('top500Prev').onclick = function () { top500Page = Math.max(0, top500Page - 1); renderTop500(); document.getElementById('top500Search').scrollIntoView({ block: 'start' }); };
     document.getElementById('top500Next').onclick = function () { top500Page++; renderTop500(); document.getElementById('top500Search').scrollIntoView({ block: 'start' }); };
+    ['request', 'unlock'].forEach(function (prefix) {
+      ['Prev', 'Next'].forEach(function (direction) {
+        document.getElementById(prefix + direction).onclick = function () {
+          var key = prefix + 'Page';
+          uiState[key] = Math.max(0, (uiState[key] || 0) + (direction === 'Next' ? 1 : -1));
+          renderUnlockTables(uiState.lastUiData);
+          document.getElementById(prefix === 'request' ? 'unstakes7dBody' : 'unlocksBody').closest('.card').scrollIntoView({ block: 'start' });
+        };
+      });
+    });
 
     Array.prototype.forEach.call(document.querySelectorAll('.tab-btn'), function (btn) {
       var tab = btn.getAttribute('data-tab');

@@ -105,3 +105,43 @@ test('dashboard replays blocks in chain order when timestamps tie', async () => 
   assert.equal(result.totalStakedSeries.at(-1).val, 60);
   assert.equal(result.sorted[0].blockNumber, 1);
 });
+
+test('cohort outflows remain visible when the last holder in that cohort exits', async () => {
+  const now = Math.floor(Date.now() / 1000);
+  const result = await dashboardStats([
+    { ...event(alice, 'lock', '100', 0, 1), timestamp: now - 200 * 86400 },
+    { ...event(alice, 'unlock', '100', 0, 2), timestamp: now - 100 },
+    { ...event(bob, 'lock', '10', 0, 3), timestamp: now - 50 }
+  ]);
+  assert.equal(result.cohorts.find(c => c.key === 'diamond').netFlow7d, -100);
+  assert.equal(result.cohorts.reduce((sum, c) => sum + c.netFlow7d, 0), result.stats.net7);
+});
+
+test('all pending lots are retained and cooldown pagination reports their real total', async () => {
+  const now = Math.floor(Date.now() / 1000);
+  const result = await dashboardStats([
+    { ...event(alice, 'lock', '108', 0, 1), timestamp: now - 1000 },
+    ...Array.from({ length: 108 }, (_, i) => ({ ...event(alice, 'unlock', '1', 0, i + 2), timestamp: now - 500 + i,
+      withdrawableTime: now + 1000 + i, hash: String(i) }))
+  ]);
+  assert.equal(result.unlocks.length, 108);
+  assert.equal(result.unstakes7d.length, 108);
+  const elements = new Map();
+  const ctx = vm.createContext({ uiState: { unlockPage: 3 }, C: { DORMANCY_DAYS: 90 },
+    document: { getElementById: id => { if (!elements.has(id)) elements.set(id, {}); return elements.get(id); } },
+    isFoundation: () => false, debBtn: () => '', shortAddr: a => a, ago: String, fullDate: String, fmt2: String });
+  vm.runInContext(html.slice(html.indexOf('  function renderUnlockTables('), html.indexOf('  async function refreshAll(')), ctx);
+  ctx.renderUnlockTables(result);
+  assert.equal(elements.get('unlockCount').textContent, '108');
+  assert.equal(elements.get('unlockPageStatus').textContent, 'Showing 91–108 of 108');
+  assert.equal((elements.get('unlocksBody').innerHTML.match(/<tr>/g) || []).length, 18);
+  assert.equal(elements.get('unlockNext').disabled, true);
+  assert.equal(elements.get('requestPageStatus').textContent, 'Showing 1–30 of 108');
+});
+
+test('ranking formatting distinguishes token dust from an exact zero', () => {
+  vm.runInContext(html.slice(html.indexOf('  function fmt2('), html.indexOf('  function fmtNet(')), context);
+  assert.equal(context.fmt2(1e-18), '<0.01');
+  assert.equal(context.fmt2(0), '0.00');
+  assert.equal(context.fmt2(1.234), '1.23');
+});
