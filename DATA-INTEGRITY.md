@@ -16,6 +16,8 @@ Snapshots predating hash checkpoints have no historical chain identity to compar
 
 Only a complete rescan produces `verified-data.json` and `report.json`. The report compares missing, extra and corrected events against the source snapshot. After review, this complete result can replace data.json and the normal sync catches up its tail before publication. The `historyVerification` metadata records coverage and is carried forward by subsequent verified syncs. The connection details display whether historical verification has completed. RPC completeness remains a trust boundary, as described above.
 
+Historical verification uses [Tenderly's public Base endpoint](https://tenderly.co/blog/changelog/tenderly-now-supports-base-mainnet-goerli-testnet/) for archived logs, in ranges of at most 1,000 blocks, and dRPC with Tenderly fallback for block headers. This is separate from the live RPC pool: PublicNode now rejects old archive requests without a personal token. The limits were checked against actual responses before running the rescan.
+
 ## Historical staking rank
 
 Ranks use integer token units and address order for ties. The address timeline records its own events and every rank change caused by another address, in block/log order. External rank changes do not become wallet transactions. The chart is stepped and extends to the displayed data block.
