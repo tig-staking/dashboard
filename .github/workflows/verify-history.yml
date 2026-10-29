@@ -46,6 +46,8 @@ jobs:
           run-id: ${{ steps.previous.outputs.run }}
       - name: Rebuild historical events
         run: node verify-history.js
+        env:
+          HISTORY_RPC_URL: ${{ secrets.HISTORY_RPC_URL }}
       - name: Save checkpoint and verification result
         if: always()
         uses: actions/upload-artifact@v4

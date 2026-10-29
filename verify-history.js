@@ -21,9 +21,10 @@ function writeJson(file, data) {
 }
 async function readRange(provider, config, fromBlock, toBlock, deadline) {
   const boundary = await Chain.anchor(provider, toBlock), windows = [];
-  for (let n = fromBlock; n <= toBlock; n += 1000) windows.push([n, Math.min(n + 999, toBlock)]);
+  const window = provider.logWindow || 1000;
+  for (let n = fromBlock; n <= toBlock; n += window) windows.push([n, Math.min(n + window - 1, toBlock)]);
   const logs = (await parallel(windows, 3, ([from, to]) => getLogsChunk(provider, config.staking, topics, from, to, { deadline, delayMs: 0 }))).flat();
-  const headers = new Map(await parallel([...new Set(logs.map(log => Number(log.blockNumber)))], 8, async n => [n, await Chain.anchor(provider, n)]));
+  const headers = new Map(await parallel([...new Set(logs.map(log => Number(log.blockNumber)))], 8, async n => [n, await retryHeader(provider, n, deadline)]));
   const blacklist = new Set(config.blacklist.map(a => a.toLowerCase()));
   const rows = logs.map(log => {
     if (log.blockNumber < fromBlock || log.blockNumber > toBlock) throw new Error('Event outside verified range');
@@ -94,13 +95,40 @@ async function verifyHistory(provider, source, options = {}) {
   writeJson(resultFile, data); writeJson(reportFile, report);
   return { complete: true, ...report };
 }
-function createHistoryProvider(deadline) {
-  // PublicNode requires a token for old history. Tenderly's public archive
-  // accepts at most 1,000 blocks; dRPC also serves historical block headers.
-  const logs = createProvider(['https://base.gateway.tenderly.co'], { deadline });
-  const headers = createProvider(['https://base.drpc.org', 'https://base.gateway.tenderly.co'], { deadline });
-  return { getLogs: filter => logs.getLogs(filter), getBlock: number => headers.getBlock(number),
-    destroy() { logs.destroy(); headers.destroy(); } };
+async function retryHeader(provider, number, deadline = Infinity) {
+  for (let attempt = 0; ; attempt++) {
+    try { return await Chain.anchor(provider, number); }
+    catch (error) {
+      if (attempt >= 5 || Date.now() >= deadline) throw error;
+      await new Promise(resolve => setTimeout(resolve, Math.min(8000, 1000 * 2 ** attempt)));
+    }
+  }
+}
+function limitedFetch(request = fetch, intervalMs = 400) {
+  const slots = new Map();
+  return function (url, options) {
+    const key = new URL(url).origin;
+    if (!slots.has(key)) slots.set(key, { tail: Promise.resolve(), next: 0 });
+    const slot = slots.get(key);
+    const operation = slot.tail.then(async () => {
+      if (slot.next > Date.now()) await new Promise(resolve => setTimeout(resolve, slot.next - Date.now()));
+      slot.next = Date.now() + intervalMs;
+      const response = await request(url, options);
+      if (response.status === 429) slot.next = Date.now() + 5000;
+      return response;
+    });
+    slot.tail = operation.catch(() => {});
+    return operation;
+  };
+}
+function createHistoryProvider(deadline, privateUrl = process.env.HISTORY_RPC_URL) {
+  const request = limitedFetch();
+  const logs = createProvider([privateUrl || 'https://rpc-base.blockmachine.io'], { deadline, fetch: request });
+  const headers = (privateUrl ? [privateUrl] : ['https://base.drpc.org', 'https://8453.rpc.thirdweb.com', 'https://base.gateway.tenderly.co'])
+    .map(url => createProvider([url], { deadline, fetch: request }));
+  let next = 0;
+  return { logWindow: 10000, getLogs: filter => logs.getLogs(filter), getBlock: number => headers[next++ % headers.length].getBlock(number),
+    destroy() { logs.destroy(); headers.forEach(provider => provider.destroy()); } };
 }
 async function run() {
   const deadline = Date.now() + 45 * 60 * 1000, provider = createHistoryProvider(deadline);
@@ -112,5 +140,5 @@ async function run() {
   }
   finally { provider.destroy(); }
 }
-if (require.main === module) run().catch(error => { console.error(error); process.exitCode = 1; });
-module.exports = { readRange, verifyHistory, compareHistory, createHistoryProvider };
+if (require.main === module) run().catch(error => { console.error(String(error.stack || error).split(process.env.HISTORY_RPC_URL || '\u0000').join('<private RPC>')); process.exitCode = 1; });
+module.exports = { readRange, verifyHistory, compareHistory, createHistoryProvider, limitedFetch };
