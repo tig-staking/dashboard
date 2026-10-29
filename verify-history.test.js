@@ -44,3 +44,9 @@ test('a changed frozen target or inconsistent event hash cannot produce a verifi
     await assert.rejects(verifyHistory({ getBlock: async n => ({ ...header(n), hash: hash(999) }), getLogs: async () => [] }, source, files(dir)), /target was reorganized/);
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('archival queries respect the public 1000-block limit without gaps', async () => {
+  const ranges = [];
+  await readRange({ getBlock: async n => header(n), getLogs: async filter => { ranges.push([filter.fromBlock, filter.toBlock]); return []; } }, config, 1, 2501);
+  assert.deepEqual(ranges.sort((a, b) => a[0] - b[0]), [[1, 1000], [1001, 2000], [2001, 2501]]);
+});

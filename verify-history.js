@@ -21,7 +21,7 @@ function writeJson(file, data) {
 }
 async function readRange(provider, config, fromBlock, toBlock, deadline) {
   const boundary = await Chain.anchor(provider, toBlock), windows = [];
-  for (let n = fromBlock; n <= toBlock; n += 10000) windows.push([n, Math.min(n + 9999, toBlock)]);
+  for (let n = fromBlock; n <= toBlock; n += 1000) windows.push([n, Math.min(n + 999, toBlock)]);
   const logs = (await parallel(windows, 3, ([from, to]) => getLogsChunk(provider, config.staking, topics, from, to, { deadline, delayMs: 0 }))).flat();
   const headers = new Map(await parallel([...new Set(logs.map(log => Number(log.blockNumber)))], 8, async n => [n, await Chain.anchor(provider, n)]));
   const blacklist = new Set(config.blacklist.map(a => a.toLowerCase()));
@@ -94,8 +94,16 @@ async function verifyHistory(provider, source, options = {}) {
   writeJson(resultFile, data); writeJson(reportFile, report);
   return { complete: true, ...report };
 }
+function createHistoryProvider(deadline) {
+  // PublicNode requires a token for old history. Tenderly's public archive
+  // accepts at most 1,000 blocks; dRPC also serves historical block headers.
+  const logs = createProvider(['https://base.gateway.tenderly.co'], { deadline });
+  const headers = createProvider(['https://base.drpc.org', 'https://base.gateway.tenderly.co'], { deadline });
+  return { getLogs: filter => logs.getLogs(filter), getBlock: number => headers.getBlock(number),
+    destroy() { logs.destroy(); headers.destroy(); } };
+}
 async function run() {
-  const deadline = Date.now() + 45 * 60 * 1000, provider = createProvider(undefined, { deadline });
+  const deadline = Date.now() + 45 * 60 * 1000, provider = createHistoryProvider(deadline);
   try {
     const result = await verifyHistory(provider, JSON.parse(fs.readFileSync('data.json', 'utf8')), { deadline });
     console.log(JSON.stringify(result, null, 2));
@@ -105,4 +113,4 @@ async function run() {
   finally { provider.destroy(); }
 }
 if (require.main === module) run().catch(error => { console.error(error); process.exitCode = 1; });
-module.exports = { readRange, verifyHistory, compareHistory };
+module.exports = { readRange, verifyHistory, compareHistory, createHistoryProvider };
