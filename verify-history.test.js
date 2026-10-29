@@ -41,7 +41,20 @@ test('a changed frozen target or inconsistent event hash cannot produce a verifi
     const provider = { getBlock: async n => header(n), getLogs: async () => [{ ...log(2), blockHash: hash(999) }] };
     await assert.rejects(readRange(provider, config, 1, 3), /unverified/);
     await verifyHistory({ getBlock: async n => header(n), getLogs: async () => [] }, source, files(dir));
+    fs.unlinkSync(files(dir).resultFile); // Simulate interruption before publishing the complete result.
     await assert.rejects(verifyHistory({ getBlock: async n => ({ ...header(n), hash: hash(999) }), getLogs: async () => [] }, source, files(dir)), /target was reorganized/);
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('invoking verification after a completed run starts a fresh rescan at the new source target', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tig-history-repeat-'));
+  const source = { config, metadata: { lastBlock: 6 }, transactions: [] }, starts = [];
+  const provider = { getBlock: async n => header(n), getLogs: async ({ fromBlock }) => { starts.push(fromBlock); return []; } };
+  try {
+    await verifyHistory(provider, source, files(dir)); starts.length = 0;
+    source.metadata.lastBlock = 9;
+    const result = await verifyHistory(provider, source, files(dir));
+    assert.equal(starts[0], 1); assert.equal(result.throughBlock, 9);
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
 

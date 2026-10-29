@@ -94,6 +94,16 @@ async function verifyHistory(provider, source, options = {}) {
   const config = source.config, first = config.firstBlock;
   let checkpoint;
   if (fs.existsSync(file)) checkpoint = JSON.parse(fs.readFileSync(file, 'utf8'));
+  // Resume an interrupted run, but a new invocation after completion must
+  // perform a new rescan rather than certify the same cached history again.
+  if (checkpoint && fs.existsSync(resultFile)) {
+    const completed = JSON.parse(fs.readFileSync(resultFile, 'utf8'));
+    const target = checkpoint.metadata?.verificationTarget;
+    if (target && checkpoint.metadata.lastBlock === target.number &&
+        completed.metadata?.historyVerification?.throughBlock === target.number &&
+        Chain.sameHash(completed.metadata.historyVerification.throughHash, target.hash) &&
+        completed.metadata.contentHash === checkpoint.metadata.contentHash) checkpoint = null;
+  }
   if (checkpoint) {
     await Chain.prepareSnapshot(checkpoint, { token: config.token, staking: config.staking, firstBlock: first });
     if (!checkpoint.metadata.verificationTarget) throw new Error('Checkpoint has no frozen verification target');
