@@ -82,3 +82,15 @@ test('a throttled header provider is bypassed for both boundaries and subsequent
   assert.equal(blockedCalls, 1);
   provider.destroy();
 });
+
+test('private archive URLs are removed before errors can reach retry logs', async () => {
+  const secret = 'https://archive.example.test/private-key';
+  const provider = createHistoryProvider(Date.now() - 1, secret, () => ({
+    getBlock: async () => { throw Error(secret + ': HTTP 429'); },
+    getLogs: async () => { throw Error(secret + ': HTTP 429'); }, destroy() {}
+  }));
+  for (const action of [() => provider.getLogs({}), () => provider.getBlock(1)]) {
+    await assert.rejects(action(), error => !error.message.includes(secret) && /private RPC.*429/.test(error.message));
+  }
+  provider.destroy();
+});

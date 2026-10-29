@@ -154,12 +154,18 @@ function limitedFetch(request = fetch, intervalMs = 400) {
   };
 }
 function createHistoryProvider(deadline, privateUrl = process.env.HISTORY_RPC_URL, factory = createProvider) {
+  function cleanError(error) {
+    if (!privateUrl) return error;
+    return new Error(String(error.message || error).split(privateUrl).join('<private RPC>'));
+  }
   const request = limitedFetch();
   const logs = factory(privateUrl ? [privateUrl] : ['https://rpc-base.blockmachine.io', 'https://base.gateway.tenderly.co', 'https://8453.rpc.thirdweb.com'], { deadline, fetch: request });
   const headers = (privateUrl ? [privateUrl] : ['https://base.drpc.org', 'https://8453.rpc.thirdweb.com', 'https://base.gateway.tenderly.co'])
     .map(url => ({ provider: factory([url], { deadline, fetch: request }), availableAt: 0 }));
   let next = 0;
-  return { logWindow: 10000, getLogs: filter => logs.getLogs(filter), async getBlock(number) {
+  return { logWindow: 10000, async getLogs(filter) {
+      try { return await logs.getLogs(filter); } catch (error) { throw cleanError(error); }
+    }, async getBlock(number) {
       let lastError;
       for (let attempt = 0; attempt < headers.length * 3; attempt++) {
         const ready = headers.filter(item => item.availableAt <= Date.now());
@@ -171,9 +177,9 @@ function createHistoryProvider(deadline, privateUrl = process.env.HISTORY_RPC_UR
         const selected = ready[next++ % ready.length];
         try { return await selected.provider.getBlock(number); }
         catch (error) {
-          lastError = error;
+          lastError = cleanError(error);
           selected.availableAt = Date.now() + 20000;
-          if (Date.now() >= deadline) throw error;
+          if (Date.now() >= deadline) throw lastError;
           if ((attempt + 1) % headers.length === 0) await new Promise(resolve => setTimeout(resolve, 2000));
         }
       }
