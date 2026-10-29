@@ -2,6 +2,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { decimalToWei, stakingBalances, csvCandidates, rankRows } = require('./holders-core');
 const { getLogsChunk } = require('./sync');
+const { cachedCandidates } = require('./holders');
+const { TOKEN, STAKING } = require('./holders-core');
 
 const A = '0x' + '1'.repeat(40);
 const B = '0x' + '2'.repeat(40);
@@ -42,6 +44,22 @@ test('CSV candidate order and precision are checked', () => {
   assert.deepEqual(result.addresses, [A, B]);
   assert.equal(result.cutoff, decimalToWei('1'));
   assert.throws(() => csvCandidates('HolderAddress,Balance\n' + B + ',1\n' + A + ',2', 1), /sorted/);
+});
+
+test('cached holder candidates preserve their coverage bound and exact replay start', () => {
+  const previous = { version: 1, token: TOKEN, staking: STAKING, block: 100,
+    candidateCutoff: '5', candidates: Array.from({ length: 500 }, (_, i) => ({
+      address: '0x' + (i + 100).toString(16).padStart(40, '0'), wallet: '6', locked: '0', pending: '0'
+    })) };
+  const cached = cachedCandidates(previous, 200);
+  assert.equal(cached.fromBlock, 101);
+  assert.equal(cached.cutoff, 5n);
+  assert.equal(cached.addresses.length, 500);
+  assert.throws(() => cachedCandidates(previous, 99), /verified/);
+  assert.throws(() => cachedCandidates({ ...previous, candidateCutoff: '6' }, 200), /coverage/);
+  assert.throws(() => cachedCandidates({ ...previous, candidates: previous.candidates.slice(0, 499) }, 200), /verified/);
+  const duplicate = previous.candidates.slice(); duplicate[499] = duplicate[0];
+  assert.throws(() => cachedCandidates({ ...previous, candidates: duplicate }, 200), /coverage/);
 });
 
 test('RPC retries the smaller block range instead of the rejected range', async () => {

@@ -28,4 +28,8 @@ npm test
 npm run sync
 ```
 
-`npm run sync` reads free public Base RPC endpoints and Blockscout. A failed refresh leaves the previous snapshot in place. The first staking sync from an empty `data.json` is much slower than an incremental refresh.
+`npm run sync` reads free public Base RPC endpoints and Blockscout. A failed range leaves the latest verified checkpoint in place. The first staking sync from an empty `data.json` is much slower than an incremental refresh.
+
+Both the browser and staking builder use `rpc.js`: every JSON-RPC request has a 10-second timeout and fails over on HTTP errors, JSON-RPC errors, or invalid responses. Log ranges shrink down to one block when providers impose a smaller range limit. The staking builder saves verified checkpoints every 20,000 blocks; a failed later range keeps that progress. GitHub Actions commits completed checkpoints even if staking catch-up or the separate holders refresh fails. A 12-minute catch-up work budget lets the next scheduled run resume large backlogs.
+
+If Blockscout holder discovery is unavailable, the holder builder verifies the previous snapshot block hash, retains its candidates and coverage cutoff, and discovers additional candidates from every TIG transfer since that block. All balances are queried again at the new staking snapshot block. Addresses untouched by those transfers retain their old upper bound; publication still requires the new 500th balance to exceed it. Verified holder age dates are preserved while indexer history refreshes are deferred during the outage.
