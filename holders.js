@@ -2,14 +2,12 @@
 const fs = require('node:fs');
 const { enrichHolderHistory } = require('./holder-history');
 const { ethers } = require('ethers');
+const { URLS, createProvider } = require('./rpc');
+const { getLogsChunk } = require('./sync');
 const { TOKEN, STAKING, ZERO, address, stakingBalances, csvCandidates, rankRows } = require('./holders-core');
 
 const CSV_URL = 'https://base.blockscout.com/api/v2/tokens/' + TOKEN + '/holders/csv';
-const RPCS = [
-  'https://mainnet.base.org',
-  'https://1rpc.io/base',
-  'https://base.drpc.org'
-];
+const RPCS = URLS;
 const TARGET = 1000;
 const BATCH = 100;
 const PAUSE_MS = 350;
@@ -94,18 +92,33 @@ async function tokenBalances(addresses, block) {
 async function changedAddresses(fromBlock, toBlock) {
   const changed = new Set();
   const topic = TOKEN_IFACE.getEvent('Transfer').topicHash;
-  for (let start = fromBlock; start <= toBlock; start += 1500) {
-    const end = Math.min(start + 1499, toBlock);
-    const logs = await rpc('eth_getLogs', [{
-      address: TOKEN, topics: [topic], fromBlock: hexBlock(start), toBlock: hexBlock(end)
-    }]);
+  const provider = createProvider();
+  try {
+    const logs = await getLogsChunk(provider, TOKEN, [topic], fromBlock, toBlock);
     for (const log of logs) {
       if (log.topics.length !== 3) throw new Error('Unexpected TIG Transfer log');
       changed.add(address('0x' + log.topics[1].slice(-40)));
       changed.add(address('0x' + log.topics[2].slice(-40)));
     }
-  }
+  } finally { provider.destroy(); }
   return changed;
+}
+
+function cachedCandidates(previous, block) {
+  if (previous.version !== 1 || address(previous.token) !== address(TOKEN) ||
+      address(previous.staking) !== address(STAKING) || !Number.isSafeInteger(previous.block) ||
+      previous.block <= 0 || previous.block > block || !Array.isArray(previous.candidates) || previous.candidates.length < 500 ||
+      !/^\d+$/.test(String(previous.candidateCutoff))) throw new Error('No verified candidate snapshot');
+  const cutoff = BigInt(previous.candidateCutoff);
+  const wallets = new Map(previous.candidates.map(row => [address(row.address), BigInt(row.wallet)]));
+  const staking = new Map(previous.candidates.map(row => [address(row.address), { locked: BigInt(row.locked), pending: BigInt(row.pending) }]));
+  if ([...wallets.values()].some(value => value < 0n) ||
+      [...staking.values()].some(row => row.locked < 0n || row.pending < 0n)) throw new Error('Invalid cached balances');
+  const ranked = rankRows(wallets, staking);
+  if (wallets.size !== previous.candidates.length || ranked.length < 500 || ranked[499].total <= cutoff) {
+    throw new Error('Cached candidate coverage is insufficient');
+  }
+  return { addresses: [...wallets.keys()], cutoff, fromBlock: previous.block + 1 };
 }
 
 async function run() {
@@ -120,21 +133,24 @@ async function run() {
 
   const staking = stakingBalances(data.transactions, block);
   console.log('Staking addresses', staking.size, 'at block', block);
-  let csv;
-  for (let attempt = 0; attempt < 5; attempt++) {
-    try {
-      csv = await (await request(CSV_URL, {}, 45000)).text();
-      break;
-    } catch (error) {
-      if (attempt === 4) throw error;
-      await sleep(1000 * 2 ** attempt);
-    }
+  let previous = {};
+  try { previous = JSON.parse(fs.readFileSync('holders.json', 'utf8')); } catch (_) {}
+  let candidates, discoverySource;
+  try {
+    candidates = csvCandidates(await (await request(CSV_URL, {}, 15000)).text(), TARGET);
+    candidates.fromBlock = block + 1;
+    discoverySource = 'Blockscout holder candidates';
+  } catch (error) {
+    console.warn('Blockscout unavailable; replaying transfers from verified holder snapshot:', error.message);
+    candidates = cachedCandidates(previous, block);
+    const oldBlock = await rpc('eth_getBlockByNumber', [hexBlock(previous.block), false]);
+    if (!oldBlock || oldBlock.hash !== previous.blockHash) throw new Error('Cached holder snapshot block hash changed');
+    discoverySource = 'Verified previous candidates plus all subsequent TIG transfers';
   }
-  const candidates = csvCandidates(csv, TARGET);
   const all = new Set(candidates.addresses);
   const afterCsvHead = Number(BigInt(await rpc('eth_blockNumber', [])));
   if (afterCsvHead - block > 15000) throw new Error('Holder discovery interval is too large');
-  const changed = await changedAddresses(block + 1, afterCsvHead);
+  const changed = await changedAddresses(candidates.fromBlock, afterCsvHead);
   changed.forEach(key => all.add(key));
   console.log('Changed addresses since snapshot block', changed.size);
   staking.forEach((balance, key) => {
@@ -161,7 +177,7 @@ async function run() {
     blockHash: blockInfo.hash,
     timestamp: Number(BigInt(blockInfo.timestamp)),
     generatedAt: new Date().toISOString(),
-    source: 'Blockscout holder candidates; on-chain balanceOf and staking events at one block',
+    source: discoverySource + '; on-chain balanceOf and staking events at one block',
     totalSupply: supply.toString(),
     candidateCount: keys.length,
     candidateCutoff: candidates.cutoff.toString(),
@@ -180,9 +196,9 @@ async function run() {
       total: row.total.toString()
     }))
   };
-  let previous = {};
-  try { previous = JSON.parse(fs.readFileSync('holders.json', 'utf8')); } catch (_) {}
-  await enrichHolderHistory(payload, previous);
+  // Keep verified history dates during an indexer outage; balance refreshes do
+  // not need hundreds of requests to the same unavailable service.
+  await enrichHolderHistory(payload, previous, () => {}, discoverySource.startsWith('Verified') ? 0 : 120000);
   const temp = 'holders.json.tmp';
   fs.writeFileSync(temp, JSON.stringify(payload));
   fs.renameSync(temp, 'holders.json');
@@ -190,4 +206,4 @@ async function run() {
 }
 
 if (require.main === module) run().catch(error => { console.error(error); process.exitCode = 1; });
-module.exports = { run, tokenBalances };
+module.exports = { run, tokenBalances, cachedCandidates };

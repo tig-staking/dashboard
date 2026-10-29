@@ -6,6 +6,7 @@
 <title>TIG Holders Dashboard</title>
 <meta name="description" content="Explore TIG staking, the top 500 addresses, unlock schedules, and wallet history on Base.">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.17.0/dist/ethers.umd.min.js"></script>
+<script src="./rpc.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
 <!-- DM Sans, bundled under SIL Open Font License:
 Copyright 2014 The DM Sans Project Authors (https://github.com/googlefonts/dm-fonts)
@@ -728,20 +729,11 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       '0x0bf860653e4a21553d9507dde3f9e59c88e8514a',
       '0x97478e3ea8461aae3c5f5dbe30fe19ab4bfaee0c'
     ],
-    RPCS: [
-      'https://mainnet.base.org',
-      'https://base.llamarpc.com',
-      'https://1rpc.io/base',
-      'https://base.meowrpc.com',
-      'https://base.drpc.org',
-      'https://base.gateway.tenderly.co',
-      'https://base-rpc.publicnode.com'
-    ],
     DB_NAME: 'TIGv14',
     DB_VERSION: 1,
     FIRST_BLOCK: 26498642,
     BATCH: 1500,
-    BATCH_MIN: 200,
+    BATCH_MIN: 1,
     BATCH_MAX: 2000,
     INTERVAL: 5 * 60 * 1000,
     PENDING_PERIOD_FALLBACK_DAYS: 28,
@@ -1011,7 +1003,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
 
   var db = new DB();
   var syncing = false, stopReq = false, provider = null, lockerIface = null;
-  var rpcIndex = 0, currentBatchSize = C.BATCH, connectingRPC = false;
+  var currentBatchSize = C.BATCH;
   var statsCache = null, statsCacheTime = 0, countdownTimer = null;
   var anchor = null, searchTimer = null, uiRefreshing = false, chainHead = null;
   var pendingPeriodSec = C.PENDING_PERIOD_FALLBACK_DAYS * 86400;
@@ -1112,45 +1104,12 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
   }
 
   async function connectRPC(forceNext) {
-    if (connectingRPC) {
-      for (var i = 0; i < 40 && connectingRPC; i++) await sleep(100);
-      if (provider) return provider.getBlockNumber();
-    }
-    connectingRPC = true;
-    try {
-      try { C.TIG = ethers.getAddress(C.TIG); C.STAKE = ethers.getAddress(C.STAKE); } catch (e) {}
-      if (!lockerIface) buildIface();
-      var list = C.RPCS;
-      var start = forceNext ? (rpcIndex + 1) % list.length : rpcIndex;
-      var lastErr = null;
-      for (var k = 0; k < list.length; k++) {
-        var idx = (start + k) % list.length;
-        var url = list[idx];
-        try {
-          var p = new ethers.JsonRpcProvider(url, 8453, { staticNetwork: true });
-          var bn = await Promise.race([
-            p.getBlockNumber(),
-            new Promise(function (_, rej) { setTimeout(function () { rej(new Error('RPC timeout')); }, 4000); })
-          ]);
-          rpcIndex = idx;
-          provider = p;
-          anchor = null;
-          chainHead = bn;
-          try {
-            var c = new ethers.Contract(C.STAKE, LOCKER_ABI, p);
-            var pp = await Promise.race([
-              c.pendingPeriod(),
-              new Promise(function (_, rej) { setTimeout(function () { rej(new Error('pp timeout')); }, 3000); })
-            ]);
-            var sec = Number(pp);
-            if (isFinite(sec) && sec > 0) pendingPeriodSec = sec;
-          } catch (e) {}
-          document.getElementById('rpcLabel').textContent = rpcHost(url);
-          return bn;
-        } catch (e) { lastErr = e; }
-      }
-      throw new Error('All RPCs failed' + (lastErr ? ': ' + errText(lastErr) : ''));
-    } finally { connectingRPC = false; }
+    if (!lockerIface) buildIface();
+    if (!provider) provider = TigRpc.createProvider();
+    var bn = await provider.getBlockNumber();
+    chainHead = bn;
+    document.getElementById('rpcLabel').textContent = 'Base RPC pool';
+    return bn;
   }
 
   async function ensureAnchor(force) {
@@ -1387,6 +1346,9 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       var res = await fetch('./data.json?t=' + Date.now(), { cache: 'no-store' });
       if (!res.ok) return false;
       var d = await res.json();
+      if (d.config && Number.isSafeInteger(d.config.pendingPeriodSec) && d.config.pendingPeriodSec > 0) {
+        pendingPeriodSec = d.config.pendingPeriodSec;
+      }
       var txList = Array.isArray(d) ? d : (d && d.transactions ? d.transactions : null);
       if (!txList || !txList.length) return false;
       var snapMeta = d && d.metadata ? d.metadata : null;

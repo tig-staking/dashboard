@@ -13,24 +13,17 @@
  */
 const fs = require('fs');
 const { ethers } = require('ethers');
+const { createProvider } = require('./rpc');
 
 const CONFIG = {
   STAKE: '0x9F6b29E498Ef6BEe4a050fa1F29c31DBE6c6aEF4',
   TOKEN: '0x0C03Ce270B4826Ec62e7DD007f0B716068639F7B',
   FIRST_BLOCK: 26498642,
-  RPCS: [
-    'https://mainnet.base.org',
-    'https://base.llamarpc.com',
-    'https://1rpc.io/base',
-    'https://base.meowrpc.com',
-    'https://base.drpc.org',
-    'https://base-rpc.publicnode.com'
-  ],
   FILE_PATH: './data.json',
   PENDING_PERIOD_SEC: 2419200, // 28d
   BLACKLIST: ['0x30FeC1f3690F3207d1A239dB392f62C9CD1deF3F'],
-  CHUNK_SIZE: 2000,          // bezpieczny start dla publicznych RPC (max 2k-3k bloków)
-  CHUNK_MIN: 200,            // minimalna wielkość paczki awaryjnej
+  CHUNK_SIZE: 10000,         // shrink automatically if a fallback has a smaller limit
+  CHUNK_MIN: 1,              // some free RPCs allow only 50 blocks
   MAX_RETRIES: 12,           // zwiększono, by skrypt miał czas płynnie zmniejszyć zakres
   RPC_DELAY_MS: 250,
   BLOCK_TS_CONCURRENCY: 8,
@@ -103,22 +96,12 @@ function isRateLimit(err) {
 }
 
 async function connectProvider() {
-  let lastErr = null;
-  for (const url of CONFIG.RPCS) {
-    try {
-      const p = new ethers.JsonRpcProvider(url, 8453, { staticNetwork: true });
-      const bn = await Promise.race([
-        p.getBlockNumber(),
-        new Promise((_, rej) => setTimeout(() => rej(new Error('RPC timeout')), 6000))
-      ]);
-      console.log(`RPC OK: ${url} @ block ${bn}`);
-      return { provider: p, head: bn, url };
-    } catch (e) {
-      lastErr = e;
-      console.warn(`RPC fail: ${url} — ${e.message || e}`);
-    }
-  }
-  throw new Error('All RPCs failed: ' + (lastErr && lastErr.message ? lastErr.message : lastErr));
+  const provider = createProvider();
+  try {
+    const head = await provider.getBlockNumber();
+    console.log('RPC pool OK @ block', head);
+    return { provider, head };
+  } catch (error) { provider.destroy(); throw error; }
 }
 
 async function fetchBlockTimestamps(provider, blockNumbers) {
@@ -233,9 +216,10 @@ async function getLogsChunk(provider, address, topics, fromBlock, toBlock) {
   return out;
 }
 
-async function run() {
+async function syncCheckpoint(provider, head) {
   const existingData = loadExisting();
-  const { provider, head: currentBlock } = await connectProvider();
+  const last = Number(existingData.metadata.lastBlock);
+  const currentBlock = Math.min(head, (Number.isSafeInteger(last) ? last : CONFIG.FIRST_BLOCK - 1) + 20000);
   const iface = new ethers.Interface(LOCKER_ABI);
   const stake = normalizeAddr(CONFIG.STAKE);
 
@@ -263,7 +247,7 @@ async function run() {
 
   if (resumeFrom > currentBlock) {
     console.log(`Baza już aktualna. lastBlock=${lastBlock}, head=${currentBlock}, txs=${(existingData.transactions || []).length}`);
-    return;
+    return false;
   }
 
   console.log(`Pobieranie bloków od ${resumeFrom} do ${currentBlock}...`);
@@ -382,10 +366,21 @@ async function run() {
     `metadata.lastBlock=${currentBlock}, head=${currentBlock}`
   );
   console.log('Dashboard przy starcie porówna snapshotCount/snapshotLastBlock i zmerguje.');
+  return currentBlock < head;
+}
+
+async function run() {
+  const { provider, head } = await connectProvider();
+  const deadline = Date.now() + 12 * 60 * 1000;
+  try {
+    while (await syncCheckpoint(provider, head)) {
+      if (Date.now() >= deadline) throw new Error('Sync work budget reached; verified checkpoints saved for the next run');
+    }
+  } finally { provider.destroy(); }
 }
 
 if (require.main === module) run().catch((e) => {
   console.error(e);
   process.exit(1);
 });
-module.exports = { getLogsChunk };
+module.exports = { getLogsChunk, syncCheckpoint, run };
