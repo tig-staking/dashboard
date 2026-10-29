@@ -63,6 +63,8 @@
         !Number.isSafeInteger(meta.lastSync) || meta.lastSync <= 0 || meta.lastSync > Date.now() + 300000 ||
         (meta.total !== undefined && meta.total !== data.transactions.length)) throw new Error('Invalid snapshot coverage');
     if (meta.lastBlockHash != null && !validHash(meta.lastBlockHash)) throw new Error('Invalid snapshot block hash');
+    var verified = meta.historyVerification;
+    if (verified && (verified.fromBlock !== expected.firstBlock || !Number.isSafeInteger(verified.throughBlock) || verified.throughBlock > meta.lastBlock || verified.throughBlock < expected.firstBlock || !validHash(verified.throughHash) || !Number.isFinite(Date.parse(verified.completedAt)))) throw new Error('Invalid history verification coverage');
     var hash = await digest(data.transactions);
     if (meta.contentHash != null && !sameHash(hash, meta.contentHash)) throw new Error('Snapshot content hash mismatch');
     var ids = new Set();
@@ -83,6 +85,7 @@
     return { rows: rows, metadata: {
       lastBlock: meta.lastBlock, lastSync: meta.lastSync, lastBlockHash: meta.lastBlockHash || null,
       lastBlockTimestamp: meta.lastBlockTimestamp || null, anchors: meta.anchors || [],
+      historyVerification: verified || null,
       snapshotSig: [meta.lastBlock, meta.lastBlockHash || 'legacy', hash].join('|'),
       snapshotCreatedAt: meta.lastSync, snapshotCount: rows.length, snapshotLastBlock: meta.lastBlock
     } };

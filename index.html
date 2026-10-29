@@ -379,7 +379,8 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
 
   <div class="progress" id="progressWrap"><div class="bar"><div class="fill" id="progressFill"></div></div><div class="ptext" id="progressText"></div></div>
 
-  <div class="empty" id="emptyState">
+    <p id="storageNotice" class="hint" role="status" hidden></p>
+<div class="empty" id="emptyState">
     <h2>Connecting to Base Network...</h2>
     <p>Loading data snapshot or fetching latest TokenLocker history...</p>
   </div>
@@ -697,6 +698,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     <span>Batch <strong id="batchSizeLabel">3000</strong></span>
     <span>RPC <strong id="rpcLabel">-</strong></span>
     <span>Coverage <strong id="coverageLabel">-</strong></span>
+    <span>History <strong id="historyStatus">Verification pending</strong></span>
   </div></details>
     <footer class="site-footer"><p>TIG on Base<br>Addresses are not necessarily individual holders.</p><section class="support-details" aria-label="Contribute"><h3 style="font-size:13px;font-weight:600;color:var(--text);margin:0 0 4px">Contribute</h3><p>Support this dashboard · 1 TIG on Base, optional</p><div class="support-address"><code class="mono">0x19c00b03bf1f2638fd45a3d48f0097863eb20bcf</code><button type="button" class="btn btn-xs" id="copySupport">Copy address</button></div></section></footer>
   </div>
@@ -721,9 +723,10 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
 <div id="detailsPanel" class="hidden"></div>
 
 <script src="./holder-age.js?v=2"></script>
-<script src="./chain-state.js?v=1"></script>
+<script src="./chain-state.js?v=2"></script>
 <script src="./cache-store.js?v=1"></script>
 <script src="./wallet-history.js?v=1"></script>
+<script src="./browser-store.js?v=1"></script>
 <script>
 (function () {
   'use strict';
@@ -865,6 +868,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
   }
 
   function loadMyWallets() {
+    if (sessionWallets !== null) return sessionWallets.slice();
     try {
       var raw = localStorage.getItem(MYTIG_KEY);
       var list = raw ? JSON.parse(raw) : [];
@@ -873,7 +877,9 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     } catch (e) { return []; }
   }
   function saveMyWallets(list) {
-    try { localStorage.setItem(MYTIG_KEY, JSON.stringify(list.slice(0, MYTIG_MAX))); } catch (e) {}
+    var clean = list.slice(0, MYTIG_MAX);
+    try { localStorage.setItem(MYTIG_KEY, JSON.stringify(clean)); sessionWallets = null; }
+    catch (e) { sessionWallets = clean; storageMode.walletMemory = true; renderStorageNotice(); }
   }
   function addMyWallet(addr, label) {
     var a;
@@ -894,128 +900,18 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     return list;
   }
 
-  function DB() { this.db = null; this._opening = null; }
-  DB.prototype.open = function () {
-    var self = this;
-    if (self.db) return Promise.resolve(self.db);
-    if (self._opening) return self._opening;
-    self._opening = new Promise(function (resolve, reject) {
-      var req = indexedDB.open(C.DB_NAME, C.DB_VERSION);
-      req.onerror = function () { self._opening = null; reject(req.error || new Error('IDB open failed')); };
-      req.onupgradeneeded = function (e) {
-        var d = e.target.result;
-        if (!d.objectStoreNames.contains('txs')) {
-          var s = d.createObjectStore('txs', { keyPath: 'id' });
-          s.createIndex('block', 'blockNumber'); s.createIndex('time', 'timestamp');
-          s.createIndex('type', 'type'); s.createIndex('addr', 'address'); s.createIndex('hash', 'hash');
-        }
-        if (!d.objectStoreNames.contains('meta')) d.createObjectStore('meta', { keyPath: 'key' });
-      };
-      req.onsuccess = function (e) {
-        self.db = e.target.result;
-        self.db.onversionchange = function () { try { self.db.close(); } catch (err) {} self.db = null; };
-        self._opening = null; resolve(self.db);
-      };
-    });
-    return self._opening;
-  };
-  DB.prototype.state = function () { return this.open().then(function (db) { return TigCache.readState(db); }); };
-  DB.prototype.replaceSnapshot = function (rows, metadata) { return this.open().then(function (db) { return TigCache.replaceSnapshot(db, rows, metadata); }); };
-  DB.prototype.commitRange = function (from, rows, metadata) { return this.open().then(function (db) { return TigCache.commitRange(db, from, rows, metadata); }); };
-  DB.prototype.all = function () {
-    return this.open().then(function (db) {
-      return new Promise(function (resolve, reject) {
-        var r = db.transaction('txs', 'readonly').objectStore('txs').getAll();
-        r.onsuccess = function () { resolve(r.result || []); };
-        r.onerror = function () { reject(r.error); };
-      });
-    });
-  };
-  DB.prototype.count = function () {
-    return this.open().then(function (db) {
-      return new Promise(function (resolve, reject) {
-        var r = db.transaction('txs', 'readonly').objectStore('txs').count();
-        r.onsuccess = function () { resolve(r.result || 0); };
-        r.onerror = function () { reject(r.error); };
-      });
-    });
-  };
-  DB.prototype.add = function (items) {
-    if (!items || !items.length) return Promise.resolve(0);
-    if (items.length <= 4000) {
-      return this.open().then(function (db) {
-        return new Promise(function (resolve, reject) {
-          var tx = db.transaction('txs', 'readwrite');
-          var store = tx.objectStore('txs');
-          for (var i = 0; i < items.length; i++) store.put(items[i]);
-          tx.oncomplete = function () { resolve(items.length); };
-          tx.onerror = function () { reject(tx.error); };
-        });
-      });
-    }
-    return this.addChunked(items, C.SNAPSHOT_CHUNK);
-  };
-  DB.prototype.addChunked = function (items, chunkSize, onProgress) {
-    if (!items || !items.length) return Promise.resolve(0);
-    chunkSize = chunkSize || C.SNAPSHOT_CHUNK;
-    var self = this;
-    var total = items.length;
-    var inserted = 0;
-    function insertChunk(offset) {
-      if (offset >= total) return Promise.resolve(0);
-      var chunk = items.slice(offset, offset + chunkSize);
-      return self.open().then(function (db) {
-        return new Promise(function (resolve, reject) {
-          var tx = db.transaction('txs', 'readwrite');
-          var store = tx.objectStore('txs');
-          for (var i = 0; i < chunk.length; i++) store.put(chunk[i]);
-          tx.oncomplete = function () { resolve(chunk.length); };
-          tx.onerror = function () { reject(tx.error); };
-        });
-      }).then(function (n) {
-        inserted += n;
-        if (onProgress) onProgress(inserted, total);
-        return new Promise(function (r) { setTimeout(r, 8); })
-          .then(function () { return insertChunk(offset + chunkSize); });
-      });
-    }
-    return insertChunk(0).then(function () { return inserted; });
-  };
-  DB.prototype.meta = function (key) {
-    return this.open().then(function (db) {
-      return new Promise(function (resolve, reject) {
-        var r = db.transaction('meta', 'readonly').objectStore('meta').get(key);
-        r.onsuccess = function () { resolve(r.result ? r.result.value : undefined); };
-        r.onerror = function () { reject(r.error); };
-      });
-    });
-  };
-  DB.prototype.setMeta = function (key, value) {
-    return this.open().then(function (db) {
-      return new Promise(function (resolve, reject) {
-        var tx = db.transaction('meta', 'readwrite');
-        tx.objectStore('meta').put({ key: key, value: value });
-        tx.oncomplete = function () { resolve(); };
-        tx.onerror = function () { reject(tx.error); };
-      });
-    });
-  };
-  DB.prototype.clear = function () {
-    return this.open().then(function (db) {
-      return new Promise(function (resolve, reject) {
-        var tx = db.transaction(['txs', 'meta'], 'readwrite');
-        tx.objectStore('txs').clear(); tx.objectStore('meta').clear();
-        tx.oncomplete = function () { resolve(); };
-        tx.onerror = function () { reject(tx.error); };
-      });
-    });
-  };
-  DB.prototype.close = function () {
-    if (this.db) { try { this.db.close(); } catch (e) {} this.db = null; }
-    this._opening = null;
-  };
-
-  var db = new DB();
+  var storageMode = { chainMemory: false, walletMemory: false }, sessionWallets = null;
+  function renderStorageNotice() {
+    var el = document.getElementById('storageNotice');
+    if (!el) return;
+    el.hidden = !storageMode.chainMemory && !storageMode.walletMemory;
+    var messages = [];
+    if (storageMode.chainMemory) messages.push('Temporary session: blockchain data is kept only until this tab closes. Reloading will download it again.');
+    if (storageMode.walletMemory) messages.push('Saved addresses are available only in this tab because browser storage is unavailable.');
+    el.textContent = messages.join(' ');
+  }
+  var db = TigStorage.createStore({ name: C.DB_NAME, version: C.DB_VERSION, getIndexedDB: function () { return indexedDB; },
+    onModeChange: function () { storageMode.chainMemory = true; renderStorageNotice(); } });
   var syncing = false, stopReq = false, provider = null, lockerIface = null;
   var currentBatchSize = C.BATCH;
   var statsCache = null, statsCacheTime = 0, countdownTimer = null;
@@ -1360,7 +1256,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
           Number(previous.snapshotCreatedAt) > snapshot.metadata.snapshotCreatedAt)) return false;
       statusEl.textContent = 'Updating verified snapshot...';
       snapshot.rows.forEach(function (row) { row.valueTig = valueToTig(row.value); row.blacklisted = isBlacklisted(row.address) ? 1 : 0; });
-      setProgress(30, 'Replacing snapshot in IndexedDB...', 'fast');
+      setProgress(30, 'Preparing verified snapshot...', 'fast');
       await db.replaceSnapshot(snapshot.rows, snapshot.metadata);
       syncHealth = { verifiedBlock: 0, checkedAt: 0, error: '' };
       myWalletBalanceCache.clear();
@@ -2645,6 +2541,8 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     try {
       var lb = await db.meta('lastBlock');
       document.getElementById('lastBlock').textContent = lb != null ? Number(lb).toLocaleString('en-US') : '-';
+      var history = await db.meta('historyVerification');
+      document.getElementById('historyStatus').textContent = history && history.fromBlock === C.FIRST_BLOCK ? 'Verified through block ' + history.throughBlock.toLocaleString('en-US') : 'Verification pending';
       ls = await db.meta('lastSync');
       document.getElementById('lastSync').textContent = ls ? new Date(ls).toLocaleTimeString('en-US') : 'never';
       if (lb != null && chainHead) {

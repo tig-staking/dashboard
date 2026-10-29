@@ -197,7 +197,7 @@ async function getLogsChunk(provider, address, topics, fromBlock, toBlock, optio
         start = end + 1;
         // powoli rośnij po udanym zapytaniu (max CHUNK_SIZE)
         size = Math.min(CONFIG.CHUNK_SIZE, Math.floor(size * 1.15) || CONFIG.CHUNK_SIZE);
-        await sleep(CONFIG.RPC_DELAY_MS);
+        await sleep(options.delayMs ?? CONFIG.RPC_DELAY_MS);
         break;
       } catch (err) {
         if (Date.now() >= (options.deadline || Infinity)) throw new Error('Log catch-up work budget reached');
@@ -342,6 +342,9 @@ async function syncCheckpoint(provider, head, deadline) {
       lastBlockTimestamp: checkpoint.timestamp,
       anchors: Chain.appendAnchor(existingData.metadata.anchors, checkpoint, resumeFrom),
       contentHash: await Chain.digest(allTxs),
+      historyVerification: existingData.metadata.historyVerification ? {
+        ...existingData.metadata.historyVerification, throughBlock: currentBlock, throughHash: checkpoint.hash
+      } : undefined,
       lastSync: Date.now(),
       total: allTxs.length,
       version: existingData.exported || existingData.metadata?.version || '4',
@@ -377,4 +380,4 @@ if (require.main === module) run().catch((e) => {
   console.error(e);
   process.exit(1);
 });
-module.exports = { getLogsChunk, syncCheckpoint, run };
+module.exports = { getLogsChunk, syncCheckpoint, run, LOCKER_ABI, EVENT_TYPE };
