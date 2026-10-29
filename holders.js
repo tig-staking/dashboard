@@ -102,6 +102,7 @@ async function buildSnapshot(deadline) {
   if (chainHead - block > 15000) throw new Error('Staking snapshot is too old for holders snapshot');
   const blockInfo = await rpc('eth_getBlockByNumber', [hexBlock(block), false]);
   if (!blockInfo || !blockInfo.hash) throw new Error('Missing snapshot block');
+  if (data.metadata.lastBlockHash && blockInfo.hash.toLowerCase() !== data.metadata.lastBlockHash.toLowerCase()) throw new Error('Staking snapshot block hash changed; rebuild staking first');
 
   const staking = stakingBalances(data.transactions, block);
   console.log('Staking addresses', staking.size, 'at block', block);
@@ -171,6 +172,8 @@ async function buildSnapshot(deadline) {
   // Keep verified history dates during an indexer outage; balance refreshes do
   // not need hundreds of requests to the same unavailable service.
   await enrichHolderHistory(payload, previous, () => {}, discoverySource.startsWith('Verified') ? 0 : Math.min(120000, Math.max(0, deadline - Date.now())));
+  const finalBlock = await rpc('eth_getBlockByNumber', [hexBlock(block), false]);
+  if (!finalBlock || finalBlock.hash !== blockInfo.hash) throw new Error('Chain changed during holder refresh');
   const temp = 'holders.json.tmp';
   fs.writeFileSync(temp, JSON.stringify(payload));
   fs.renameSync(temp, 'holders.json');

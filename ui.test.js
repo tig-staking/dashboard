@@ -3,10 +3,11 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const { ethers } = require('ethers');
+const TigHistory = require('./wallet-history');
 const html = fs.readFileSync(`${__dirname}/index.html`, 'utf8');
 const start = html.indexOf('  function replayActiveWei(');
 const end = html.indexOf('  function computePersonalWallet(', start);
-const context = vm.createContext({ ethers, isFoundation: () => false,
+const context = vm.createContext({ ethers, TigHistory, isFoundation: () => false,
   normalizeType: t => ({ stake: 'lock', unstake: 'withdraw' })[t] || t });
 vm.runInContext(html.slice(start, end), context);
 const alice = '0x' + '1'.repeat(40), bob = '0x' + '2'.repeat(40);
@@ -62,7 +63,7 @@ test('small positive TIG balances never display as zero', () => {
 });
 
 async function dashboardStats(events, chartRangeDays = 30) {
-  const statsContext = vm.createContext({ ethers, db: { all: async () => events, meta: async () => Math.max(0, ...events.map(tx => tx.blockNumber)) },
+  const statsContext = vm.createContext({ ethers, TigHistory, db: { state: async () => ({ transactions: events, metadata: { lastBlock: Math.max(0, ...events.map(tx => tx.blockNumber)) } }) },
     statsCache: null, statsCacheTime: 0, pendingPeriodSec: 28 * 86400, uiState: { chartRangeDays },
     C: { COHORT_DIAMOND: 180, COHORT_LONG: 90, COHORT_MEDIUM: 30, DORMANCY_DAYS: 90 },
     isBlacklisted: () => false, isFoundation: () => false,
