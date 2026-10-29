@@ -14,6 +14,7 @@
 const fs = require('fs');
 const { ethers } = require('ethers');
 const { createProvider } = require('./rpc');
+const Chain = require('./chain-state');
 
 const CONFIG = {
   STAKE: '0x9F6b29E498Ef6BEe4a050fa1F29c31DBE6c6aEF4',
@@ -112,11 +113,11 @@ async function fetchBlockTimestamps(provider, blockNumbers) {
   for (let i = 0; i < unique.length; i += conc) {
     const chunk = unique.slice(i, i + conc);
     const results = await Promise.allSettled(
-      chunk.map((n) => provider.getBlock(n))
+      chunk.map((n) => Chain.anchor(provider, n))
     );
     results.forEach((r, j) => {
       if (r.status === 'fulfilled' && r.value && r.value.timestamp != null) {
-        map.set(chunk[j], Number(r.value.timestamp));
+        map.set(chunk[j], r.value);
       }
     });
     if (i + conc < unique.length) await sleep(40);
@@ -220,8 +221,11 @@ async function getLogsChunk(provider, address, topics, fromBlock, toBlock, optio
 
 async function syncCheckpoint(provider, head, deadline) {
   const existingData = loadExisting();
-  const last = Number(existingData.metadata.lastBlock);
-  const currentBlock = Math.min(head, (Number.isSafeInteger(last) ? last : CONFIG.FIRST_BLOCK - 1) + 20000);
+  if (existingData.metadata.contentHash && !Chain.sameHash(existingData.metadata.contentHash, await Chain.digest(existingData.transactions))) throw new Error('Stored snapshot content hash mismatch');
+  const firstBlock = Number(existingData.config.firstBlock) || CONFIG.FIRST_BLOCK;
+  const plan = await Chain.planReplay(provider, existingData.metadata, firstBlock, head);
+  const resumeFrom = plan.fromBlock;
+  const currentBlock = Math.min(head, resumeFrom + 19999);
   const iface = new ethers.Interface(LOCKER_ABI);
   const stake = normalizeAddr(CONFIG.STAKE);
 
@@ -245,7 +249,6 @@ async function syncCheckpoint(provider, head, deadline) {
   ]);
 
   const lastBlock = Number(existingData.metadata?.lastBlock);
-  const resumeFrom = Number.isFinite(lastBlock) ? lastBlock + 1 : CONFIG.FIRST_BLOCK;
 
   if (resumeFrom > currentBlock) {
     console.log(`Baza już aktualna. lastBlock=${lastBlock}, head=${currentBlock}, txs=${(existingData.transactions || []).length}`);
@@ -258,37 +261,30 @@ async function syncCheckpoint(provider, head, deadline) {
     Object.keys(EVENT_TYPE).map((name) => iface.getEvent(name).topicHash)
   ];
 
+  const checkpoint = await Chain.anchor(provider, currentBlock);
   const logs = await getLogsChunk(provider, stake, topics, resumeFrom, currentBlock, { deadline });
   console.log(`Zebrano ${logs.length} logów. Parsowanie…`);
-
-  const headBlock = await provider.getBlock(currentBlock);
-  const headTs = headBlock && headBlock.timestamp != null
-    ? Number(headBlock.timestamp)
-    : Math.floor(Date.now() / 1000);
 
   const newTxs = [];
   const needBlocks = [];
 
   for (const log of logs) {
-    try {
       const parsed = iface.parseLog({ topics: log.topics, data: log.data });
-      if (!parsed) continue;
+      if (!parsed) throw new Error('Unparseable staking event');
       const type = EVENT_TYPE[parsed.name];
-      if (!type) continue;
+      if (!type) throw new Error('Unknown staking event');
 
       const args = parsed.args;
       const user = normalizeAddr(args.user != null ? args.user : args[0]);
       const amt = args.amount != null ? args.amount : args[1];
       const bn = Number(log.blockNumber);
-      const estTs = Math.floor(headTs + (bn - currentBlock) * CONFIG.BASE_BLOCK_TIME);
+      if (!Number.isSafeInteger(bn) || bn < resumeFrom || bn > currentBlock) throw new Error('Log outside requested range');
 
       let withdrawableTime = 0;
       if (type === 'unlock') {
         const wt = args.withdrawableTime != null ? args.withdrawableTime : args[3];
         withdrawableTime = Number(wt);
-        if (!Number.isFinite(withdrawableTime) || withdrawableTime <= 0) {
-          withdrawableTime = estTs + pendingPeriodSec;
-        }
+        if (!Number.isSafeInteger(withdrawableTime) || withdrawableTime <= 0) throw new Error('Invalid on-chain withdrawal time');
       }
 
       needBlocks.push(bn);
@@ -297,37 +293,29 @@ async function syncCheckpoint(provider, head, deadline) {
         hash: log.transactionHash,
         logIndex: log.index,
         blockNumber: bn,
+        blockHash: log.blockHash,
         address: user,
         type,
         value: amt.toString(),
         valueTig: valueToTig(amt),
-        timestamp: estTs,
+        timestamp: 0,
         blacklisted: blacklist.has(user.toLowerCase()) ? 1 : 0,
         withdrawableTime
       });
-    } catch (_) {
-      // skip unparseable
-    }
   }
 
   console.log(`Pobieranie timestampów bloków (${new Set(needBlocks).size} unikalnych)…`);
   const tsMap = await fetchBlockTimestamps(provider, needBlocks);
 
-  for (const tx of newTxs) {
-    const real = tsMap.get(tx.blockNumber);
-    if (real != null) {
-      const prev = tx.timestamp;
-      tx.timestamp = real;
-      if (tx.type === 'unlock' && tx.withdrawableTime) {
-        const delta = tx.withdrawableTime - prev;
-        if (Math.abs(delta - pendingPeriodSec) < 5 || tx.withdrawableTime < real) {
-          tx.withdrawableTime = real + pendingPeriodSec;
-        }
-      }
-    } else throw new Error(`Missing real timestamp for block ${tx.blockNumber}; snapshot not advanced`);
+  for (let i = 0; i < newTxs.length; i++) {
+    const block = tsMap.get(newTxs[i].blockNumber);
+    if (!block) throw new Error('Missing verified block header at ' + newTxs[i].blockNumber);
+    Chain.assertLog(logs[i], block);
+    newTxs[i].timestamp = block.timestamp;
   }
-
-  const allTxs = dedupeById([...(existingData.transactions || []), ...newTxs]);
+  if (!Chain.sameHash(checkpoint.hash, (await Chain.anchor(provider, currentBlock)).hash)) throw new Error('Chain changed during checkpoint; snapshot not advanced');
+  await Chain.verifyPrefix(provider, existingData.metadata, resumeFrom);
+  const allTxs = dedupeById([...(existingData.transactions || []).filter(tx => tx.blockNumber < resumeFrom), ...newTxs]);
 
   allTxs.sort((a, b) => {
     const db = (a.blockNumber || 0) - (b.blockNumber || 0);
@@ -350,6 +338,10 @@ async function syncCheckpoint(provider, head, deadline) {
     },
     metadata: {
       lastBlock: currentBlock,
+      lastBlockHash: checkpoint.hash,
+      lastBlockTimestamp: checkpoint.timestamp,
+      anchors: Chain.appendAnchor(existingData.metadata.anchors, checkpoint, resumeFrom),
+      contentHash: await Chain.digest(allTxs),
       lastSync: Date.now(),
       total: allTxs.length,
       version: existingData.exported || existingData.metadata?.version || '4',
@@ -367,7 +359,7 @@ async function syncCheckpoint(provider, head, deadline) {
     `OK. +${newTxs.length} nowych (po dedupe w pliku: ${allTxs.length}). ` +
     `metadata.lastBlock=${currentBlock}, head=${currentBlock}`
   );
-  console.log('Dashboard przy starcie porówna snapshotCount/snapshotLastBlock i zmerguje.');
+  console.log('Verified snapshot saved (' + plan.reason + ').');
   return currentBlock < head;
 }
 

@@ -5,22 +5,25 @@ const vm = require('node:vm');
 const { ethers } = require('ethers');
 const html = fs.readFileSync(`${__dirname}/index.html`, 'utf8');
 const address = n => '0x' + n.toString(16).padStart(40, '0');
+const hash = n => '0x' + n.toString(16).padStart(64, '0');
 const transfer = (from, to, value) => ({
+  blockNumber: 101, blockHash: hash(101),
   topics: [ethers.id('Transfer(address,address,uint256)'), ethers.zeroPadValue(from, 32), ethers.zeroPadValue(to, 32)],
   data: ethers.toBeHex(value)
 });
 function liveContext({ logs = [], balanceOf = async () => 0n, getLogs, target = 101 } = {}) {
   const elements = new Map();
   const candidates = Array.from({ length: 500 }, (_, i) => ({ address: address(i + 100), wallet: '100', locked: '0', pending: '0' }));
-  const snapshot = { block: 100, candidateCutoff: '99', candidates };
+  const snapshot = { block: 100, blockHash: hash(100), candidateCutoff: '99', candidates };
   const oldRanking = [{ address: address(100), total: 100n }];
   let paints = 0;
   const ctx = vm.createContext({
+    TigChain: require('./chain-state'),
     ethers: { ...ethers, Contract: class { balanceOf(...args) { return balanceOf(...args); } } },
     document: { getElementById: id => { if (!elements.has(id)) elements.set(id, { textContent: '' }); return elements.get(id); } },
     holderSnapshot: snapshot, holderRanking: oldRanking, holderRankingBlock: 100, holderRefreshBusy: false,
-    provider: { getLogs: getLogs || (async () => logs) },
-    db: { meta: async () => target, all: async () => [] },
+    provider: { getLogs: getLogs || (async () => logs), getBlock: async number => ({ number, hash: hash(number), timestamp: 1700000000 + number * 2 }) },
+    db: { state: async () => ({ metadata: { lastBlock: target, lastBlockHash: hash(target) }, transactions: [] }) },
     C: { TIG: address(1), MAX_BATCH_RETRIES: 12, RPC_DELAY_MS: 0 }, ERC20_ABI: [],
     EXCLUDED_HOLDER_ADDRESSES: new Set([address(0)]),
     normalizeType: t => t, isRateLimit: () => false, connectRPC: async () => {}, sleep: async () => {},
@@ -77,6 +80,23 @@ test('a newer holder snapshot cannot be overwritten by an older in-flight live u
   await ctx.refreshHolderLive();
   assert.ok(ctx.holderRanking === oldRanking);
   assert.equal(ctx.holderRankingBlock, 102);
+});
+
+test('a holder snapshot from an orphaned block is removed from the ranking', async () => {
+  const { ctx, paints, elements } = liveContext();
+  ctx.holderSnapshot.blockHash = hash(999);
+  await ctx.refreshHolderLive();
+  assert.equal(ctx.holderRanking.length, 0);
+  assert.equal(ctx.holderRankingBlock, 0);
+  assert.equal(paints(), 1);
+  assert.match(elements.get('top500Status').textContent, /reorganization/);
+});
+
+test('live holder updates reject transfers from another fork', async () => {
+  const { ctx, oldRanking, elements } = liveContext({ logs: [{ ...transfer(address(0), address(1), 1n), blockHash: hash(999) }] });
+  await ctx.refreshHolderLive();
+  assert.ok(ctx.holderRanking === oldRanking);
+  assert.match(elements.get('top500Status').textContent, /unverified/);
 });
 
 test('old or unverified data never receives a fresh status', () => {
