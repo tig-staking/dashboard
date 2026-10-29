@@ -51,3 +51,12 @@ test('RPC reports an exhausted pool instead of returning an empty log range', as
   try { await assert.rejects(provider.getLogs({ fromBlock: 1, toBlock: 2 }), /eth_getLogs failed on all RPCs.*503/); }
   finally { provider.destroy(); }
 });
+
+test('an exhausted work budget starts no further network requests', async () => {
+  let requests = 0;
+  const provider = createProvider(['https://failed.test'], {
+    deadline: Date.now() - 1, fetch: async () => { requests++; throw Error('must not fetch'); }
+  });
+  try { await assert.rejects(provider.getBlockNumber(), /work budget/); assert.equal(requests, 0); }
+  finally { provider.destroy(); }
+});

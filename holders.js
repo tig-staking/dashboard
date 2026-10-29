@@ -2,12 +2,11 @@
 const fs = require('node:fs');
 const { enrichHolderHistory } = require('./holder-history');
 const { ethers } = require('ethers');
-const { URLS, createProvider } = require('./rpc');
+const { createProvider } = require('./rpc');
 const { getLogsChunk } = require('./sync');
 const { TOKEN, STAKING, ZERO, address, stakingBalances, csvCandidates, rankRows } = require('./holders-core');
 
 const CSV_URL = 'https://base.blockscout.com/api/v2/tokens/' + TOKEN + '/holders/csv';
-const RPCS = URLS;
 const TARGET = 1000;
 const BATCH = 100;
 const PAUSE_MS = 350;
@@ -22,38 +21,23 @@ const TOKEN_IFACE = new ethers.Interface([
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const hexBlock = block => '0x' + block.toString(16);
 
-async function request(url, options, timeoutMs = 20000) {
+async function requestText(url, options, timeoutMs = 20000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(url, { ...options, signal: controller.signal });
     if (!response.ok) throw new Error(url + ': HTTP ' + response.status);
-    return response;
+    return await response.text();
   } finally { clearTimeout(timer); }
 }
 
-async function rpc(method, params, start = 0) {
-  let lastError;
-  for (let attempt = 0; attempt < 9; attempt++) {
-    const url = RPCS[(start + attempt) % RPCS.length];
-    try {
-      const response = await request(url, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params })
-      });
-      const result = await response.json();
-      if (result.error || result.result === undefined) throw new Error(JSON.stringify(result.error || result));
-      return result.result;
-    } catch (error) {
-      lastError = error;
-      await sleep(Math.min(10000, 500 * 2 ** attempt));
-    }
-  }
-  throw new Error(method + ' failed: ' + lastError);
+let rpcProvider;
+async function rpc(method, params) {
+  if (!rpcProvider) rpcProvider = createProvider();
+  return rpcProvider.send(method, params);
 }
 
-async function tokenBalances(addresses, block) {
+async function tokenBalances(addresses, block, send = rpc) {
   const balances = new Map();
   const tag = hexBlock(block);
   for (let offset = 0; offset < addresses.length; offset += BATCH) {
@@ -63,38 +47,26 @@ async function tokenBalances(addresses, block) {
       callData: TOKEN_IFACE.encodeFunctionData('balanceOf', [key])
     }));
     const callData = MULTICALL_IFACE.encodeFunctionData('aggregate3', [calls]);
-    let lastError;
-    let result;
-    for (let attempt = 0; attempt < 9; attempt++) {
-      try {
-        const raw = await rpc('eth_call', [{ to: MULTICALL, data: callData }, tag], attempt);
-        result = MULTICALL_IFACE.decodeFunctionResult('aggregate3', raw)[0];
-        if (result.length !== calls.length) throw new Error('Incomplete multicall');
-        chunk.forEach((key, index) => {
-          const item = result[index];
-          if (!item.success) throw new Error('balanceOf reverted for ' + key);
-          balances.set(key, TOKEN_IFACE.decodeFunctionResult('balanceOf', item.returnData)[0]);
-        });
-        lastError = null;
-        break;
-      } catch (error) {
-        lastError = error;
-        await sleep(Math.min(10000, 500 * 2 ** attempt));
-      }
-    }
-    if (lastError) throw new Error('balanceOf failed at ' + offset + ': ' + lastError);
+    const raw = await send('eth_call', [{ to: MULTICALL, data: callData }, tag]);
+    const result = MULTICALL_IFACE.decodeFunctionResult('aggregate3', raw)[0];
+    if (result.length !== calls.length) throw new Error('Incomplete multicall');
+    chunk.forEach((key, index) => {
+      const item = result[index];
+      if (!item.success) throw new Error('balanceOf reverted for ' + key);
+      balances.set(key, TOKEN_IFACE.decodeFunctionResult('balanceOf', item.returnData)[0]);
+    });
     if ((offset / BATCH) % 10 === 0) console.log('Balances', Math.min(offset + BATCH, addresses.length), '/', addresses.length);
     await sleep(PAUSE_MS);
   }
   return balances;
 }
 
-async function changedAddresses(fromBlock, toBlock) {
+async function changedAddresses(fromBlock, toBlock, deadline) {
   const changed = new Set();
   const topic = TOKEN_IFACE.getEvent('Transfer').topicHash;
-  const provider = createProvider();
+  const provider = createProvider(undefined, { deadline });
   try {
-    const logs = await getLogsChunk(provider, TOKEN, [topic], fromBlock, toBlock);
+    const logs = await getLogsChunk(provider, TOKEN, [topic], fromBlock, toBlock, { deadline });
     for (const log of logs) {
       if (log.topics.length !== 3) throw new Error('Unexpected TIG Transfer log');
       changed.add(address('0x' + log.topics[1].slice(-40)));
@@ -121,7 +93,7 @@ function cachedCandidates(previous, block) {
   return { addresses: [...wallets.keys()], cutoff, fromBlock: previous.block + 1 };
 }
 
-async function run() {
+async function buildSnapshot(deadline) {
   const data = JSON.parse(fs.readFileSync('data.json', 'utf8'));
   const block = Number(data.metadata?.lastBlock);
   if (!Number.isSafeInteger(block) || block < Number(data.config?.firstBlock)) throw new Error('Invalid staking snapshot block');
@@ -137,7 +109,7 @@ async function run() {
   try { previous = JSON.parse(fs.readFileSync('holders.json', 'utf8')); } catch (_) {}
   let candidates, discoverySource;
   try {
-    candidates = csvCandidates(await (await request(CSV_URL, {}, 15000)).text(), TARGET);
+    candidates = csvCandidates(await requestText(CSV_URL, {}, 15000), TARGET);
     candidates.fromBlock = block + 1;
     discoverySource = 'Blockscout holder candidates';
   } catch (error) {
@@ -150,7 +122,7 @@ async function run() {
   const all = new Set(candidates.addresses);
   const afterCsvHead = Number(BigInt(await rpc('eth_blockNumber', [])));
   if (afterCsvHead - block > 15000) throw new Error('Holder discovery interval is too large');
-  const changed = await changedAddresses(candidates.fromBlock, afterCsvHead);
+  const changed = await changedAddresses(candidates.fromBlock, afterCsvHead, deadline);
   changed.forEach(key => all.add(key));
   console.log('Changed addresses since snapshot block', changed.size);
   staking.forEach((balance, key) => {
@@ -198,12 +170,19 @@ async function run() {
   };
   // Keep verified history dates during an indexer outage; balance refreshes do
   // not need hundreds of requests to the same unavailable service.
-  await enrichHolderHistory(payload, previous, () => {}, discoverySource.startsWith('Verified') ? 0 : 120000);
+  await enrichHolderHistory(payload, previous, () => {}, discoverySource.startsWith('Verified') ? 0 : Math.min(120000, Math.max(0, deadline - Date.now())));
   const temp = 'holders.json.tmp';
   fs.writeFileSync(temp, JSON.stringify(payload));
   fs.renameSync(temp, 'holders.json');
   console.log('Wrote holders.json at', block, 'with', payload.candidateCount, 'candidates');
 }
 
+async function run() {
+  const deadline = Date.now() + 6 * 60 * 1000;
+  rpcProvider = createProvider(undefined, { deadline });
+  try { await buildSnapshot(deadline); }
+  finally { rpcProvider.destroy(); rpcProvider = null; }
+}
+
 if (require.main === module) run().catch(error => { console.error(error); process.exitCode = 1; });
-module.exports = { run, tokenBalances, cachedCandidates };
+module.exports = { run, tokenBalances, cachedCandidates, requestText };

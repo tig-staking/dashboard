@@ -17,11 +17,13 @@
       async _send(payload) {
         var failures = [], start = active;
         for (var attempt = 0; attempt < urls.length; attempt++) {
+          var remaining = (options.deadline || Infinity) - Date.now();
+          if (remaining <= 0) throw new Error('RPC work budget reached');
           var index = (start + attempt) % urls.length;
           try {
             var response = await request(urls[index], {
               method: 'POST', headers: { 'content-type': 'application/json' },
-              body: JSON.stringify(payload), signal: AbortSignal.timeout(options.timeoutMs || 10000)
+              body: JSON.stringify(payload), signal: AbortSignal.timeout(Math.max(1, Math.min(options.timeoutMs || 10000, remaining)))
             });
             if (!response.ok) throw new Error('HTTP ' + response.status);
             var data = await response.json();

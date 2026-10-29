@@ -6,7 +6,7 @@
 <title>TIG Holders Dashboard</title>
 <meta name="description" content="Explore TIG staking, the top 500 addresses, unlock schedules, and wallet history on Base.">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.17.0/dist/ethers.umd.min.js"></script>
-<script src="./rpc.js"></script>
+<script src="./rpc.js?v=2"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
 <!-- DM Sans, bundled under SIL Open Font License:
 Copyright 2014 The DM Sans Project Authors (https://github.com/googlefonts/dm-fonts)
@@ -353,6 +353,9 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
 @media(min-width:768px){.overview-charts>.card:has(#chartUnlock){display:grid;grid-template-columns:1fr 1.4fr;column-gap:32px}.overview-charts>.card:has(#chartUnlock)>:not(.chart-frame){grid-column:1}.overview-charts>.card:has(#chartUnlock)>.chart-frame{grid-column:2;grid-row:1/6;height:280px;margin:0}.overview-charts>.card:has(#chartUnlock)>.chart-fallback{grid-column:1/-1}}
 .mytig-chip{flex-wrap:wrap}.mytig-chip .btn{white-space:nowrap;flex-shrink:0}.mytig-chip button{flex-shrink:0}.card:has(#chartFlow){margin-bottom:24px}.btn-xs{white-space:nowrap}
 .copy-notes{font-size:13px;color:var(--text2);margin:12px 0}.copy-notes summary{cursor:pointer;color:var(--text);padding:8px 0;min-height:44px;display:list-item}.copy-notes p{margin:6px 0 10px;max-width:75ch;line-height:1.6}
+.tag{font-size:12px}.mono{font-size:13px}.tip{width:24px;height:24px;min-width:24px;min-height:24px}.th-tip{min-height:24px}.holder-links{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.btn-link{min-height:44px}.page-heading{scroll-margin-top:100px}.mobile-section{display:none!important}
+.chart-controls{display:flex;gap:16px;align-items:end;flex-wrap:wrap;margin:0 0 24px}.chart-controls .field{flex:0 1 180px}.chart-controls select{min-height:44px}.chart-data{grid-column:1/-1}.overview-charts>.card:has(#chartUnlock)>.chart-data{grid-column:1/-1}.chart-data .table-wrap{max-height:300px}
+@media(max-width:767px){.mobile-bottom button{font-size:11px;min-width:0}.rank-summary .holder-kind{font-size:12px}.mobile-bottom{gap:0}}
 </style>
 </head>
 <body>
@@ -372,6 +375,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
 </header>
 <div class="container">
   <div class="snapshot-line"><span class="network-label">Base network</span><span class="fresh" id="freshLine">Loading snapshot…</span><span class="live" id="liveBadge">LIVE</span><span class="hidden" id="syncModeBadge">Ready</span><span class="hidden" id="countdown"></span></div>
+  <div class="chart-controls" id="chartControls"><div class="field"><label for="chartRange">Chart period · UTC days</label><select class="sel" id="chartRange"><option value="7">7 days</option><option value="30" selected>30 days</option><option value="90">90 days</option><option value="0">All history</option></select></div><a class="btn" href="#mytig">Check an address</a></div>
 
   <div class="progress" id="progressWrap"><div class="bar"><div class="fill" id="progressFill"></div></div><div class="ptext" id="progressText"></div></div>
 
@@ -402,6 +406,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
         <h3>Staked TIG over time</h3>
         <div class="hint">End-of-day active stake. Excludes TIG pending withdrawal.</div>
         <div class="chart-frame"><canvas id="chartTotalStaked" role="img" aria-label="Active staked TIG over time"></canvas></div><p class="chart-fallback" hidden>Chart unavailable. Please reload to retry loading the chart library.</p>
+        <details class="copy-notes chart-data"><summary>View data / export CSV</summary><p class="hint" id="stakeDataMeta"></p><button type="button" class="btn" data-export="stake">Download CSV</button><div class="table-wrap"><table><thead><tr><th scope="col">Time · UTC</th><th scope="col">Active stake · TIG</th></tr></thead><tbody id="stakeDataBody"></tbody></table></div></details>
         <div class="hint" style="margin-top:8px" id="extraMetrics"></div>
       </div>
 
@@ -416,6 +421,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
           </div>
           <div class="near-list" id="nearUnlockList"></div>
           <div class="chart-frame compact"><canvas id="chartUnlock" role="img" aria-label="TIG becoming withdrawable over the next 28 days"></canvas></div><p class="chart-fallback" hidden>Chart unavailable. Please reload to retry loading the chart library.</p>
+          <details class="copy-notes chart-data"><summary>View data / export CSV</summary><p class="hint" id="unlockDataMeta"></p><button type="button" class="btn" data-export="cooldown">Download CSV</button><div class="table-wrap"><table><thead><tr><th scope="col">Hours from now</th><th scope="col">TIG becoming ready</th></tr></thead><tbody id="unlockDataBody"></tbody></table></div></details>
           <div class="hint hidden" id="unlockEmptyHint" style="margin-top:8px;color:var(--green)">No upcoming cooldown expirations.</div>
         </div>
       </div>
@@ -517,6 +523,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
             <thead><tr><th>Address</th><th>TIG</th><th>When</th><th>Withdrawable</th><th><span class="th-tip" tabindex="0" data-tip="Time without staking activity before this request.">Inactive</span></th><th></th></tr></thead>
             <tbody id="unstakes7dBody"><tr><td colspan="6">Sync</td></tr></tbody>
           </table></div>
+          <div class="search pagination"><button type="button" class="btn" id="requestPrev">Previous</button><span class="hint" id="requestPageStatus" aria-live="polite">–</span><button type="button" class="btn" id="requestNext">Next</button></div>
         </div>
         <div class="card">
           <h3>Cooldown ending <span class="badge" id="unlockCount">0</span></h3>
@@ -525,6 +532,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
             <thead><tr><th>When</th><th>Address</th><th>TIG</th><th>In</th><th></th></tr></thead>
             <tbody id="unlocksBody"><tr><td colspan="5">Sync</td></tr></tbody>
           </table></div>
+          <div class="search pagination"><button type="button" class="btn" id="unlockPrev">Previous</button><span class="hint" id="unlockPageStatus" aria-live="polite">–</span><button type="button" class="btn" id="unlockNext">Next</button></div>
         </div>
       </div>
     </div>
@@ -532,9 +540,10 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     <div class="tab-panel" id="tab-holders">
 <div class="page-heading"><h2>Staking</h2></div>
         <div class="card">
-          <h3>Staking flows · 30 days <span class="tip" tabindex="0" data-tip="Daily locks, claims, and relocks versus unlock requests, with net change and a 7-day average.">?</span></h3>
+          <h3>Staking flows <span class="tip" tabindex="0" data-tip="Daily locks, claims, and relocks versus unlock requests. Uses the selected chart period and UTC calendar days.">?</span></h3>
           <div class="hint">TIG added to stake and requested for withdrawal each day.</div>
           <div class="chart-frame"><canvas id="chartFlow" role="img" aria-label="Daily staking additions, unlock requests, and net change"></canvas></div><p class="chart-fallback" hidden>Chart unavailable. Please reload to retry loading the chart library.</p>
+          <details class="copy-notes chart-data"><summary>View data / export CSV</summary><p class="hint" id="flowDataMeta"></p><button type="button" class="btn" data-export="flows">Download CSV</button><div class="table-wrap"><table><thead><tr><th scope="col">Day · UTC</th><th scope="col">Added · TIG</th><th scope="col">Unlocks · TIG</th><th scope="col">Net · TIG</th></tr></thead><tbody id="flowDataBody"></tbody></table></div></details>
           <div class="hint" id="flowSummary" style="margin-top:10px;padding:8px 10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;font-weight:600;color:var(--text)"></div>
         </div>
       <div class="card">
@@ -597,9 +606,11 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
 <div class="page-heading"><h2>Top 500 TIG</h2><p>Total TIG = wallet balance + active stake + pending withdrawals.</p></div>
       <div class="card">
         <h3>Largest addresses <span class="badge" id="top500Count">-</span></h3>
-        <details class="copy-notes"><summary>About this ranking</summary><p>Each row is an address, not a person. Exchange and contract balances may belong to many holders.</p><p>Pending includes TIG in cooldown and ready to withdraw. The staking contract and burn addresses are excluded to avoid double counting.</p><p>Holder labels use the first positive TIG receipt on Base: Fresh under 30 days; Established 30–179 days; Long-term 180–364 days; Diamond 365+ days. They do not prove continuous holding. History unavailable means the first receipt could not be verified.</p><p>Known contracts keep their names. Other addresses may also be contracts. Balances come from on-chain checks of addresses found through Blockscout and staking records.</p></details>
+        <details class="copy-notes"><summary>About this ranking</summary><p>Each row is an address, not a person. Exchange and contract balances may belong to many holders.</p><p>Pending includes TIG in cooldown and ready to withdraw. The staking contract and burn addresses are excluded to avoid double counting.</p><p>Holder labels use the first positive TIG receipt on Base: Fresh under 30 days; Established 30–179 days; Long-term 180–364 days; Diamond 365+ days. They do not prove continuous holding. Age unavailable means the receipt date could not be verified; balances are verified separately.</p><p>Known contracts keep their names. Other addresses may also be contracts. Balances come from on-chain checks of addresses found through Blockscout and staking records.</p></details>
         <div class="hint" id="top500Status">Loading balances…</div>
+        <div class="hint" id="holderAgeStatus"></div>
         <div class="search"><div class="field"><label for="top500Search">Filter by address</label><input id="top500Search" class="mono" placeholder="0x…"></div></div>
+        <button type="button" class="btn" data-export="ranking">Export filtered ranking · CSV</button>
         <div class="hint" id="top500Concentration">Concentration: loading…</div>
         <div id="mobileHolders" class="mobile-holders" aria-label="TIG address ranking"></div>
         <div class="table-wrap"><table class="balance-table">
@@ -613,18 +624,19 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     <div class="tab-panel" id="tab-mytig">
 <div class="page-heading"><h2>My address</h2></div>
       <div class="card" style="margin-bottom:12px;border-color:rgba(34,197,94,.28)">
-        <h3>Saved addresses <span class="tip" tabindex="0" data-tip="Total TIG includes wallet balance, active stake and pending withdrawals. Wallet balances and staking data may be from different blocks, shown below.">?</span></h3>
-        <div class="hint">Save up to 8 addresses in this browser. No wallet connection needed.</div>
+        <h3>Address lookup <span class="tip" tabindex="0" data-tip="Wallet, active stake and pending withdrawals are read at the same Base block. Totals wait for a complete balance lookup.">?</span></h3>
+        <div class="hint">No wallet connection needed. Save up to 8 addresses in this browser.</div>
         <div class="mytig-add">
-          <div class="field"><label for="mytigAddr">Wallet address</label><input id="mytigAddr" class="mono" placeholder="0x…"></div>
-          <div class="field"><label for="mytigLabel">Label (optional)</label><input id="mytigLabel" placeholder="e.g. Main wallet"></div>
-          <button type="button" class="btn btn-primary" id="mytigAddBtn">Add wallet</button>
+          <div class="field"><label for="inspInput">Wallet address</label><input id="inspInput" class="mono" placeholder="0x…" autocomplete="off" spellcheck="false"></div>
+          <button type="button" class="btn btn-primary" id="inspBtn">Look up</button>
         </div>
-        <div class="mytig-err" id="mytigErr"></div>
+        <div id="inspError" class="mytig-err" role="alert"></div>
+        <details class="copy-notes"><summary>Save this address</summary><div class="mytig-add"><div class="field"><label for="mytigLabel">Label (optional)</label><input id="mytigLabel" placeholder="e.g. Main wallet"></div><button type="button" class="btn btn-info" id="mytigAddBtn">Save address</button></div><div class="mytig-err" id="mytigErr" role="alert"></div></details>
         <div class="mytig-wallet-list" id="mytigWalletList"></div>
       </div>
+      <div id="addressOverview" class="hidden" aria-live="polite"></div>
       <div id="mytigEmpty" class="empty" style="margin:12px 0">
-        <p>Add an address above to see its balances.</p>
+        <p>Look up any address above. Save addresses to compare them in your portfolio.</p>
       </div>
       <div id="mytigMain" class="hidden">
         <div class="portfolio-grid" id="mytigPortfolio">
@@ -636,15 +648,10 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
         </div>
         <div id="mytigWalletCards"></div>
       </div>
-    <details class="advanced" id="inspectorSection" open><summary>Wallet inspector</summary>
+    <details class="advanced" id="inspectorSection" open><summary>Staking history</summary>
       <div class="card" style="margin-bottom:12px;border-color:rgba(168,85,247,.3)">
         <h3>Staking history</h3>
         <div class="hint">Look up any current or past staker.</div>
-        <div class="search" style="margin-top:10px">
-          <div class="field"><label for="inspInput">Wallet address</label><input id="inspInput" placeholder="0x…"></div>
-          <button type="button" class="btn btn-primary" id="inspBtn" style="background:linear-gradient(135deg,#a855f7,#7e22ce)">Look up</button>
-        </div>
-        <div id="inspError" class="mytig-err" role="alert"></div>
         <div class="chips" id="inspQuickChips" style="margin-top:8px">
           <span style="font-size:11px;color:var(--text2);align-self:center;margin-right:4px">Former stakers:</span>
         </div>
@@ -664,10 +671,11 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
               <span>Show staking rank</span>
             </label>
           </div>
-          <p class="hint">Rank is recorded only when this address has staking activity.</p><div class="chart-frame"><canvas id="chartInspector" role="img" aria-label="Wallet staked TIG and optional historical staking rank"></canvas></div><p class="chart-fallback" hidden>Chart unavailable. Please reload to retry loading the chart library.</p>
+          <p class="hint">Rank is shown at this address’s staking events and at the current data block. Changes between those events are not plotted.</p><div class="chart-frame"><canvas id="chartInspector" role="img" aria-label="Wallet staked TIG and staking rank at the address events and current data block"></canvas></div><p class="chart-fallback" hidden>Chart unavailable. Please reload to retry loading the chart library.</p>
         </div>
         <div class="card">
           <h3>Staking events <span class="badge" id="inspBadge">0</span></h3>
+          <button type="button" class="btn" data-export="events">Export events · CSV</button>
           <div class="table-wrap"><table>
             <thead><tr><th>Type</th><th>Amount</th><th>Timestamp</th><th>Block</th><th>Withdrawable</th><th>Tx</th></tr></thead>
             <tbody id="inspTableBody"><tr><td colspan="6">Enter address to load</td></tr></tbody>
@@ -694,7 +702,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
   </div>
 </div>
 
-<nav class="mobile-bottom" aria-label="Quick navigation"><button type="button" data-nav="overview" class="active">Overview</button><button type="button" data-nav="top500">Top 500</button><button type="button" data-nav="mytig">My address</button></nav>
+<nav class="mobile-bottom" aria-label="Quick navigation"><button type="button" data-nav="overview" class="active">Overview</button><button type="button" data-nav="top500">Top 500</button><button type="button" data-nav="holders">Staking</button><button type="button" data-nav="exits">Unlocks</button><button type="button" data-nav="mytig">Address</button></nav>
 <div class="drawer-bg" id="drawerBg"></div>
 <aside class="drawer" id="holderDrawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" inert>
   <button type="button" class="btn btn-ghost btn-xs close" id="drawerClose">Close</button>
@@ -712,7 +720,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
 <button type="button" id="toggleDetails" class="hidden" tabindex="-1" aria-hidden="true"></button>
 <div id="detailsPanel" class="hidden"></div>
 
-<script src="./holder-age.js"></script>
+<script src="./holder-age.js?v=2"></script>
 <script>
 (function () {
   'use strict';
@@ -1006,9 +1014,11 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
   var currentBatchSize = C.BATCH;
   var statsCache = null, statsCacheTime = 0, countdownTimer = null;
   var anchor = null, searchTimer = null, uiRefreshing = false, chainHead = null;
+  var syncHealth = { verifiedBlock: 0, checkedAt: 0, error: '' };
   var pendingPeriodSec = C.PENDING_PERIOD_FALLBACK_DAYS * 86400;
   var eventTopics = [];
   var uiState = {
+    chartRangeDays: 30,
     txFilter: 'all',
     holderSort: 'locked',
     lastUiData: null,
@@ -1029,6 +1039,8 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
   }
   function fmt2(n) {
     if (typeof n !== 'number' || !isFinite(n)) return '0.00';
+    if (n > 0 && n < 0.01) return '<0.01';
+    if (n < 0 && n > -0.01) return '-<0.01';
     return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
   function fmtNet(n) { if (typeof n !== 'number' || !isFinite(n)) return '0'; return (n > 0 ? '+' : '') + fmt(n); }
@@ -1085,10 +1097,15 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     if (!ls) { el.textContent = '· No data yet'; return; }
     var mins = Math.max(0, Math.round((Date.now() - Number(ls)) / 60000));
     var agoTxt = mins < 1 ? 'just now' : (mins + 'm ago');
-    var cov = document.getElementById('coverageLabel').textContent || '';
-    var isPartial = partial || (cov && cov !== '-' && parseFloat(cov) < 99.5);
-    if (isPartial) el.innerHTML = '· <strong>Partial</strong> · synced ' + agoTxt;
-    else el.innerHTML = '· Data fresh · synced <strong>' + agoTxt + '</strong>';
+    var block = uiState.lastUiData && uiState.lastUiData.block;
+    var recent = Date.now() - Number(ls) <= 2 * C.INTERVAL;
+    var verified = Number.isSafeInteger(block) && block > 0 && syncHealth.verifiedBlock === block;
+    var checked = syncHealth.checkedAt > 0 && Date.now() - syncHealth.checkedAt <= 2 * C.INTERVAL;
+    var lag = Number.isSafeInteger(chainHead) && block ? chainHead - block : null;
+    var state = !recent ? 'Out of date' : syncHealth.error ? 'Live update unavailable' :
+      partial || (lag !== null && lag > 30) ? 'Catching up' :
+      verified && checked && lag !== null && lag >= 0 ? 'Up to date' : 'Snapshot';
+    el.textContent = '· ' + state + ' · checked ' + agoTxt + (block ? ' · block ' + block.toLocaleString('en-US') : '');
   }
 
   function buildIface() {
@@ -1428,7 +1445,9 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       var cur = await connectRPC(false);
       chainHead = cur;
       var from = await getResumeFrom();
+      if (from > cur + 1) throw new Error('RPC head is behind the stored data; retrying later');
       if (from > cur) {
+        syncHealth = { verifiedBlock: cur, checkedAt: Date.now(), error: '' };
         document.getElementById('syncStatus').textContent = 'Up to date';
         setDot('dot-green');
         document.getElementById('syncModeBadge').textContent = 'Live';
@@ -1440,6 +1459,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       }
       var ok = await scanBlocks(from, cur, mode);
       if (ok && !stopReq) {
+        syncHealth = { verifiedBlock: cur, checkedAt: Date.now(), error: '' };
         await db.setMeta('lastBlock', cur);
         await db.setMeta('lastSync', Date.now());
         var c = await db.count();
@@ -1451,13 +1471,16 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
         await refreshAll({ skipCharts: false });
         refreshHolderLive();
       } else if (stopReq) {
+        syncHealth.error = 'Sync stopped';
         invalidateCache();
         await refreshAll({ skipCharts: false });
       } else {
+        syncHealth.error = 'Catch-up incomplete';
         invalidateCache();
         await refreshAll({ skipCharts: false });
       }
     } catch (err) {
+      syncHealth.error = errText(err);
       console.error(err);
       document.getElementById('syncStatus').textContent = 'Live sync info: ' + errText(err);
       setDot('dot-yellow');
@@ -1490,11 +1513,15 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
 
   async function getStats(useCache) {
     if (useCache && statsCache && Date.now() - statsCacheTime < 1200) return statsCache;
+    var dataBlock = Number(await db.meta('lastBlock'));
+    var asOf = Math.floor(Number(await db.meta('lastSync')) / 1000);
     var txsAll = await db.all();
+    if (!Number.isSafeInteger(dataBlock) || dataBlock <= 0) dataBlock = txsAll.reduce(function (max, tx) { return Math.max(max, Number(tx.blockNumber) || 0); }, 0);
     if (!txsAll.length) { statsCache = null; return null; }
     var txs = [], skippedBl = 0, i;
     for (i = 0; i < txsAll.length; i++) {
       if (!txsAll[i] || isBlacklisted(txsAll[i].address)) { skippedBl++; continue; }
+      if (Number.isSafeInteger(dataBlock) && Number(txsAll[i].blockNumber) > dataBlock) continue;
       if (normalizeType(txsAll[i].type) === 'reward') continue;
       // Use one address key across balances, age cohorts, pending lots and alerts.
       txs.push(Object.assign({}, txsAll[i], { address: String(txsAll[i].address).toLowerCase() }));
@@ -1503,7 +1530,10 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     var sorted = txs.slice().sort(function (a, b) {
       return (Number(a.blockNumber) - Number(b.blockNumber)) || (a.timestamp - b.timestamp) || ((a.logIndex || 0) - (b.logIndex || 0));
     });
+    asOf = Math.max(asOf || 0, sorted[sorted.length - 1].timestamp);
     var now = Math.floor(Date.now() / 1000);
+    var rangeDays = uiState.chartRangeDays === 0 ? Math.max(1, Math.floor(now / 86400) - Math.floor(sorted[0].timestamp / 86400) + 1) : uiState.chartRangeDays;
+    var chartFrom = (Math.floor(now / 86400) - rangeDays + 1) * 86400;
     var d7 = now - 7 * 86400, d14 = now - 14 * 86400, d24 = now - 86400, d30 = now - 30 * 86400;
     var unlockTotal = 0, withdrawTotal = 0, relockTotal = 0;
     var s7 = 0, u7 = 0, s14 = 0, u14 = 0, s30 = 0, u30 = 0, w7 = 0;
@@ -1531,7 +1561,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
         if (tx.timestamp >= d30) s30 += v;
         holders.set(addr, (holders.get(addr) || 0) + v);
         if (!firstSeen.has(addr)) firstSeen.set(addr, tx.timestamp);
-        if (tx.timestamp >= d30) {
+        if (tx.timestamp >= chartFrom) {
           var dayIn = new Date(tx.timestamp * 1000).toISOString().slice(0, 10);
           if (!daily[dayIn]) daily[dayIn] = { staked: 0, unstaked: 0 };
           daily[dayIn].staked += v;
@@ -1546,7 +1576,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
         pendingBal.set(addr, (pendingBal.get(addr) || 0) + v);
         var wt = Number(tx.withdrawableTime) || (tx.timestamp + pendingPeriodSec);
         addPending(openPending, { address: addr, valueTig: v, unlockTime: wt, timestamp: tx.timestamp, hash: tx.hash, id: tx.id });
-        if (tx.timestamp >= d30) {
+        if (tx.timestamp >= chartFrom) {
           var dayU = new Date(tx.timestamp * 1000).toISOString().slice(0, 10);
           if (!daily[dayU]) daily[dayU] = { staked: 0, unstaked: 0 };
           daily[dayU].unstaked += v;
@@ -1561,7 +1591,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
         if (tx.timestamp >= d7) s7 += v;
         if (tx.timestamp >= d14) s14 += v;
         if (tx.timestamp >= d30) s30 += v;
-        if (tx.timestamp >= d30) {
+        if (tx.timestamp >= chartFrom) {
           var dayR = new Date(tx.timestamp * 1000).toISOString().slice(0, 10);
           if (!daily[dayR]) daily[dayR] = { staked: 0, unstaked: 0 };
           daily[dayR].staked += v;
@@ -1624,7 +1654,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     var cohortData = ['diamond', 'long', 'medium', 'short'].map(function (k) {
       var c = cohorts[k];
       return { key: k, label: c.label, holderCount: c.holders, staked: c.staked, share: totalHeld > 0 ? c.staked / totalHeld * 100 : 0, netFlow7d: c.s7 - c.u7 };
-    }).filter(function (c) { return c.holderCount || c.staked; });
+    }).filter(function (c) { return c.holderCount || c.staked || c.netFlow7d; });
 
     var tierMap = {};
     TIERS.forEach(function (tr) { tierMap[tr.key] = { key: tr.key, label: tr.label, holders: 0, staked: 0, s7: 0, u7: 0 }; });
@@ -1721,8 +1751,8 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     });
 
     var days30 = [];
-    for (var di = 29; di >= 0; di--) days30.push(new Date((now - di * 86400) * 1000).toISOString().slice(0, 10));
-    var flowSeries = days30.map(function (day) {
+    for (var di = rangeDays - 1; di >= 0; di--) days30.push(new Date((now - di * 86400) * 1000).toISOString().slice(0, 10));
+    var flowSeries = days30.filter(function (day) { return day <= new Date(asOf * 1000).toISOString().slice(0, 10); }).map(function (day) {
       var x = daily[day] || { staked: 0, unstaked: 0 };
       return { day: day, staked: x.staked, unstaked: x.unstaked, net: x.staked - x.unstaked };
     });
@@ -1730,7 +1760,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     for (i = 0; i < sorted.length; i++) if (sorted[i].timestamp >= d24) seen24.add(sorted[i].address);
 
     var result = {
-      sorted: sorted, storedTotal: txsAll.length, skippedBlacklist: skippedBl, now: now,
+      sorted: sorted, block: dataBlock, asOf: asOf, chartFrom: chartFrom, storedTotal: txsAll.length, skippedBlacklist: skippedBl, now: now,
       stats: {
         netStaked: netStaked, totalPendingOpen: totalPendingOpen,
         pendingCooldown: pendingCooldown, pendingWithdrawable: pendingWithdrawable,
@@ -1745,8 +1775,8 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       spi: spi, spiLevel: spiLevel, spiDrivers: drivers, spiBreakdown: spiBreakdown, holders: holdersMeta, totalHeld: totalHeld,
       cohorts: cohortData, tiers: tierData,
       dormancyAlerts: dormancyAlerts, whaleAlerts: whaleAlerts,
-      unlocks: allUnlocks.slice(0, 40), unlockBars: unlockBars, unlockBands: uBands,
-      unstakes7d: unstakes7d.slice(0, 40), flowSeries: flowSeries, totalStakedSeries: totalStakedSeries, pendingPeriodSec: pendingPeriodSec
+      unlocks: allUnlocks, unlockBars: unlockBars, unlockBands: uBands,
+      unstakes7d: unstakes7d, flowSeries: flowSeries, totalStakedSeries: totalStakedSeries, pendingPeriodSec: pendingPeriodSec
     };
     statsCache = result; statsCacheTime = Date.now();
     return result;
@@ -1805,25 +1835,81 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       y: { type: 'linear', position: 'left', beginAtZero: true, ticks: { color: palette.muted, maxTicksLimit: 5, callback: function (v) { return fmt(v); } }, grid: { color: palette.grid } }
     };
   }
+  function stakeChartPoints(data) {
+    if (data.asOf < data.chartFrom) return [];
+    var daily = new Map(), before = null;
+    data.totalStakedSeries.forEach(function (pt) {
+      if (pt.ts < data.chartFrom) before = pt;
+      else if (pt.ts <= data.asOf) daily.set(Math.floor(pt.ts / 86400), pt);
+    });
+    var points = [{ ts: data.chartFrom, val: before ? before.val : 0 }].concat(Array.from(daily.values()));
+    points.push({ ts: data.asOf, val: data.stats.netStaked });
+    return points;
+  }
+  function csvText(columns, rows) {
+    return [columns].concat(rows).map(function (row) {
+      return row.map(function (value) { return '"' + String(value == null ? '' : value).replace(/"/g, '""') + '"'; }).join(',');
+    }).join('\r\n') + '\r\n';
+  }
+  function downloadData(kind) {
+    var data = uiState.lastUiData;
+    if (!data) return;
+    var table = uiState.chartExports && uiState.chartExports[kind], block = data.block;
+    if (kind === 'ranking') {
+      var query = document.getElementById('top500Search').value.trim().toLowerCase();
+      block = holderRankingBlock;
+      table = { columns: ['rank', 'address', 'total_tig', 'wallet_tig', 'active_stake_tig', 'pending_tig'], rows:
+        holderRanking.slice(0, 500).filter(function (row) { return !query || row.address.includes(query); }).map(function (row) {
+          return [row.rank, row.address, ethers.formatUnits(row.total, 18), ethers.formatUnits(row.wallet, 18), ethers.formatUnits(row.locked, 18), ethers.formatUnits(row.pending, 18)];
+        }) };
+    } else if (kind === 'events') table = uiState.inspectorExport;
+    if (!table || !block) return;
+    var asOf = kind === 'ranking' ? (block === data.block ? data.asOf : holderSnapshot && block === holderSnapshot.block ? holderSnapshot.timestamp : null) : data.asOf;
+    var columns = ['base_block', 'data_as_of_utc', 'exported_utc', 'chart_period_days'].concat(table.columns);
+    var rows = table.rows.map(function (row) { return [block, asOf ? new Date(asOf * 1000).toISOString() : '', new Date().toISOString(), kind === 'ranking' || kind === 'events' ? '' : kind === 'cooldown' ? 28 : uiState.chartRangeDays || 'all'].concat(row); });
+    var url = URL.createObjectURL(new Blob(['\ufeff' + csvText(columns, rows)], { type: 'text/csv;charset=utf-8' }));
+    var link = document.createElement('a');
+    link.href = url; link.download = 'tig-' + kind + '-block-' + block + '.csv'; link.click();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+  function renderChartTables(data) {
+    var points = stakeChartPoints(data);
+    var meta = 'Base block ' + data.block.toLocaleString('en-US') + ' · checked ' + new Date(data.asOf * 1000).toISOString() + ' · ' + (uiState.chartRangeDays ? uiState.chartRangeDays + ' UTC days' : 'all history');
+    function table(prefix, rows) {
+      document.getElementById(prefix + 'DataMeta').textContent = meta;
+      document.getElementById(prefix + 'DataBody').innerHTML = rows.map(function (row) {
+        return '<tr>' + row.map(function (value) { return '<td>' + escapeHtml(typeof value === 'number' ? fmt2(value) : value) + '</td>'; }).join('') + '</tr>';
+      }).join('') || '<tr><td colspan="4">No data in the selected period</td></tr>';
+    }
+    var stake = points.map(function (pt) { return [new Date(pt.ts * 1000).toISOString(), pt.val]; });
+    var flows = data.flowSeries.map(function (row) { return [row.day, row.staked, row.unstaked, row.net]; });
+    var cooldown = data.unlockBars.map(function (row) { return [row.day * 24 + '–' + (row.day + 1) * 24 + 'h', row.value]; });
+    table('stake', stake); table('flow', flows); table('unlock', cooldown);
+    document.getElementById('unlockDataMeta').textContent = 'Pending balances at Base block ' + data.block.toLocaleString('en-US') + ' · windows start ' + new Date(data.now * 1000).toISOString() + ' · next 28 days';
+    uiState.chartExports = {
+      stake: { columns: ['time_utc', 'active_stake_tig'], rows: stake },
+      flows: { columns: ['day_utc', 'added_tig', 'unlock_requests_tig', 'net_tig'], rows: flows },
+      cooldown: { columns: ['window_start_utc', 'window_end_utc', 'tig_becoming_ready'], rows: data.unlockBars.map(function (row) {
+        return [new Date((data.now + row.day * 86400) * 1000).toISOString(), new Date((data.now + (row.day + 1) * 86400) * 1000).toISOString(), row.value];
+      }) }
+    };
+  }
   function drawCharts(data) {
     if (typeof Chart === 'undefined') { document.querySelectorAll('.chart-fallback').forEach(function (p) { p.hidden = false; }); return; }
     try {
       var palette = chartPalette();
-      var labels = data.flowSeries.map(function (x) { return x.day.slice(5); });
+      var labels = data.flowSeries.map(function (x) { return x.day; });
       var last7 = data.flowSeries.slice(-7);
       var avg7 = last7.length ? last7.reduce(function (s, x) { return s + x.net; }, 0) / last7.length : 0;
       makeChart('chartFlow', 'bar', labels, [
         { label: 'Added to stake', data: data.flowSeries.map(function (x) { return x.staked; }), backgroundColor: palette.accent, borderRadius: 3 },
         { label: 'Unlock requests', data: data.flowSeries.map(function (x) { return -x.unstaked; }), backgroundColor: palette.red, borderRadius: 3 },
         { label: 'Net change', data: data.flowSeries.map(function (x) { return x.net; }), type: 'line', borderColor: palette.line, tension: 0.1, pointRadius: 0, borderWidth: 2 },
-        { label: '7d average', data: data.flowSeries.map(function () { return avg7; }), type: 'line', borderColor: palette.yellow, borderDash: [4, 4], tension: 0, pointRadius: 0, borderWidth: 1.5 }
+        { label: 'Last 7 daily totals · average', data: data.flowSeries.map(function () { return avg7; }), type: 'line', borderColor: palette.yellow, borderDash: [4, 4], tension: 0, pointRadius: 0, borderWidth: 1.5 }
       ]);
-      makeChart('chartUnlock', 'bar', data.unlockBars.map(function (x) { return 'D' + x.day; }),
+      makeChart('chartUnlock', 'bar', data.unlockBars.map(function (x) { return x.day === 0 ? '0–24h' : x.day + '–' + (x.day + 1) + 'd'; }),
         [{ label: 'Withdrawable', data: data.unlockBars.map(function (x) { return x.value; }), backgroundColor: palette.accent, borderRadius: 3 }]);
-      var dailyClose = new Map();
-      data.totalStakedSeries.forEach(function (pt) { dailyClose.set(Math.floor(pt.ts / 86400), pt); });
-      var downsampled = Array.from(dailyClose.values());
-      if (downsampled.length) downsampled.push({ ts: data.now, val: data.stats.netStaked });
+      var downsampled = stakeChartPoints(data);
       makeChart('chartTotalStaked', 'line', downsampled.map(function (pt) { return chartDate(pt.ts); }), [{
         label: 'Total Active Staked TIG',
         data: downsampled.map(function (pt) { return { x: pt.ts * 1000, y: pt.val }; }),
@@ -1890,7 +1976,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     }).join('') || '<tr><td colspan="6">None</td></tr>';
   }
 
-  var holderSnapshot = null, holderRanking = [], holderRefreshBusy = false, top500Page = 0;
+  var holderSnapshot = null, holderRanking = [], holderRankingBlock = 0, holderRefreshBusy = false, top500Page = 0;
   function holderWei(value) {
     if (!/^\d+$/.test(String(value))) throw new Error('Invalid holder balance');
     return BigInt(value);
@@ -1902,9 +1988,9 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     var first = holderSnapshot && holderSnapshot.firstReceived && holderSnapshot.firstReceived[address];
     var bound = holderSnapshot && holderSnapshot.receivedBy && holderSnapshot.receivedBy[address];
     var dated = first || bound;
-    var info = typeof TigHolderAge === 'undefined' ? {label: 'History unavailable', days: null} : TigHolderAge.classify(dated, Math.floor(Date.now() / 1000));
+    var info = typeof TigHolderAge === 'undefined' ? {label: 'Age unavailable', days: null} : TigHolderAge.classify(dated, Math.floor(Date.now() / 1000));
     var note = info.days === null ? 'Holder age could not be verified.' : (first ? 'First TIG received ' : 'Received TIG at least ') + info.days + ' days ago. Does not imply continuous holding.';
-    return { label: info.label, note: note };
+    return { label: info.label, note: note, verified: info.days !== null };
   }
   function renderTop500() {
     var query = document.getElementById('top500Search').value.trim().toLowerCase();
@@ -1925,8 +2011,8 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       var age = holderAgeInfo(row.address);
       var kind = KNOWN_HOLDER_CONTRACTS[row.address] ? '<span class="tag tag-relock">' + KNOWN_HOLDER_CONTRACTS[row.address] + '</span>' : '<span class="tag tag-reward th-tip" tabindex="0" data-tip="' + age.note + '">' + age.label + '</span>';
       var foundation = isFoundation(row.address) ? '<span class="tag tag-foundation">Foundation</span>' : '';
-      return '<tr><td>' + row.rank + '</td><td><a class="mono" target="_blank" rel="noopener" href="https://basescan.org/address/' + row.address + '">' +
-        shortAddr(row.address) + '</a> ' + kind + foundation + debBtn(row.address) + '</td><td><strong>' + holderAmount(row.total) +
+      return '<tr><td>' + row.rank + '</td><td><button type="button" class="btn-link mono inspect-address" data-address="' + row.address + '">' +
+        shortAddr(row.address) + '</button> ' + kind + foundation + '<div class="holder-links"><button type="button" class="btn-link copy-address" data-address="' + row.address + '">Copy</button> <a target="_blank" rel="noopener" href="https://basescan.org/address/' + row.address + '">Explorer ↗</a></div></td><td><strong>' + holderAmount(row.total) +
         '</strong></td><td>' + holderAmount(row.wallet) + '</td><td>' + holderAmount(row.locked) +
         '</td><td>' + holderAmount(row.pending) + '</td></tr>';
     }).join('') || '<tr><td colspan="6">No matching address in the top 500</td></tr>';
@@ -1935,9 +2021,12 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     mobile.innerHTML = list.map(function (row) {
       var age = holderAgeInfo(row.address);
       var kind = KNOWN_HOLDER_CONTRACTS[row.address] || (isFoundation(row.address) ? 'Foundation · ' + age.label : age.label);
-      return '<details class="holder-detail" data-address="' + row.address + '"' + (expanded.has(row.address) ? ' open' : '') + '><summary class="rank-summary"><span class="rank-number">' + row.rank + '</span><span><span class="mono">' + shortAddr(row.address) + '</span><span class="holder-kind">' + kind + '</span></span><span class="holder-total">' + holderAmount(row.total) + '<small>TIG total · details</small></span></summary><div class="holder-breakdown"><span class="full-address">' + row.address + '</span>' + (KNOWN_HOLDER_CONTRACTS[row.address] ? '' : '<p class="hint">' + age.note + '</p>') + '<dl><div><dt>Wallet</dt><dd>' + holderAmount(row.wallet) + ' TIG</dd></div><div><dt>Active stake</dt><dd>' + holderAmount(row.locked) + ' TIG</dd></div><div><dt>Pending</dt><dd>' + holderAmount(row.pending) + ' TIG</dd></div></dl><div class="holder-links"><a href="https://basescan.org/address/' + row.address + '" target="_blank" rel="noopener">Basescan ↗</a><button class="btn-link inspect-address" data-address="' + row.address + '">Inspect staking</button></div></div></details>';
+      return '<details class="holder-detail" data-address="' + row.address + '"' + (expanded.has(row.address) ? ' open' : '') + '><summary class="rank-summary"><span class="rank-number">' + row.rank + '</span><span><span class="mono">' + shortAddr(row.address) + '</span><span class="holder-kind">' + kind + '</span></span><span class="holder-total">' + holderAmount(row.total) + '<small>TIG total · details</small></span></summary><div class="holder-breakdown"><span class="full-address">' + row.address + '</span>' + (KNOWN_HOLDER_CONTRACTS[row.address] ? '' : '<p class="hint">' + age.note + '</p>') + '<dl><div><dt>Wallet</dt><dd>' + holderAmount(row.wallet) + ' TIG</dd></div><div><dt>Active stake</dt><dd>' + holderAmount(row.locked) + ' TIG</dd></div><div><dt>Pending</dt><dd>' + holderAmount(row.pending) + ' TIG</dd></div></dl><div class="holder-links"><button type="button" class="btn-link copy-address" data-address="' + row.address + '">Copy</button><a href="https://basescan.org/address/' + row.address + '" target="_blank" rel="noopener">Basescan ↗</a><button class="btn-link inspect-address" data-address="' + row.address + '">Inspect staking</button></div></div></details>';
     }).join('') || '<p class="hint">No matching address in the top 500.</p>';
     var top = holderRanking.slice(0, 500);
+    var datedAddresses = top.filter(function (row) { return !KNOWN_HOLDER_CONTRACTS[row.address]; });
+    var verifiedAges = datedAddresses.filter(function (row) { return holderAgeInfo(row.address).verified; }).length;
+    document.getElementById('holderAgeStatus').textContent = 'Age dates verified for ' + verifiedAges + ' of ' + datedAddresses.length + ' addresses. Missing dates do not affect balance verification.';
     var total = top.reduce(function (sum, row) { return sum + row.total; }, 0n);
     var top10 = top.slice(0, 10).reduce(function (sum, row) { return sum + row.total; }, 0n);
     var top50 = top.slice(0, 50).reduce(function (sum, row) { return sum + row.total; }, 0n);
@@ -1970,30 +2059,34 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
         seen.add(key);
         return { address: key, wallet: holderWei(item.wallet), locked: holderWei(item.locked), pending: holderWei(item.pending) };
       });
+      var ranked = rankHolderRows(rows);
+      if (ranked.length < 500 || ranked[499].total <= holderWei(snap.candidateCutoff)) throw new Error('Candidate coverage is insufficient');
       holderSnapshot = snap;
-      holderRanking = rankHolderRows(rows);
+      holderRanking = ranked;
+      holderRankingBlock = snap.block;
       document.getElementById('top500Status').textContent =
         'Balances at block ' + snap.block.toLocaleString('en-US') + ' · ' + new Date(snap.timestamp * 1000).toLocaleString('en-US');
       renderTop500();
     } catch (error) {
-      document.getElementById('top500Status').textContent = 'Top 500 snapshot unavailable: ' + errText(error);
-      document.getElementById('top500Body').innerHTML = '<tr><td colspan="6">Waiting for a verified snapshot</td></tr>';
+      document.getElementById('top500Status').textContent = (holderRankingBlock ? 'Verified balances at block ' + holderRankingBlock.toLocaleString('en-US') + ' · snapshot update unavailable: ' : 'Top 500 snapshot unavailable: ') + errText(error);
+      if (!holderRanking.length) document.getElementById('top500Body').innerHTML = '<tr><td colspan="6">Waiting for a verified snapshot</td></tr>';
     }
   }
   async function refreshHolderLive() {
     if (!holderSnapshot || !provider || holderRefreshBusy) return;
     holderRefreshBusy = true;
+    var baseSnapshot = holderSnapshot;
     try {
       var target = Number(await db.meta('lastBlock'));
-      if (!Number.isSafeInteger(target) || target <= holderSnapshot.block) return;
-      if (target - holderSnapshot.block > 15000) throw new Error('Snapshot is too old for browser catch-up');
-      var rows = new Map(holderSnapshot.candidates.map(function (item) {
+      if (!Number.isSafeInteger(target) || target <= baseSnapshot.block) return;
+      if (target - baseSnapshot.block > 15000) throw new Error('Snapshot is too old for browser catch-up');
+      var rows = new Map(baseSnapshot.candidates.map(function (item) {
         var key = item.address.toLowerCase();
         return [key, { address: key, wallet: holderWei(item.wallet), locked: holderWei(item.locked), pending: holderWei(item.pending) }];
       }));
       var transfers = [];
       var topic = ethers.id('Transfer(address,address,uint256)');
-      for (var start = holderSnapshot.block + 1; start <= target;) {
+      for (var start = baseSnapshot.block + 1; start <= target;) {
         var step = 500, logs, end, attempts = 0;
         for (;;) {
           end = Math.min(start + step - 1, target);
@@ -2002,7 +2095,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
             break;
           } catch (error) {
             attempts++;
-            step = Math.max(100, Math.floor(step / 2));
+            step = Math.max(1, Math.floor(step / 2));
             if (attempts >= C.MAX_BATCH_RETRIES) throw error;
             if (isRateLimit(error) || attempts % 3 === 0) {
               try { await connectRPC(true); } catch (e) {}
@@ -2027,7 +2120,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
         else if (!EXCLUDED_HOLDER_ADDRESSES.has(to)) checkWallet.add(to);
       });
       var newStakeEvents = (await db.all()).filter(function (tx) {
-        return Number(tx.blockNumber) > holderSnapshot.block && Number(tx.blockNumber) <= target;
+        return Number(tx.blockNumber) > baseSnapshot.block && Number(tx.blockNumber) <= target;
       }).sort(function (a, b) { return Number(a.blockNumber) - Number(b.blockNumber) || Number(a.logIndex) - Number(b.logIndex); });
       newStakeEvents.forEach(function (tx) {
         var key = String(tx.address).toLowerCase();
@@ -2047,7 +2140,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       });
       var unknown = [...checkWallet];
       for (var i = 0; i < unknown.length; i++) {
-        var key = unknown[i], result, lastError;
+        var key = unknown[i], result = undefined, lastError = undefined;
         for (var attempt = 0; attempt < 5; attempt++) {
           try {
             result = await new ethers.Contract(C.TIG, ERC20_ABI, provider).balanceOf(key, { blockTag: target });
@@ -2063,14 +2156,19 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
         if (!row) { row = { address: key, wallet: 0n, locked: 0n, pending: 0n }; rows.set(key, row); }
         row.wallet = BigInt(result);
       }
-      holderRanking = rankHolderRows([...rows.values()]);
+      var ranked = rankHolderRows([...rows.values()]);
+      if (ranked.length < 500 || ranked[499].total <= holderWei(baseSnapshot.candidateCutoff)) throw new Error('Candidate coverage is insufficient; keeping the verified ranking');
+      if (holderSnapshot !== baseSnapshot || target < holderRankingBlock) return;
+      holderRanking = ranked;
+      holderRankingBlock = target;
       document.getElementById('top500Status').textContent =
         'Updated through block ' + target.toLocaleString('en-US');
       renderTop500();
     } catch (error) {
       console.warn('Top 500 live update', error);
+      if (holderSnapshot !== baseSnapshot) return;
       document.getElementById('top500Status').textContent =
-        'Snapshot at block ' + holderSnapshot.block.toLocaleString('en-US') + ' · live update unavailable: ' + errText(error);
+        'Verified balances at block ' + holderRankingBlock.toLocaleString('en-US') + ' · live update unavailable: ' + errText(error);
     } finally { holderRefreshBusy = false; }
   }
 
@@ -2323,7 +2421,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       pendingCooldown: pendingCooldown, pendingReady: pendingReady, totalWithdrawn: hist.totalWithdrawn,
       peakBal: hist.peakBal, peakRank: hist.peakRank, rank: rank, share: share, net7: in7 - out7,
       in7: in7, out7: out7, lifetimeDays: Math.floor((now - hist.firstSeen) / 86400),
-      firstSeen: hist.firstSeen, lastSeen: hist.lastSeen, lots: lots.slice(0, 12),
+      firstSeen: hist.firstSeen, lastSeen: hist.lastSeen, lots: lots,
       nextUnlock: nextUnlock, txCount: hist.userTxs.length, isFoundation: hist.isFoundation
     };
   }
@@ -2332,6 +2430,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     if (!['overview', 'top500', 'holders', 'exits', 'mytig'].includes(tab)) tab = 'overview';
     var btn = document.querySelector('.tab-btn[data-tab="' + tab + '"]');
     if (!btn) return;
+    document.getElementById('chartControls').classList.toggle('hidden', tab !== 'overview' && tab !== 'holders');
     Array.prototype.forEach.call(document.querySelectorAll('.tab-btn'), function (b) {
       var selected = b === btn;
       b.classList.toggle('active', selected);
@@ -2341,7 +2440,11 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     Array.prototype.forEach.call(document.querySelectorAll('.tab-panel'), function (p) {
       p.classList.toggle('active', p.id === 'tab-' + tab);
     });
-    if (updateUrl && location.hash !== '#' + tab) history.replaceState(null, '', '#' + tab);
+    if (updateUrl && location.hash !== '#' + tab) {
+      history.replaceState({ scrollY: window.scrollY }, '', location.href);
+      history.pushState({ scrollY: 0 }, '', '#' + tab);
+      window.scrollTo(0, 0);
+    }
     document.getElementById('mobileSection').value = tab;
     document.querySelectorAll('[data-nav]').forEach(function (button) {
       var selected = button.dataset.nav === tab;
@@ -2357,18 +2460,55 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     if (tab === 'mytig') renderMyTig();
   }
 
+  var selectedAddress = null;
+  function addressFromUrl(value) {
+    var address = new URL(value).searchParams.get('address');
+    return /^0x[0-9a-fA-F]{40}$/.test(address || '') ? address.toLowerCase() : null;
+  }
+  function openAddress(address) {
+    address = String(address).trim();
+    if (!/^0x[0-9a-fA-F]{40}$/.test(address)) { renderInspector(address); return; }
+    history.replaceState({ scrollY: window.scrollY }, '', location.href);
+    var url = new URL(location.href);
+    url.searchParams.set('address', address.toLowerCase());
+    url.hash = 'mytig';
+    if (url.href !== location.href) history.pushState({ scrollY: 0 }, '', url.href);
+    selectedAddress = address.toLowerCase();
+    document.getElementById('inspInput').value = selectedAddress;
+    activateTab('mytig', false);
+    renderInspector(selectedAddress);
+    window.scrollTo(0, 0);
+  }
+  function applyLocation() {
+    selectedAddress = addressFromUrl(location.href);
+    document.getElementById('inspInput').value = selectedAddress || '';
+    if (!selectedAddress) {
+      document.getElementById('inspMain').classList.add('hidden');
+      document.getElementById('inspEmpty').classList.remove('hidden');
+      document.getElementById('inspEmpty').textContent = 'Look up an address above to view its staking history.';
+      document.getElementById('inspError').textContent = '';
+      uiState.inspectorExport = null;
+    }
+    activateTab(location.hash.slice(1) || (selectedAddress ? 'mytig' : 'overview'), false);
+    if (selectedAddress && uiState.lastUiData) renderInspector(selectedAddress);
+    requestAnimationFrame(function () { window.scrollTo(0, history.state && history.state.scrollY || 0); });
+  }
+
   var myWalletBalanceCache = new Map(), myWalletBalanceBusy = false;
-  async function refreshMyWalletBalances(list) {
-    if (myWalletBalanceBusy || !list.length) return;
+  function walletBalanceAtBlock(address, block) {
+    var item = myWalletBalanceCache.get(address.toLowerCase());
+    return item && item.block === block ? item : null;
+  }
+  async function refreshMyWalletBalances(list, block) {
+    if (myWalletBalanceBusy || !list.length || !Number.isSafeInteger(block) || block <= 0) return;
     var missing = list.filter(function (w) {
       var item = myWalletBalanceCache.get(w.address.toLowerCase());
-      return !item || Date.now() - item.time > 2 * 60 * 1000;
+      return !item || item.block !== block || Date.now() - item.time > 2 * 60 * 1000;
     });
     if (!missing.length) return;
     myWalletBalanceBusy = true;
     try {
       if (!provider) await connectRPC(false);
-      var block = Number(await db.meta('lastBlock')) || await provider.getBlockNumber();
       var token = new ethers.Contract(C.TIG, ERC20_ABI, provider);
       await Promise.all(missing.map(async function (w) {
         var key = w.address.toLowerCase();
@@ -2381,7 +2521,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       }));
     } catch (error) {
       missing.forEach(function (w) {
-        myWalletBalanceCache.set(w.address.toLowerCase(), { error: errText(error), time: Date.now() });
+        myWalletBalanceCache.set(w.address.toLowerCase(), { error: errText(error), block: block, time: Date.now() });
       });
     } finally {
       myWalletBalanceBusy = false;
@@ -2389,8 +2529,28 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     }
   }
 
+  function renderSelectedAddress(data) {
+    var panel = document.getElementById('addressOverview');
+    if (!selectedAddress || !data) { panel.classList.add('hidden'); return; }
+    panel.classList.remove('hidden');
+    var stats = computePersonalWallet(selectedAddress, data);
+    refreshMyWalletBalances([{ address: selectedAddress }], data.block).catch(function (error) { console.warn(error); });
+    var wallet = walletBalanceAtBlock(selectedAddress, data.block);
+    var total = wallet && wallet.value != null ? fmt2(wallet.value + stats.curStaked + stats.curPending) + ' TIG' : 'Updating…';
+    var walletText = wallet && wallet.value != null ? fmt2(wallet.value) + ' TIG' : wallet && wallet.error ? 'Unavailable' : 'Loading…';
+    panel.innerHTML = '<div class="card" style="margin-bottom:24px"><h3>Address balances</h3><p class="mono" style="overflow-wrap:anywhere">' + selectedAddress + '</p>' +
+      '<div class="search"><button type="button" class="btn copy-address" data-address="' + selectedAddress + '">Copy address</button><button type="button" class="btn" data-share-address>Copy link</button><a class="btn" href="https://basescan.org/address/' + selectedAddress + '" target="_blank" rel="noopener">Explorer ↗</a></div>' +
+      '<p class="hint">Balances at Base block ' + data.block.toLocaleString('en-US') + (wallet && wallet.error ? ' · wallet lookup unavailable: ' + escapeHtml(wallet.error) : '') + '</p>' +
+      '<div class="inspector-stats"><div class="mytig-stat"><div class="k">In wallet</div><div class="v">' + walletText + '</div></div>' +
+      '<div class="mytig-stat"><div class="k">Active stake</div><div class="v">' + fmt2(stats.curStaked) + ' TIG</div></div>' +
+      '<div class="mytig-stat"><div class="k">In cooldown</div><div class="v">' + fmt2(stats.pendingCooldown) + ' TIG</div></div>' +
+      '<div class="mytig-stat"><div class="k">Ready to withdraw</div><div class="v">' + fmt2(stats.pendingReady) + ' TIG</div></div></div>' +
+      '<p><strong>Total: ' + total + '</strong></p><p class="hint">' + (stats.nextUnlock ? 'Next cooldown ends: ' + fullDate(stats.nextUnlock) : 'No upcoming cooldown end') + '</p></div>';
+  }
+
   function renderMyTig() {
     var data = uiState.lastUiData;
+    renderSelectedAddress(data);
     var list = loadMyWallets();
     var listEl = document.getElementById('mytigWalletList');
     var empty = document.getElementById('mytigEmpty');
@@ -2405,15 +2565,15 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       btn.onclick = function () { removeMyWallet(btn.getAttribute('data-rm')); renderMyTig(); };
     });
     if (!list.length || !data) {
-      if (empty) empty.classList.remove('hidden');
+      if (empty) empty.classList.toggle('hidden', !!selectedAddress);
       if (main) main.classList.add('hidden');
       return;
     }
     if (empty) empty.classList.add('hidden');
     if (main) main.classList.remove('hidden');
     var rows = list.map(function (w) { return { meta: w, stats: computePersonalWallet(w.address, data) }; });
-    refreshMyWalletBalances(list).catch(function (error) { console.warn('wallet balances', error); });
-    var walletEntries = list.map(function (w) { return myWalletBalanceCache.get(w.address.toLowerCase()); });
+    refreshMyWalletBalances(list, data.block).catch(function (error) { console.warn('wallet balances', error); });
+    var walletEntries = list.map(function (w) { return walletBalanceAtBlock(w.address, data.block); });
     var walletComplete = walletEntries.every(function (entry) { return entry && entry.value != null; });
     var walletTotal = walletEntries.reduce(function (sum, entry) { return sum + (entry && entry.value != null ? entry.value : 0); }, 0);
     var totLocked = 0, totCool = 0, totReady = 0, totNet = 0, next = null, tenureSum = 0, tenureN = 0;
@@ -2451,7 +2611,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       var w = r.meta, s = r.stats;
       var title = (w.label ? escapeHtml(w.label) + ' · ' : '') + shortAddr(w.address);
       var fTag = s.isFoundation ? '<span class="tag tag-foundation">Foundation</span>' : '';
-      var walletEntry = myWalletBalanceCache.get(w.address.toLowerCase());
+      var walletEntry = walletBalanceAtBlock(w.address, data.block);
       var walletValue = walletEntry && walletEntry.value != null ? walletEntry.value : null;
       var walletText = walletValue != null ? fmt(walletValue) + ' TIG' : 'Loading or unavailable';
       var combined = walletValue != null ? fmt(walletValue + s.curStaked + s.curPending) + ' TIG' : '–';
@@ -2504,12 +2664,43 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       btn.onclick = function () {
         var a = btn.getAttribute('data-insp');
         document.getElementById('inspectorSection').open = true;
-        var inp = document.getElementById('inspInput');
-        if (inp) inp.value = a;
-        renderInspector(a);
-        document.getElementById('inspectorSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        openAddress(a);
       };
     });
+  }
+
+  function renderUnlockTables(data) {
+    if (!data) return;
+    function page(rows, key, prefix) {
+      var index = Math.max(0, Math.min(uiState[key] || 0, Math.max(0, Math.ceil(rows.length / 30) - 1)));
+      uiState[key] = index;
+      document.getElementById(prefix + 'Prev').disabled = index === 0;
+      document.getElementById(prefix + 'Next').disabled = (index + 1) * 30 >= rows.length;
+      document.getElementById(prefix + 'PageStatus').textContent = rows.length
+        ? 'Showing ' + (index * 30 + 1) + '–' + Math.min((index + 1) * 30, rows.length) + ' of ' + rows.length
+        : 'No items';
+      return rows.slice(index * 30, (index + 1) * 30);
+    }
+    var requests = page(data.unstakes7d, 'requestPage', 'request');
+    var upcoming = page(data.unlocks, 'unlockPage', 'unlock');
+    document.getElementById('unstakeCount7d').textContent = String(data.unstakes7d.length);
+    document.getElementById('unstakes7dBody').innerHTML = data.unstakes7d.length ? requests.map(function (tx) {
+      var g = tx._dormancyGap, dlab = 'Active';
+      if (g >= C.DORMANCY_DAYS) dlab = '<span class="c-purple">' + Math.floor(g) + 'd</span>';
+      else if (g >= 30) dlab = '<span class="c-yellow">' + Math.floor(g) + 'd idle</span>';
+      var fTag = isFoundation(tx.address) ? '<span class="tag tag-foundation">Foundation</span>' : '';
+      return '<tr><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a>' + fTag + debBtn(tx.address) + '</td><td class="c-yellow">' + fmt2(tx.valueTig) + ' TIG</td><td>' + ago(tx.timestamp) + '</td><td>' + fullDate(tx._withdrawableTime) + '</td><td>' + dlab + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
+    }).join('') : '<tr><td colspan="6" class="c-green">No unstakes in last 7 days </td></tr>';
+
+    document.getElementById('unlockCount').textContent = String(data.unlocks.length);
+    document.getElementById('unlocksBody').innerHTML = data.unlocks.length ? upcoming.map(function (tx) {
+      var rem = tx.unlockTime - data.now;
+      var cd = rem < 86400 ? Math.floor(rem / 3600) + 'h' : Math.floor(rem / 86400) + 'd';
+      var cls = rem < 7 * 86400 ? 'c-red' : rem < 14 * 86400 ? 'c-yellow' : '';
+      var fTag = isFoundation(tx.address) ? '<span class="tag tag-foundation">Foundation</span>' : '';
+      return '<tr><td class="' + cls + '">' + fullDate(tx.unlockTime) + '</td><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a>' + fTag + debBtn(tx.address) + '</td><td class="' + cls + '">' + fmt2(tx.valueTig) + ' TIG</td><td class="' + cls + '">in ' + cd + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
+    }).join('') : '<tr><td colspan="5" class="c-green">No upcoming cooldown expirations</td></tr>';
+
   }
 
   async function refreshAll(opts) {
@@ -2615,7 +2806,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     var nearHtml = '';
     for (var nd = 0; nd < 3; nd++) {
       var val = byDay[nd] || 0;
-      var labelN = nd === 0 ? 'Today' : nd === 1 ? 'Tomorrow' : 'In ' + nd + ' days';
+      var labelN = nd === 0 ? 'Next 24h' : (nd * 24) + '–' + ((nd + 1) * 24) + 'h';
       nearHtml += '<div class="near-item"><span>' + labelN + '</span><strong class="' + (val > 0 ? 'c-yellow' : '') + '">' + fmt(val) + ' TIG</strong></div>';
     }
     near.innerHTML = nearHtml;
@@ -2644,7 +2835,8 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       html += '<div class="alert warn">Large holder ' + shortAddr(w.address) + fTag + ' unlocked ' + fmt(w.unstaked) + ' TIG (' + w.percentage.toFixed(1) + '% of their locked)</div>';
     });
     document.getElementById('alertsSection').innerHTML = html;
-    document.getElementById('flowSummary').textContent = '30-day stake change: ' + fmtNet(st.net30) + ' TIG';
+    document.getElementById('flowSummary').textContent = 'Selected period · net stake change: ' + fmtNet(data.flowSeries.reduce(function (sum, row) { return sum + row.net; }, 0)) + ' TIG · daily totals in UTC';
+    renderChartTables(data);
 
     uiState.activityRows = data.sorted.slice(-80).reverse();
     document.getElementById('txBadge').textContent = String(Math.min(80, data.sorted.length));
@@ -2663,23 +2855,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       return '<tr><td>' + t.label + '</td><td>' + t.holders + '</td><td>' + fmt(t.staked) + ' TIG</td><td>' + t.share.toFixed(1) + '%</td><td class="' + (t.netFlow7d >= 0 ? 'c-green' : 'c-red') + '">' + fmtNet(t.netFlow7d) + '</td></tr>';
     }).join('') || '<tr><td colspan="5">None</td></tr>';
 
-    document.getElementById('unstakeCount7d').textContent = String(data.unstakes7d.length);
-    document.getElementById('unstakes7dBody').innerHTML = data.unstakes7d.length ? data.unstakes7d.map(function (tx) {
-      var g = tx._dormancyGap, dlab = 'Active';
-      if (g >= C.DORMANCY_DAYS) dlab = '<span class="c-purple">' + Math.floor(g) + 'd</span>';
-      else if (g >= 30) dlab = '<span class="c-yellow">' + Math.floor(g) + 'd idle</span>';
-      var fTag = isFoundation(tx.address) ? '<span class="tag tag-foundation">Foundation</span>' : '';
-      return '<tr><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a>' + fTag + debBtn(tx.address) + '</td><td class="c-yellow">' + fmt2(tx.valueTig) + ' TIG</td><td>' + ago(tx.timestamp) + '</td><td>' + fullDate(tx._withdrawableTime) + '</td><td>' + dlab + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
-    }).join('') : '<tr><td colspan="6" class="c-green">No unstakes in last 7 days </td></tr>';
-
-    document.getElementById('unlockCount').textContent = String(data.unlocks.length);
-    document.getElementById('unlocksBody').innerHTML = data.unlocks.length ? data.unlocks.slice(0, 30).map(function (tx) {
-      var rem = tx.unlockTime - data.now;
-      var cd = rem < 86400 ? Math.floor(rem / 3600) + 'h' : Math.floor(rem / 86400) + 'd';
-      var cls = rem < 7 * 86400 ? 'c-red' : rem < 14 * 86400 ? 'c-yellow' : '';
-      var fTag = isFoundation(tx.address) ? '<span class="tag tag-foundation">Foundation</span>' : '';
-      return '<tr><td class="' + cls + '">' + fullDate(tx.unlockTime) + '</td><td><a class="mono" target="_blank" href="https://basescan.org/address/' + tx.address + '">' + shortAddr(tx.address) + '</a>' + fTag + debBtn(tx.address) + '</td><td class="' + cls + '">' + fmt2(tx.valueTig) + ' TIG</td><td class="' + cls + '">in ' + cd + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
-    }).join('') : '<tr><td colspan="5" class="c-green">No upcoming cooldown expirations</td></tr>';
+    renderUnlockTables(data);
 
     document.getElementById('extraMetrics').textContent =
       'Pending withdrawal: ' + fmt(st.totalPendingOpen) + ' TIG';
@@ -2687,6 +2863,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     if (!opts.skipCharts) drawCharts(data);
     populateExHoldersChips();
     try { renderMyTig(); } catch (eMt) { console.warn(eMt); }
+    if (selectedAddress && !opts.skipCharts) renderInspector(selectedAddress);
   }
 
   function searchHolder() {
@@ -2741,16 +2918,21 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
   function renderInspector(addr) {
     var validation = document.getElementById('inspError');
     if (!/^0x[0-9a-fA-F]{40}$/.test(String(addr).trim())) {
+      selectedAddress = null;
+      document.getElementById('addressOverview').classList.add('hidden');
       validation.textContent = 'Enter a valid Ethereum address: 0x followed by 40 hexadecimal characters.';
       document.getElementById('inspInput').setAttribute('aria-invalid', 'true');
       document.getElementById('inspMain').classList.add('hidden');
       document.getElementById('inspEmpty').classList.add('hidden');
       return;
     }
+    addr = String(addr).trim().toLowerCase();
+    selectedAddress = addr;
     validation.textContent = '';
     document.getElementById('inspInput').removeAttribute('aria-invalid');
     var data = uiState.lastUiData;
     if (!data) { validation.textContent = 'Staking history is still loading. Please try again shortly.'; return; }
+    renderSelectedAddress(data);
     var res = computeWalletHistory(addr, data.sorted);
     var main = document.getElementById('inspMain');
     var empty = document.getElementById('inspEmpty');
@@ -2758,7 +2940,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       if (main) main.classList.add('hidden');
       if (empty) {
         empty.classList.remove('hidden');
-        empty.innerHTML = '<h2>Wallet not found</h2><p>No staking events found for address <span class="mono">' + shortAddr(addr) + '</span> ' + debBtn(addr) + '</p>';
+        empty.innerHTML = '<h2>No staking history</h2><p>No TokenLocker events found for <span class="mono">' + shortAddr(addr) + '</span>. Wallet balances are shown above.</p>';
       }
       return;
     }
@@ -2778,8 +2960,10 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     document.getElementById('inspLifetime').textContent = lifetimeDays + ' days';
     document.getElementById('inspTxCount').textContent = res.userTxs.length + ' transactions';
     var showRank = document.getElementById('inspToggleRank') ? document.getElementById('inspToggleRank').checked : false;
-    var chartLabels = res.timeline.map(function (pt) { return chartDate(pt.ts); });
-    var chartData = res.timeline.map(function (pt) { return { x: pt.ts * 1000, y: pt.staked }; });
+    var points = res.timeline.slice();
+    if (points.length && points[points.length - 1].ts < data.asOf) points.push({ ts: data.asOf, staked: res.curStaked, rank: curRankIdx >= 0 ? curRankIdx + 1 : null });
+    var chartLabels = points.map(function (pt) { return chartDate(pt.ts); });
+    var chartData = points.map(function (pt) { return { x: pt.ts * 1000, y: pt.staked }; });
     var palette = chartPalette();
     var datasets = [{
       label: 'Staked TIG balance', data: chartData, borderColor: palette.accent,
@@ -2788,8 +2972,8 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     var customScales = historyScales(chartData);
     if (showRank) {
       datasets.push({
-        label: 'Historical Rank Position',
-        data: res.timeline.map(function (pt) { return { x: pt.ts * 1000, y: pt.rank }; }),
+        label: 'Rank at address events / current block',
+        data: points.map(function (pt) { return { x: pt.ts * 1000, y: pt.rank }; }),
         borderColor: palette.yellow, backgroundColor: 'transparent', borderDash: [3, 3],
         stepped: true, pointRadius: 3, spanGaps: false, yAxisID: 'yRank'
       });
@@ -2806,6 +2990,9 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       var wt = (t === 'unlock' && tx.withdrawableTime) ? fullDate(tx.withdrawableTime) : '–';
       return '<tr><td><span class="tag ' + typeTag(t) + '">' + typeLabel(t) + '</span></td><td style="font-weight:700">' + fmt2(tx.valueTig) + ' TIG</td><td>' + fullDate(tx.timestamp) + '</td><td>' + tx.blockNumber + '</td><td>' + wt + '</td><td><a target="_blank" href="https://basescan.org/tx/' + tx.hash + '">tx</a></td></tr>';
     }).join('');
+    uiState.inspectorExport = { columns: ['address', 'type', 'amount_tig', 'timestamp_utc', 'event_block', 'transaction_hash'], rows: res.userTxs.map(function (tx) {
+      return [addr, normalizeType(tx.type), tx.value != null ? ethers.formatUnits(tx.value, 18) : tx.valueTig, new Date(tx.timestamp * 1000).toISOString(), tx.blockNumber, tx.hash];
+    }) };
   }
 
   function populateExHoldersChips() {
@@ -2837,8 +3024,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     Array.prototype.forEach.call(container.querySelectorAll('.insp-chip'), function (chip) {
       chip.onclick = function () {
         var a = chip.getAttribute('data-addr');
-        document.getElementById('inspInput').value = a;
-        renderInspector(a);
+        openAddress(a);
       };
     });
   }
@@ -2886,16 +3072,18 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
 
     document.getElementById('mobileSection').onchange = function (e) { activateTab(e.target.value, true); window.scrollTo(0, 0); };
     document.querySelectorAll('[data-nav]').forEach(function (button) { button.onclick = function () { activateTab(button.dataset.nav, true); window.scrollTo(0, 0); }; });
-    document.getElementById('mobileHolders').onclick = function (e) {
+    document.addEventListener('click', async function (e) {
+      var exportButton = e.target.closest('[data-export]');
+      if (exportButton) { downloadData(exportButton.dataset.export); return; }
       var button = e.target.closest('.inspect-address');
+      if (button) { document.getElementById('inspectorSection').open = true; openAddress(button.dataset.address); return; }
+      button = e.target.closest('.copy-address,[data-share-address]');
       if (!button) return;
-      activateTab('mytig', true);
-      var address = button.dataset.address;
-      document.getElementById('inspectorSection').open = true;
-      document.getElementById('inspInput').value = address;
-      renderInspector(address);
-      document.getElementById('inspectorSection').scrollIntoView({ block: 'start' });
-    };
+      try {
+        await navigator.clipboard.writeText(button.hasAttribute('data-share-address') ? location.href : button.dataset.address);
+        button.textContent = 'Copied';
+      } catch (error) { button.textContent = 'Copy unavailable'; }
+    });
     document.getElementById('copySupport').onclick = async function () {
       try { await navigator.clipboard.writeText('0x19c00b03bf1f2638fd45a3d48f0097863eb20bcf'); this.textContent = 'Copied'; }
       catch (e) { this.textContent = 'Select address to copy'; }
@@ -2904,9 +3092,25 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     document.getElementById('searchBtn').onclick = function () { searchHolder(); };
     document.getElementById('searchInput').oninput = function () { searchHolder(); };
     document.getElementById('top500Search').oninput = function () { top500Page = 0; renderTop500(); };
+    document.getElementById('chartRange').onchange = function (e) {
+      var days = Number(e.target.value);
+      if (![0, 7, 30, 90].includes(days)) return;
+      uiState.chartRangeDays = days;
+      refreshAll({ skipCharts: false });
+    };
 
     document.getElementById('top500Prev').onclick = function () { top500Page = Math.max(0, top500Page - 1); renderTop500(); document.getElementById('top500Search').scrollIntoView({ block: 'start' }); };
     document.getElementById('top500Next').onclick = function () { top500Page++; renderTop500(); document.getElementById('top500Search').scrollIntoView({ block: 'start' }); };
+    ['request', 'unlock'].forEach(function (prefix) {
+      ['Prev', 'Next'].forEach(function (direction) {
+        document.getElementById(prefix + direction).onclick = function () {
+          var key = prefix + 'Page';
+          uiState[key] = Math.max(0, (uiState[key] || 0) + (direction === 'Next' ? 1 : -1));
+          renderUnlockTables(uiState.lastUiData);
+          document.getElementById(prefix === 'request' ? 'unstakes7dBody' : 'unlocksBody').closest('.card').scrollIntoView({ block: 'start' });
+        };
+      });
+    });
 
     Array.prototype.forEach.call(document.querySelectorAll('.tab-btn'), function (btn) {
       var tab = btn.getAttribute('data-tab');
@@ -2927,8 +3131,9 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
         next.focus();
       };
     });
-    activateTab(location.hash.slice(1) || 'overview', false);
-    window.addEventListener('hashchange', function () { activateTab(location.hash.slice(1) || 'overview', false); });
+    applyLocation();
+    window.addEventListener('hashchange', applyLocation);
+    window.addEventListener('popstate', applyLocation);
     Array.prototype.forEach.call(document.querySelectorAll('#txChips .chip'), function (chip) {
       chip.onclick = function () {
         uiState.txFilter = chip.getAttribute('data-filter');
@@ -2961,7 +3166,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     if (inspBtn) {
       inspBtn.onclick = function () {
         var addr = document.getElementById('inspInput').value.trim();
-        renderInspector(addr);
+        openAddress(addr);
       };
     }
     var inspInp = document.getElementById('inspInput');
@@ -2969,7 +3174,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       inspInp.onkeyup = function (e) {
         if (e.key === 'Enter') {
           var addr = inspInp.value.trim();
-          renderInspector(addr);
+          openAddress(addr);
         }
       };
     }
@@ -2984,21 +3189,15 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     if (mytigAdd) {
       mytigAdd.onclick = function () {
         var errEl = document.getElementById('mytigErr');
-        var res = addMyWallet(document.getElementById('mytigAddr').value, document.getElementById('mytigLabel').value);
+        var res = addMyWallet(document.getElementById('inspInput').value, document.getElementById('mytigLabel').value);
         if (!res.ok) {
           if (errEl) errEl.textContent = res.err || 'Could not add wallet';
           return;
         }
         if (errEl) errEl.textContent = '';
-        document.getElementById('mytigAddr').value = '';
         document.getElementById('mytigLabel').value = '';
+        openAddress(document.getElementById('inspInput').value);
         renderMyTig();
-      };
-    }
-    var mytigAddr = document.getElementById('mytigAddr');
-    if (mytigAddr) {
-      mytigAddr.onkeyup = function (e) {
-        if (e.key === 'Enter') document.getElementById('mytigAddBtn').click();
       };
     }
   }
