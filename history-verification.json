@@ -1,0 +1,162 @@
+{
+  "fromBlock": 26356578,
+  "throughBlock": 53249049,
+  "throughHash": "0x241b17fa99e9404a8931c55d140ab581e6886d849865ff68a2ca9f4e625a595a",
+  "completedAt": "2026-10-29T19:13:32.027Z",
+  "method": "Full eth_getLogs rescan and event block headers",
+  "contentHash": "0x26e2cbf7ea9dab90f4f69aa0fca2f67077242f5223e6d466f88ecccbbe21f315",
+  "deploymentCheck": {
+    "contract": "0x9F6b29E498Ef6BEe4a050fa1F29c31DBE6c6aEF4",
+    "deployedAt": 26356578,
+    "previousBlockHasCode": false,
+    "deploymentBlockHasCode": true,
+    "block": {
+      "number": 26356578,
+      "hash": "0x0b4451f30f877e0a922c122fdfc89d0017cc1bd69fc721e32271180882a197b6",
+      "timestamp": 1739502503
+    }
+  },
+  "preActivityInterval": {
+    "fromBlock": 26356578,
+    "throughBlock": 26498641,
+    "throughHash": "0xf1025f7b9865f8f559de0d466fd8deb6327b0a323eea80d4e38e1ed6aa4f0f82",
+    "stakingEvents": 0
+  },
+  "comparison": {
+    "originalEvents": 30141,
+    "verifiedEvents": 30141,
+    "added": 0,
+    "removed": 0,
+    "corrected": 9,
+    "examples": {
+      "added": [],
+      "removed": [],
+      "corrected": [
+        "0x74ea3096ae59722d4a4ca6564b32fb998353b6053a473f4ed08daeae5a9da3f7-69",
+        "0x0a512fe27b91e15ef0ed3f2025b82c27d33fe703101bc748c8008862f1fde55f-91",
+        "0x357473a800186792b327665ab5f3e4a6f013f584932f58a965611aa1b0c410ec-179",
+        "0x27daf0668afd15cdc04aae32b4f4436179b22626d281dc6e1005d69abbbe23c0-255",
+        "0xe3f3643a5d979e7ce50e392f341a74c4f3b49be095e31335848a9bcc66df3864-151",
+        "0x1a910a5611cc644b9011bf7672b98be5b8d3b22c58b7b150a9ea55b31ef91129-52",
+        "0x111fd4758b9430b80e326c1394867d0ede09f9a51ecb674eb01ef1f062df3f74-39",
+        "0xad9d82a4f2d41a8e88d9e5fb10258bf4fd49f33eda64d295aa6849e949a36d62-13",
+        "0x06cf6cba4d2cfc5eced7aad4fd3997ba77e3570092785ba30f4e9b8c8b89b4da-163"
+      ]
+    }
+  },
+  "token": "0x0C03Ce270B4826Ec62e7DD007f0B716068639F7B",
+  "staking": "0x9F6b29E498Ef6BEe4a050fa1F29c31DBE6c6aEF4",
+  "blockTimestamp": 1793287445,
+  "publicationCodeRevision": "c0d34f698d856e23181a58915a0305fd8867e818",
+  "tokenLockerCustody": {
+    "block": 53249049,
+    "expectedWei": "9604102654722496643249731",
+    "onChainWei": "9604102654722496643249731",
+    "matches": true
+  },
+  "stakingTotals": {
+    "lockedWei": "6729057870257601909617768",
+    "pendingWei": "669765165177001372950442"
+  },
+  "corrections": [
+    {
+      "id": "0x74ea3096ae59722d4a4ca6564b32fb998353b6053a473f4ed08daeae5a9da3f7-69",
+      "blockNumber": 49003527,
+      "type": "withdraw",
+      "fields": {
+        "timestamp": {
+          "before": 1784799391,
+          "after": 1784796401
+        }
+      }
+    },
+    {
+      "id": "0x0a512fe27b91e15ef0ed3f2025b82c27d33fe703101bc748c8008862f1fde55f-91",
+      "blockNumber": 49003535,
+      "type": "withdraw",
+      "fields": {
+        "timestamp": {
+          "before": 1784799391,
+          "after": 1784796417
+        }
+      }
+    },
+    {
+      "id": "0x357473a800186792b327665ab5f3e4a6f013f584932f58a965611aa1b0c410ec-179",
+      "blockNumber": 49003543,
+      "type": "withdraw",
+      "fields": {
+        "timestamp": {
+          "before": 1784799391,
+          "after": 1784796433
+        }
+      }
+    },
+    {
+      "id": "0x27daf0668afd15cdc04aae32b4f4436179b22626d281dc6e1005d69abbbe23c0-255",
+      "blockNumber": 49003552,
+      "type": "withdraw",
+      "fields": {
+        "timestamp": {
+          "before": 1784799391,
+          "after": 1784796451
+        }
+      }
+    },
+    {
+      "id": "0xe3f3643a5d979e7ce50e392f341a74c4f3b49be095e31335848a9bcc66df3864-151",
+      "blockNumber": 49003559,
+      "type": "withdraw",
+      "fields": {
+        "timestamp": {
+          "before": 1784799391,
+          "after": 1784796465
+        }
+      }
+    },
+    {
+      "id": "0x1a910a5611cc644b9011bf7672b98be5b8d3b22c58b7b150a9ea55b31ef91129-52",
+      "blockNumber": 49003567,
+      "type": "withdraw",
+      "fields": {
+        "timestamp": {
+          "before": 1784799391,
+          "after": 1784796481
+        }
+      }
+    },
+    {
+      "id": "0x111fd4758b9430b80e326c1394867d0ede09f9a51ecb674eb01ef1f062df3f74-39",
+      "blockNumber": 49003578,
+      "type": "withdraw",
+      "fields": {
+        "timestamp": {
+          "before": 1784799391,
+          "after": 1784796503
+        }
+      }
+    },
+    {
+      "id": "0xad9d82a4f2d41a8e88d9e5fb10258bf4fd49f33eda64d295aa6849e949a36d62-13",
+      "blockNumber": 49004139,
+      "type": "claim",
+      "fields": {
+        "timestamp": {
+          "before": 1784799391,
+          "after": 1784797625
+        }
+      }
+    },
+    {
+      "id": "0x06cf6cba4d2cfc5eced7aad4fd3997ba77e3570092785ba30f4e9b8c8b89b4da-163",
+      "blockNumber": 49004849,
+      "type": "lock",
+      "fields": {
+        "timestamp": {
+          "before": 1784799391,
+          "after": 1784799045
+        }
+      }
+    }
+  ]
+}

@@ -52,3 +52,18 @@ test('sync removes orphan events after a fork and refuses a checkpoint that chan
     assert.equal(fs.readFileSync('data.json', 'utf8'), saved);
   } finally { process.chdir(cwd); fs.rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('incremental sync carries full historical verification forward to its new checkpoint', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tig-certified-')), cwd = process.cwd();
+  const hash = n => '0x' + n.toString(16).padStart(64, '0');
+  try {
+    process.chdir(dir);
+    const completedAt = new Date().toISOString();
+    fs.writeFileSync('data.json', JSON.stringify({ config: { firstBlock: 1 }, transactions: [], metadata: {
+      lastBlock: 100, lastBlockHash: hash(100), historyVerification: { fromBlock: 1, throughBlock: 100, throughHash: hash(100), completedAt }
+    } }));
+    await syncCheckpoint({ getBlock: async number => ({ number, hash: hash(number), timestamp: 1700000000 + number * 2 }), getLogs: async () => [] }, 102);
+    const result = JSON.parse(fs.readFileSync('data.json'));
+    assert.deepEqual(result.metadata.historyVerification, { fromBlock: 1, throughBlock: 102, throughHash: hash(102), completedAt });
+  } finally { process.chdir(cwd); fs.rmSync(dir, { recursive: true, force: true }); }
+});

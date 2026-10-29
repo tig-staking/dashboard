@@ -698,7 +698,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     <span>Batch <strong id="batchSizeLabel">3000</strong></span>
     <span>RPC <strong id="rpcLabel">-</strong></span>
     <span>Coverage <strong id="coverageLabel">-</strong></span>
-    <span>History <strong id="historyStatus">Verification pending</strong></span>
+    <span>History <strong id="historyStatus">Verification pending</strong> <a id="historyReportLink" href="./history-verification.json" target="_blank" rel="noopener" hidden>Full rescan report ↗</a></span>
   </div></details>
     <footer class="site-footer"><p>TIG on Base<br>Addresses are not necessarily individual holders.</p><section class="support-details" aria-label="Contribute"><h3 style="font-size:13px;font-weight:600;color:var(--text);margin:0 0 4px">Contribute</h3><p>Support this dashboard · 1 TIG on Base, optional</p><div class="support-address"><code class="mono">0x19c00b03bf1f2638fd45a3d48f0097863eb20bcf</code><button type="button" class="btn btn-xs" id="copySupport">Copy address</button></div></section></footer>
   </div>
@@ -745,7 +745,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     ],
     DB_NAME: 'TIGv14',
     DB_VERSION: 1,
-    FIRST_BLOCK: 26498642,
+    FIRST_BLOCK: 26356578,
     BATCH: 1500,
     BATCH_MIN: 1,
     BATCH_MAX: 2000,
@@ -2543,6 +2543,7 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
       document.getElementById('lastBlock').textContent = lb != null ? Number(lb).toLocaleString('en-US') : '-';
       var history = await db.meta('historyVerification');
       document.getElementById('historyStatus').textContent = history && history.fromBlock === C.FIRST_BLOCK ? 'Verified through block ' + history.throughBlock.toLocaleString('en-US') : 'Verification pending';
+      document.getElementById('historyReportLink').hidden = !(history && history.fromBlock === C.FIRST_BLOCK);
       ls = await db.meta('lastSync');
       document.getElementById('lastSync').textContent = ls ? new Date(ls).toLocaleTimeString('en-US') : 'never';
       if (lb != null && chainHead) {

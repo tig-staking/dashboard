@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs'), os = require('node:os'), path = require('node:path');
 const { ethers } = require('ethers');
-const { readRange, verifyHistory, limitedFetch } = require('./verify-history');
+const { readRange, verifyHistory, limitedFetch, createHistoryProvider } = require('./verify-history');
 const { LOCKER_ABI } = require('./sync');
 const hash = n => '0x' + n.toString(16).padStart(64, '0');
 const config = { token: '0x' + '1'.repeat(40), staking: '0x' + '2'.repeat(40), firstBlock: 1, blacklist: [] };
@@ -41,7 +41,20 @@ test('a changed frozen target or inconsistent event hash cannot produce a verifi
     const provider = { getBlock: async n => header(n), getLogs: async () => [{ ...log(2), blockHash: hash(999) }] };
     await assert.rejects(readRange(provider, config, 1, 3), /unverified/);
     await verifyHistory({ getBlock: async n => header(n), getLogs: async () => [] }, source, files(dir));
+    fs.unlinkSync(files(dir).resultFile); // Simulate interruption before publishing the complete result.
     await assert.rejects(verifyHistory({ getBlock: async n => ({ ...header(n), hash: hash(999) }), getLogs: async () => [] }, source, files(dir)), /target was reorganized/);
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('invoking verification after a completed run starts a fresh rescan at the new source target', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tig-history-repeat-'));
+  const source = { config, metadata: { lastBlock: 6 }, transactions: [] }, starts = [];
+  const provider = { getBlock: async n => header(n), getLogs: async ({ fromBlock }) => { starts.push(fromBlock); return []; } };
+  try {
+    await verifyHistory(provider, source, files(dir)); starts.length = 0;
+    source.metadata.lastBlock = 9;
+    const result = await verifyHistory(provider, source, files(dir));
+    assert.equal(starts[0], 1); assert.equal(result.throughBlock, 9);
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -59,4 +72,38 @@ test('archive throttling serializes one host but permits independent providers t
   assert.ok(!calls.includes('https://one.test/next'));
   release(); await Promise.all([first, second]);
   assert.deepEqual(calls, ['https://one.test/held', 'https://two.test/independent', 'https://one.test/next']);
+});
+
+test('historical headers start before the remaining log windows finish', async () => {
+  let release;
+  const waiting = new Promise(resolve => release = resolve);
+  const result = await readRange({
+    getBlock: async n => { if (n === 2) release(); return header(n); },
+    getLogs: async ({ fromBlock }) => { if (fromBlock === 2001) await waiting; return fromBlock === 1 ? [log(2)] : []; }
+  }, config, 1, 2501);
+  assert.equal(result.rows.length, 1);
+});
+
+test('a throttled header provider is bypassed for both boundaries and subsequent reads', async () => {
+  let blockedCalls = 0;
+  const provider = createHistoryProvider(Date.now() + 10000, null, urls => ({
+    getBlock: async n => { if (urls[0].includes('drpc')) { blockedCalls++; throw Error('HTTP 429'); } return header(n); },
+    destroy() {}
+  }));
+  assert.equal((await provider.getBlock(2)).hash, hash(2));
+  assert.equal((await provider.getBlock(3)).hash, hash(3));
+  assert.equal(blockedCalls, 1);
+  provider.destroy();
+});
+
+test('private archive URLs are removed before errors can reach retry logs', async () => {
+  const secret = 'https://archive.example.test/private-key';
+  const provider = createHistoryProvider(Date.now() - 1, secret, () => ({
+    getBlock: async () => { throw Error(secret + ': HTTP 429'); },
+    getLogs: async () => { throw Error(secret + ': HTTP 429'); }, destroy() {}
+  }));
+  for (const action of [() => provider.getLogs({}), () => provider.getBlock(1)]) {
+    await assert.rejects(action(), error => !error.message.includes(secret) && /private RPC.*429/.test(error.message));
+  }
+  provider.destroy();
 });

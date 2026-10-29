@@ -19,7 +19,7 @@ const Chain = require('./chain-state');
 const CONFIG = {
   STAKE: '0x9F6b29E498Ef6BEe4a050fa1F29c31DBE6c6aEF4',
   TOKEN: '0x0C03Ce270B4826Ec62e7DD007f0B716068639F7B',
-  FIRST_BLOCK: 26498642,
+  FIRST_BLOCK: 26356578, // TokenLocker deployment; first staking event is at 26498642
   FILE_PATH: './data.json',
   PENDING_PERIOD_SEC: 2419200, // 28d
   BLACKLIST: ['0x30FeC1f3690F3207d1A239dB392f62C9CD1deF3F'],
