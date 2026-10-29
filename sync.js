@@ -95,8 +95,8 @@ function isRateLimit(err) {
   );
 }
 
-async function connectProvider() {
-  const provider = createProvider();
+async function connectProvider(deadline) {
+  const provider = createProvider(undefined, { deadline });
   try {
     const head = await provider.getBlockNumber();
     console.log('RPC pool OK @ block', head);
@@ -174,7 +174,7 @@ function dedupeById(txs) {
   return Array.from(map.values());
 }
 
-async function getLogsChunk(provider, address, topics, fromBlock, toBlock) {
+async function getLogsChunk(provider, address, topics, fromBlock, toBlock, options = {}) {
   // Ograniczamy wielkość pierwszej paczki do bezpiecznego CHUNK_SIZE
   let size = Math.min(CONFIG.CHUNK_SIZE, toBlock - fromBlock + 1);
   let start = fromBlock;
@@ -183,6 +183,7 @@ async function getLogsChunk(provider, address, topics, fromBlock, toBlock) {
   while (start <= toBlock) {
     let attempt = 0;
     for (;;) {
+      if (Date.now() >= (options.deadline || Infinity)) throw new Error('Log catch-up work budget reached');
       const end = Math.min(start + size - 1, toBlock);
       try {
         const logs = await provider.getLogs({
@@ -198,6 +199,7 @@ async function getLogsChunk(provider, address, topics, fromBlock, toBlock) {
         await sleep(CONFIG.RPC_DELAY_MS);
         break;
       } catch (err) {
+        if (Date.now() >= (options.deadline || Infinity)) throw new Error('Log catch-up work budget reached');
         attempt++;
         const msg = err && err.message ? err.message : String(err);
         if (attempt >= CONFIG.MAX_RETRIES) {
@@ -216,7 +218,7 @@ async function getLogsChunk(provider, address, topics, fromBlock, toBlock) {
   return out;
 }
 
-async function syncCheckpoint(provider, head) {
+async function syncCheckpoint(provider, head, deadline) {
   const existingData = loadExisting();
   const last = Number(existingData.metadata.lastBlock);
   const currentBlock = Math.min(head, (Number.isSafeInteger(last) ? last : CONFIG.FIRST_BLOCK - 1) + 20000);
@@ -256,7 +258,7 @@ async function syncCheckpoint(provider, head) {
     Object.keys(EVENT_TYPE).map((name) => iface.getEvent(name).topicHash)
   ];
 
-  const logs = await getLogsChunk(provider, stake, topics, resumeFrom, currentBlock);
+  const logs = await getLogsChunk(provider, stake, topics, resumeFrom, currentBlock, { deadline });
   console.log(`Zebrano ${logs.length} logów. Parsowanie…`);
 
   const headBlock = await provider.getBlock(currentBlock);
@@ -370,10 +372,10 @@ async function syncCheckpoint(provider, head) {
 }
 
 async function run() {
-  const { provider, head } = await connectProvider();
   const deadline = Date.now() + 12 * 60 * 1000;
+  const { provider, head } = await connectProvider(deadline);
   try {
-    while (await syncCheckpoint(provider, head)) {
+    while (await syncCheckpoint(provider, head, deadline)) {
       if (Date.now() >= deadline) throw new Error('Sync work budget reached; verified checkpoints saved for the next run');
     }
   } finally { provider.destroy(); }

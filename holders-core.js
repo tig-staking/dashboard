@@ -48,7 +48,7 @@ function stakingBalances(transactions, throughBlock) {
 function csvCandidates(csv, count = 1000) {
   const lines = csv.trim().split(/\r?\n/);
   if (lines[0] !== 'HolderAddress,Balance') throw new Error('Unexpected Blockscout CSV header');
-  if (lines.length <= count) throw new Error('Too few token holders in CSV');
+  if (lines.length <= count + 1) throw new Error('Too few token holders in CSV; need one excluded holder for coverage');
   const rows = [];
   const seen = new Set();
   let previous = null;

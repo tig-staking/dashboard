@@ -33,10 +33,12 @@ jobs:
 
       - name: Sync staking snapshot
         id: staking
+        timeout-minutes: 15
         run: node sync.js
 
       - name: Sync holders snapshot
         if: success()
+        timeout-minutes: 8
         run: node holders.js
 
       - name: Commit & Push changes
