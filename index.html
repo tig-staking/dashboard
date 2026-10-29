@@ -1534,11 +1534,12 @@ table{font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:14px 10px;b
     for (i = 0; i < txsAll.length; i++) {
       if (!txsAll[i] || isBlacklisted(txsAll[i].address)) { skippedBl++; continue; }
       if (normalizeType(txsAll[i].type) === 'reward') continue;
-      txs.push(txsAll[i]);
+      // Use one address key across balances, age cohorts, pending lots and alerts.
+      txs.push(Object.assign({}, txsAll[i], { address: String(txsAll[i].address).toLowerCase() }));
     }
     if (!txs.length) { statsCache = null; return null; }
     var sorted = txs.slice().sort(function (a, b) {
-      return (a.timestamp - b.timestamp) || ((a.logIndex || 0) - (b.logIndex || 0));
+      return (Number(a.blockNumber) - Number(b.blockNumber)) || (a.timestamp - b.timestamp) || ((a.logIndex || 0) - (b.logIndex || 0));
     });
     var now = Math.floor(Date.now() / 1000);
     var d7 = now - 7 * 86400, d14 = now - 14 * 86400, d24 = now - 86400, d30 = now - 30 * 86400;
