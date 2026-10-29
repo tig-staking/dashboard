@@ -112,3 +112,12 @@ test('wallet balances are refreshed and displayed only at the staking block', as
   assert.equal(ctx.walletBalanceAtBlock(address(1), 100), null);
   assert.equal(ctx.walletBalanceAtBlock(address(1), 200).value, 40);
 });
+
+test('address permalinks accept only full Ethereum addresses', () => {
+  const ctx = vm.createContext({ URL });
+  vm.runInContext(html.slice(html.indexOf('  function addressFromUrl('), html.indexOf('  function openAddress(')), ctx);
+  assert.equal(ctx.addressFromUrl('https://example.test/?address=' + address(123) + '#mytig'), address(123));
+  assert.equal(ctx.addressFromUrl('https://example.test/?address=0x123'), null);
+  assert.equal(ctx.addressFromUrl('https://example.test/?address=%3Cscript%3E'), null);
+  assert.equal(ctx.addressFromUrl('https://example.test/'), null);
+});
