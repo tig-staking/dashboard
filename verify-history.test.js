@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs'), os = require('node:os'), path = require('node:path');
 const { ethers } = require('ethers');
-const { readRange, verifyHistory } = require('./verify-history');
+const { readRange, verifyHistory, limitedFetch } = require('./verify-history');
 const { LOCKER_ABI } = require('./sync');
 const hash = n => '0x' + n.toString(16).padStart(64, '0');
 const config = { token: '0x' + '1'.repeat(40), staking: '0x' + '2'.repeat(40), firstBlock: 1, blacklist: [] };
@@ -49,4 +49,14 @@ test('archival queries respect the public 1000-block limit without gaps', async 
   const ranges = [];
   await readRange({ getBlock: async n => header(n), getLogs: async filter => { ranges.push([filter.fromBlock, filter.toBlock]); return []; } }, config, 1, 2501);
   assert.deepEqual(ranges.sort((a, b) => a[0] - b[0]), [[1, 1000], [1001, 2000], [2001, 2501]]);
+});
+
+test('archive throttling serializes one host but permits independent providers to work', async () => {
+  let release; const held = new Promise(resolve => release = resolve), calls = [];
+  const request = limitedFetch(async url => { calls.push(url); if (url.endsWith('/held')) await held; return { status: 200 }; }, 1);
+  const first = request('https://one.test/held'), second = request('https://one.test/next');
+  await request('https://two.test/independent');
+  assert.ok(!calls.includes('https://one.test/next'));
+  release(); await Promise.all([first, second]);
+  assert.deepEqual(calls, ['https://one.test/held', 'https://two.test/independent', 'https://one.test/next']);
 });
